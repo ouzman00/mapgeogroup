@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mapgeo_db}
+      POSTGRES_USER: ${POSTGRES_USER:-mapgeo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mapgeo}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mapgeo} -d ${POSTGRES_DB:-mapgeo_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgis://mapgeo:mapgeo@db:5432/mapgeo_db}
+      USE_POSTGIS: ${USE_POSTGIS:-True}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-mapgeo_db}
+      DB_USER: ${POSTGRES_USER:-mapgeo}
+      DB_SCHEMA: ${DB_SCHEMA:-donnees_mapgeo}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-mapgeo}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/app/media
+      - private_media_data:/app/private_media
+      - static_data:/app/staticfiles
+
+  worker:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgis://mapgeo:mapgeo@db:5432/mapgeo_db}
+      USE_POSTGIS: ${USE_POSTGIS:-True}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-mapgeo_db}
+      DB_USER: ${POSTGRES_USER:-mapgeo}
+      DB_SCHEMA: ${DB_SCHEMA:-donnees_mapgeo}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-mapgeo}
+      SKIP_COLLECTSTATIC: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["python", "manage.py", "process_import_jobs", "--loop"]
+    volumes:
+      - media_data:/app/media
+      - private_media_data:/app/private_media
+      - static_data:/app/staticfiles
+
+volumes:
+  postgres_data:
+  media_data:
+  private_media_data:
+  static_data:

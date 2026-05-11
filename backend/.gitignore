@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+# Fichiers d'environnement locaux — ne jamais commiter
+.env
+.env.local
+.venv/
+venv/
+media/
+staticfiles/
+.pytest_cache/
+.coverage
+.DS_Store
+*.bak
+*.bak-*
+**/__pycache__/
+**/*.pyc
+
+# Sécurité / nettoyage projet
+private_media/
+backend/private_media/
+*.mbtiles
+*.orig
+*.tmp
+*.temp
+*~
+*.swp
+XXOQZkCA

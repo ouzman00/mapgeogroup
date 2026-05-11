@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110" fill="none">
+  <rect width="420" height="110" rx="28" fill="#123B5D"/>
+  <rect x="18" y="18" width="74" height="74" rx="22" fill="#1B5A74"/>
+  <path d="M55 30c-9.4 0-17 7.6-17 17 0 14.1 17 30 17 30s17-15.9 17-30c0-9.4-7.6-17-17-17Z" fill="#C7B299"/>
+  <circle cx="55" cy="47" r="6.5" fill="#F7F5F2"/>
+  <text x="115" y="52" fill="#F7F5F2" font-family="Arial, sans-serif" font-size="28" font-weight="700">MAPGEO</text>
+  <text x="115" y="77" fill="#C7B299" font-family="Arial, sans-serif" font-size="13" letter-spacing="2">CARTOGRAPHIE · VALORISATION FONCIÈRE</text>
+</svg>

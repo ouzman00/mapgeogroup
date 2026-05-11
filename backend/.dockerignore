@@ -1,0 +1,26 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+# Fichiers d'environnement locaux — jamais dans l'image Docker
+.env
+.env.local
+db.sqlite3
+*.sqlite3
+media
+staticfiles
+.DS_Store
+
+# Sécurité / nettoyage projet
+private_media
+*.mbtiles
+*.bak
+*.bak-*
+*.orig
+*.tmp
+XXOQZkCA

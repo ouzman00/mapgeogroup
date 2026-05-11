@@ -1,0 +1,22 @@
+services:
+  frontend:
+    build: .
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: /api
+      # Si le backend Django est dans le docker-compose fourni précédemment,
+      # son service s'appelle "web".
+      BACKEND_UPSTREAM: http://web:8000
+    ports:
+      - "8080:80"
+    networks:
+      - default
+
+# Utilisation recommandée :
+# 1) place ce frontend dans le même dossier compose que le backend ou lance-le
+#    sur le même réseau Docker.
+# 2) côté backend .env :
+#    FRONTEND_URL=http://localhost:8080
+#    DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+#    DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:8080
+#    DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8080

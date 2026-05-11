@@ -1,0 +1,5 @@
+export const SELECTION_MAX_ZOOM = 18;
+export const SELECTION_FALLBACK_ZOOM = 17;
+export const PORTFOLIO_MAX_ZOOM = 14;
+export const PORTFOLIO_FALLBACK_ZOOM = 7;
+export const USER_LOCATION_FOCUS_ZOOM = 17;

@@ -1,0 +1,13 @@
+Django==5.2.1
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+django-filter==24.2
+psycopg2-binary==2.9.9
+Pillow==10.3.0
+gunicorn==22.0.0
+python-dotenv==1.0.1
+pyproj==3.6.1
+shapely==2.0.4
+# Redis — cache partagé pour le throttling anti-brute-force (requis en production multi-workers)
+redis==5.0.8

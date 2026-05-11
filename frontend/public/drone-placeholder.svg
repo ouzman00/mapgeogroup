@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" fill="none">
+  <rect width="1600" height="900" fill="#F7F5F2"/>
+  <rect x="44" y="44" width="1512" height="812" rx="34" fill="#EDE7DF"/>
+  <path d="M120 660 320 520 450 580 690 350 870 430 1030 320 1280 510 1480 390V820H120V660Z" fill="#9DB2BE"/>
+  <path d="M130 620 370 450 540 520 760 280 980 360 1210 240 1480 430V820H130V620Z" fill="#6F95A8" opacity=".78"/>
+  <rect x="370" y="260" width="490" height="300" rx="34" fill="#123B5D" fill-opacity=".10" stroke="#C7B299" stroke-width="10" stroke-dasharray="18 14"/>
+  <circle cx="370" cy="260" r="14" fill="#C7B299"/>
+  <circle cx="860" cy="260" r="14" fill="#C7B299"/>
+  <circle cx="860" cy="560" r="14" fill="#C7B299"/>
+  <circle cx="370" cy="560" r="14" fill="#C7B299"/>
+  <rect x="95" y="90" width="430" height="150" rx="26" fill="#123B5D" fill-opacity=".92"/>
+  <text x="135" y="146" fill="#F7F5F2" font-family="Arial, sans-serif" font-size="24" font-weight="700">ORTHOPHOTO PREMIUM</text>
+  <text x="135" y="186" fill="#C7B299" font-family="Arial, sans-serif" font-size="18">Cartographie de précision et lecture patrimoniale</text>
+  <rect x="1120" y="640" width="350" height="140" rx="24" fill="#F7F5F2" fill-opacity=".94"/>
+  <text x="1160" y="697" fill="#123B5D" font-family="Arial, sans-serif" font-size="20" font-weight="700">Parcelle valorisable</text>
+  <text x="1160" y="731" fill="#1B5A74" font-family="Arial, sans-serif" font-size="17">Accès, emprise, contexte et lisibilité terrain</text>
+</svg>
