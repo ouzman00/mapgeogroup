@@ -3002,3 +3002,164 @@ main > .mapgeo-carto-workspace,
     height: 21px !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX FINAL MOBILE CARTO : LOCALISATION + NORD UNIQUEMENT
+   Objectif :
+   - supprimer la bande Carte / Recherche / Fiche
+   - afficher la flèche nord compacte en haut à droite
+   - afficher uniquement le bouton localisation en bas à droite
+   - masquer les boutons zoom
+   - mobile uniquement, desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Supprime la bande Carte / Recherche / Fiche */
+  .mapgeo-mobile-carto-tabs {
+    display: none !important;
+  }
+
+  /* Flèche nord : correction forte pour annuler les anciens bottom-sheets */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-north-arrow,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-north-arrow.mapgeo-overlay-panel,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-north-arrow.mapgeo-export-hidden,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-north-arrow[class*="absolute"][class*="top-"][class*="right-"][class*="rounded"][class*="bg-"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow[class] {
+    display: flex !important;
+    position: fixed !important;
+
+    top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+    right: 12px !important;
+    bottom: auto !important;
+    left: auto !important;
+
+    z-index: 2600 !important;
+
+    width: 42px !important;
+    height: 52px !important;
+    min-width: 42px !important;
+    min-height: 52px !important;
+    max-width: 42px !important;
+    max-height: 52px !important;
+
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 4px !important;
+    margin: 0 !important;
+
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    background: rgba(7, 17, 27, 0.78) !important;
+    color: #ffffff !important;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.26) !important;
+    backdrop-filter: blur(14px) !important;
+
+    overflow: hidden !important;
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow .mapgeo-north-label,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow[class] .mapgeo-north-label {
+    display: block !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.12em !important;
+    margin: 0 !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow svg,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow[class] svg {
+    width: 28px !important;
+    height: 34px !important;
+    margin-top: 2px !important;
+  }
+
+  /* Bloc contrôle : annule les anciens display:none et les anciens panneaux bas */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-map-control-stack,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-map-control-stack.mapgeo-popover-enter,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-map-control-stack.mapgeo-export-hidden,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-printable-map .mapgeo-map-control-stack[class*="absolute"][class*="top-"][class*="right-"][class*="rounded"][class*="bg-"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack[class] {
+    display: flex !important;
+    position: fixed !important;
+
+    right: 12px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px) !important;
+    top: auto !important;
+    left: auto !important;
+
+    z-index: 2600 !important;
+
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    max-width: 48px !important;
+    max-height: 48px !important;
+
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  /* Masque les boutons zoom seulement */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack .mapgeo-zoom-button,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-control-zoom {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Affiche uniquement localisation */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack .mapgeo-location-button,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack[class] .mapgeo-location-button {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    max-width: 48px !important;
+    max-height: 48px !important;
+
+    place-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    background: rgba(7, 17, 27, 0.82) !important;
+    color: #ffffff !important;
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.30) !important;
+    backdrop-filter: blur(14px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack .mapgeo-location-button svg,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack[class] .mapgeo-location-button svg {
+    width: 21px !important;
+    height: 21px !important;
+  }
+}
