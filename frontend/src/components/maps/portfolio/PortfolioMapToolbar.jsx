@@ -135,7 +135,7 @@ export default function FloatingMapToolbar({
   };
 
   return (
-    <div {...overlayEventProps} className="mapgeo-export-hidden absolute left-3 right-3 top-3 z-[970] max-w-[calc(100%-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:max-w-[calc(100%-2rem)]">
+    <div {...overlayEventProps} className="mapgeo-toolbar-container mapgeo-export-hidden absolute left-3 right-3 top-3 z-[970] max-w-[calc(100%-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:max-w-[calc(100%-2rem)]">
       <div className="mapgeo-toolbar-shell flex w-full max-w-full items-center gap-1 overflow-hidden rounded-[18px] border border-white/10 bg-[#07111b]/70 p-1.5 text-white shadow-[0_20px_64px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:w-fit sm:min-w-0">
         <ToolbarButton active={showLegend} icon={Layers3} label="Légende" forceLabel className={commonButtonClass} onClick={() => { setShowLegend((current) => !current); }} />
         <ToolbarArrowButton open={toolsOpen} onClick={toggleTools} />
