@@ -2205,3 +2205,34 @@ main > .mapgeo-carto-workspace,
     max-height: min(23dvh, 168px) !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE MEASURE DISABLE TAP COMPLETE
+   Objectif :
+   - le tap/clic carte ne peut plus ajouter de point sur mobile
+   - seul le bouton Ajouter valide le point central
+   - masque les indications de clic type premier point / point suivant
+   - desktop inchange
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-container {
+    cursor: grab !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-container:active {
+    cursor: grabbing !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="measurement-hint"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="measure-hint"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="measurement-tooltip"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="measure-tooltip"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-tooltip {
+    pointer-events: none !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-help {
+    display: none !important;
+  }
+}
