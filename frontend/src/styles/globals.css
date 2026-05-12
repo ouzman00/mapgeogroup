@@ -2493,7 +2493,8 @@ main > .mapgeo-carto-workspace,
     max-width: 180px !important;
     font-size: 10px !important;
   }
-}\n
+}
+
 /* --------------------------------------------------------------------------
    HOTFIX MOBILE CARTOGRAPHIE CONTROLES STABLES
    Objectif :
@@ -2632,5 +2633,96 @@ main > .mapgeo-carto-workspace,
   .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack[class*="absolute"][class*="top-"][class*="rounded"][class*="bg-"] {
     right: 10px !important;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 66px) !important;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE CARTOGRAPHIE ANTI-COLLISION FINAL
+   Objectif :
+   - empêcher les contrôles zoom/localisation d'être transformés en gros panneau
+   - cacher le message d'emprise mobile
+   - garder les outils/légende propres
+   - mobile uniquement, aucun impact desktop
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Message "emprise courante" masqué sur mobile */
+  .mapgeo-carto-workspace .mapgeo-viewport-notice,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-viewport-notice,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-viewport-notice[class] {
+    display: none !important;
+  }
+
+  /* Zoom natif Leaflet masqué sur mobile */
+  .mapgeo-carto-workspace .leaflet-control-zoom,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-control-zoom {
+    display: none !important;
+  }
+
+  /* Bloc custom + / - / localisation totalement masqué sur mobile */
+  .mapgeo-carto-workspace .mapgeo-map-control-stack,
+  .mapgeo-carto-workspace .mapgeo-map-control-stack[class],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack[class],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack[class*="absolute"][class*="top-"][class*="rounded"][class*="bg-"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    transform: none !important;
+  }
+
+  /* Barre outils/légende compacte sous les onglets */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-toolbar-container {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 56px) !important;
+    left: 10px !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 2180 !important;
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    transform: none !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-toolbar-shell {
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    border-radius: 18px !important;
+    padding: 0.35rem !important;
+    background: rgba(7, 17, 27, 0.78) !important;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-inline-tools {
+    max-width: calc(100vw - 96px) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-inline-tools::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Échelle discrète */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-control-scale {
+    transform: scale(0.86) !important;
+    transform-origin: bottom left !important;
+    margin-left: 10px !important;
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-control-attribution {
+    display: none !important;
   }
 }
