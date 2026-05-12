@@ -234,7 +234,7 @@ export function parseGeoJsonGeometry(text, options = {}) {
     parsed = JSON.parse(sanitizeJsonText(text));
   } catch {
     throw new Error(
-      "GeoJSON invalide : vérifie que le texte est un JSON complet avec un type Polygon/MultiPolygon et des coordonnées numériques sans espaces de milliers.",
+      "JSON invalide. Astuce : pour saisir une géométrie simplement, passe en mode CSV et entre tes coordonnées au format x,y;x,y;x,y (une paire par sommet, séparées par des points-virgules).",
     );
   }
 
@@ -243,7 +243,7 @@ export function parseGeoJsonGeometry(text, options = {}) {
 
   if (!normalized) {
     throw new Error(
-      "Le GeoJSON doit contenir un Polygon ou un MultiPolygon valide en coordonnées EPSG:32628. Colle soit { type: 'Polygon', coordinates: [...] }, soit un Feature avec geometry, soit un tableau de coordonnées.",
+      "Le GeoJSON ne contient pas de Polygon ou MultiPolygon exploitable. Formats acceptés : { type: 'Polygon', coordinates: [...] }, Feature GeoJSON, ou tableau de coordonnées. Pour saisir manuellement, utilise le mode CSV avec x,y;x,y;x,y.",
     );
   }
 
@@ -457,38 +457,92 @@ function isNumericCell(value) {
   return parseCsvNumber(value) !== null;
 }
 
-function splitFlatCoordinateTokens(value) {
-  const text = String(value || "").trim();
-
-  if (!text || /[{}\[\]]/.test(text)) return [];
-  if (!/[;\n\r\t]/.test(text)) return [];
-
-  return text
-    .split(/[;\n\r\t ]+/)
-    .map((token) => token.trim())
-    .filter(Boolean);
-}
-
+/**
+ * Tente de parser un texte comme une séquence de coordonnées X,Y séparées
+ * par des points-virgules, sauts de ligne ou tabulations.
+ *
+ * Formats acceptés :
+ *   - "x1;y1;x2;y2;x3;y3"        (plat, alternance)
+ *   - "x1,y1;x2,y2;x3,y3"        (paires virgule)
+ *   - "x1,y1\nx2,y2\nx3,y3"      (paires newline)
+ *   - "x1 y1\nx2 y2\nx3 y3"      (paires espace)
+ *
+ * Retourne un GeoJSON MultiPolygon ou null si non reconnu.
+ */
 function parseFlatCoordinateSequenceGeometry(value) {
-  const tokens = splitFlatCoordinateTokens(value);
+  const text = String(value || "").trim();
+  if (!text || /[{}\[\]]/.test(text)) return null;
+  // Reject clearly JSON/GeoJSON/KML/WKT content
+  if (text.startsWith("{") || text.startsWith("[") || text.toLowerCase().startsWith("polygon")
+    || text.toLowerCase().startsWith("multipolygon") || text.toLowerCase().startsWith("<")) return null;
 
-  if (tokens.length < 6 || tokens.length % 2 !== 0) return null;
+  // Format "x,y;x,y;x,y" — paires séparées par ";"
+  if (/[;\n\r\t]/.test(text)) {
+    // Chaque token peut être "x,y" ou un nombre seul
+    const tokens = text
+      .split(/[;\n\r\t]+/)
+      .map((t) => t.trim())
+      .filter(Boolean);
 
-  const ring = [];
-  for (let index = 0; index < tokens.length; index += 2) {
-    const x = parseCsvNumber(tokens[index]);
-    const y = parseCsvNumber(tokens[index + 1]);
+    // Cas: tokens sont des paires "x,y"
+    const pairPattern = tokens.every((t) => /^-?[\d.,]+,-?[\d.,]+$/.test(t));
+    if (pairPattern && tokens.length >= 3) {
+      const ring = tokens.map((t) => {
+        const parts = t.split(",");
+        const x = parseCsvNumber(parts[0]);
+        const y = parseCsvNumber(parts[1]);
+        return x !== null && y !== null ? [x, y] : null;
+      }).filter(Boolean);
+      if (ring.length >= 3) return { type: "MultiPolygon", coordinates: [[ring]] };
+    }
 
-    if (x === null || y === null) return null;
-    ring.push([x, y]);
+    // Cas: tokens sont des nombres plats alternés x;y;x;y
+    if (tokens.length >= 6 && tokens.length % 2 === 0 && tokens.every((t) => isNumericCell(t))) {
+      const ring = [];
+      for (let i = 0; i < tokens.length; i += 2) {
+        const x = parseCsvNumber(tokens[i]);
+        const y = parseCsvNumber(tokens[i + 1]);
+        if (x === null || y === null) return null;
+        ring.push([x, y]);
+      }
+      if (ring.length >= 3) return { type: "MultiPolygon", coordinates: [[ring]] };
+    }
   }
 
-  if (ring.length < 3) return null;
+  // Format "x y\nx y\nx y" — paires espace sur lignes
+  if (/\n/.test(text)) {
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const spacePairs = lines.every((l) => /^-?[\d.]+\s+-?[\d.]+$/.test(l));
+    if (spacePairs && lines.length >= 3) {
+      const ring = lines.map((l) => {
+        const parts = l.split(/\s+/);
+        const x = parseCsvNumber(parts[0]);
+        const y = parseCsvNumber(parts[1]);
+        return x !== null && y !== null ? [x, y] : null;
+      }).filter(Boolean);
+      if (ring.length >= 3) return { type: "MultiPolygon", coordinates: [[ring]] };
+    }
+  }
 
-  return {
-    type: "MultiPolygon",
-    coordinates: [[ring]],
-  };
+  // Format "x y x y x y" — liste plate espace sur une seule ligne
+  // (minimum 6 tokens = 3 paires)
+  const singleLineTokens = text.split(/\s+/).map((t) => t.trim()).filter(Boolean);
+  if (
+    singleLineTokens.length >= 6 &&
+    singleLineTokens.length % 2 === 0 &&
+    singleLineTokens.every((t) => isNumericCell(t))
+  ) {
+    const ring = [];
+    for (let i = 0; i < singleLineTokens.length; i += 2) {
+      const x = parseCsvNumber(singleLineTokens[i]);
+      const y = parseCsvNumber(singleLineTokens[i + 1]);
+      if (x === null || y === null) break;
+      ring.push([x, y]);
+    }
+    if (ring.length >= 3) return { type: "MultiPolygon", coordinates: [[ring]] };
+  }
+
+  return null;
 }
 
 function looksLikeFlatCoordinateSequence(value) {
@@ -584,20 +638,51 @@ export function parseCsvGeometry(text, options = {}) {
   return normalized;
 }
 
+/**
+ * Parse une géométrie selon le format indiqué.
+ *
+ * Auto-détection : quel que soit le format sélectionné, si le texte ressemble
+ * à une séquence de coordonnées simples (x,y;x,y;x,y ou x y\nx y\nx y),
+ * il est traité comme CSV avant d'essayer le format déclaré.
+ * Cela permet à l'utilisateur de coller ses coordonnées terrain directement
+ * sans se soucier du format.
+ */
 export function parseGeometryByFormat(text, format, options = {}) {
-  if (!text?.trim()) throw new Error("Aucune géométrie à importer.");
+  const trimmed = String(text || "").trim();
+  if (!trimmed) throw new Error("Aucune géométrie à importer.");
 
   const normalizedFormat = String(format || "").toLowerCase();
 
-  if (normalizedFormat === "geojson" && looksLikeFlatCoordinateSequence(text)) {
-    return parseCsvGeometry(text, options);
+  // Auto-détection : si le texte ressemble à une séquence de coordonnées simples,
+  // on le traite comme CSV quelle que soit la sélection de format.
+  // Ceci évite les erreurs quand l'utilisateur saisit "x,y;x,y" en mode GeoJSON.
+  const flatGeom = parseFlatCoordinateSequenceGeometry(trimmed);
+  if (flatGeom) {
+    const normalized = normalizeToMultiPolygon(flatGeom, options);
+    if (normalized) return normalized;
   }
 
-  if (normalizedFormat === "geojson") return parseGeoJsonGeometry(text, options);
-  if (normalizedFormat === "csv") return parseCsvGeometry(text, options);
-  if (normalizedFormat === "kml") return parseKmlGeometry(text);
-  if (normalizedFormat === "wkt") return parseWktGeometry(text, options);
-  throw new Error("Format non supporté.");
+  // Dispatch par format déclaré
+  try {
+    if (normalizedFormat === "csv") return parseCsvGeometry(trimmed, options);
+    if (normalizedFormat === "kml") return parseKmlGeometry(trimmed);
+    if (normalizedFormat === "wkt") return parseWktGeometry(trimmed, options);
+    // GeoJSON par défaut (ou format inconnu → on tente GeoJSON)
+    return parseGeoJsonGeometry(trimmed, options);
+  } catch (primaryError) {
+    // Fallback : si le format déclaré échoue, on tente les autres sauf KML
+    if (normalizedFormat !== "csv") {
+      try { return parseCsvGeometry(trimmed, options); } catch { /* ignore */ }
+    }
+    if (normalizedFormat !== "wkt") {
+      try { return parseWktGeometry(trimmed, options); } catch { /* ignore */ }
+    }
+    if (normalizedFormat !== "geojson") {
+      try { return parseGeoJsonGeometry(trimmed, options); } catch { /* ignore */ }
+    }
+    // Tous les parsers ont échoué — on re-lance l'erreur du parser déclaré
+    throw primaryError;
+  }
 }
 
 export function withProjectedCrsMetadata(geometry) {

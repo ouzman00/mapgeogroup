@@ -98,7 +98,11 @@ function buildClientFilterValue(client) {
 }
 
 function buildOrganizationId(client) {
-  return client?.organization_id || client?.id || "";
+  // organization_id est l'ID de l'organisation (table Organization)
+  // client.id peut être l'ID de l'organisation si l'endpoint retourne directement une org
+  // Si organization_id est absent et que id semble être un ID d'organisation, on l'utilise
+  const orgId = client?.organization_id ?? client?.id ?? "";
+  return orgId ? String(orgId) : "";
 }
 
 function buildHref(path, params = {}) {
@@ -425,7 +429,15 @@ export default function ClientDetailPage() {
                   </div>
                 </section>
 
-                {["admin", "manager"].includes(user?.role) ? <AdminMapLayersPanel clientId={organizationId} /> : null}
+                {["admin", "manager"].includes(user?.role) ? (
+                  organizationId
+                    ? <AdminMapLayersPanel clientId={organizationId} />
+                    : (
+                      <div className="rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 p-4 text-sm text-mapgeo-secondary">
+                        <strong className="text-mapgeo-primary">Couches SIG non disponibles :</strong> impossible de déterminer l'organisation liée à ce client. Vérifiez que ce client est bien rattaché à une organisation dans le back-office.
+                      </div>
+                    )
+                ) : null}
 
                 <DetailTable title="Parcelles du client" columns={["Référence", "Commune", "Surface", "Statut", "Avancement", "Action"]} action={<Link to={parcelsHref} className="text-sm font-bold text-mapgeo-primary">Voir tout</Link>} empty="Aucune parcelle liée à ce client." colSpan={6}>
                   {parcels.length ? parcels.map((parcel) => {

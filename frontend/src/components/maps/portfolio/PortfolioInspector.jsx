@@ -431,7 +431,7 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
         </label>
       ) : (
         <label className="block text-[11px] font-bold text-white/60">Propriétaire
-          <input value={form.ownerName} onChange={(event) => update("ownerName", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
+          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.ownerName || "—"}</p>
         </label>
       )}
 
@@ -446,7 +446,7 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
         </label>
       ) : (
         <label className="block text-[11px] font-bold text-white/60">Client
-          <input value={form.clientCode} onChange={(event) => update("clientCode", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
+          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.clientCode || "—"}</p>
         </label>
       )}
 
@@ -455,7 +455,7 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
           <input type="number" step="0.01" value={form.area} onChange={(event) => update("area", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
         </label>
         <label className="block text-[11px] font-bold text-white/60">Créée le
-          <input type="date" value={form.createdAt} onChange={(event) => update("createdAt", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
+          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.createdAt || "—"}</p>
         </label>
       </div>
 
@@ -632,10 +632,21 @@ export default function PortfolioInspector({
     </div>
   );
 
-  const createInitialValues = useMemo(
-    () => (createParcelDefaultOwnerId ? { owner: createParcelDefaultOwnerId } : null),
-    [createParcelDefaultOwnerId],
-  );
+  const createInitialValues = useMemo(() => {
+    if (!createParcelDefaultOwnerId) return null;
+    // Dérive l'organisation depuis la parcelle active si disponible
+    // Évite la déduction silencieuse côté backend
+    const contextOrg = activeFeature?.parcel?.organization
+      || createParcelOwners.find((o) => String(o.id) === String(createParcelDefaultOwnerId))
+          ?.organizations?.find((org) => org.is_primary)?.id
+      || createParcelOwners.find((o) => String(o.id) === String(createParcelDefaultOwnerId))
+          ?.organization_id
+      || null;
+    return {
+      owner: createParcelDefaultOwnerId,
+      organization: contextOrg ? String(contextOrg) : "",
+    };
+  }, [createParcelDefaultOwnerId, activeFeature?.parcel?.organization, createParcelOwners]);
   const [infoEditOpen, setInfoEditOpen] = useState(false);
 
     const openInfoEdit = () => {

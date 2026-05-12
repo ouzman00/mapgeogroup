@@ -947,7 +947,42 @@ def build_parcel_payload_from_row(row, default_owner=None, default_organization=
     }
 
 
-def parse_csv_import(uploaded_file, default_owner=None, default_organization=None, dry_run=False):
+def _detect_csv_delimiter(content: str) -> str:
+    """Détecte le délimiteur CSV via csv.Sniffer sur les 4 premières lignes non vides.
+
+    Fallback sur ';' vs ',' si Sniffer échoue (fichiers trop courts ou uniformes).
+    """
+    sample_lines = [line for line in content.splitlines() if line.strip()][:4]
+    sample = "\n".join(sample_lines)
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        return dialect.delimiter
+    except csv.Error:
+        # Fallback : compte simple sur la première ligne non vide
+        first = sample_lines[0] if sample_lines else ""
+        return ";" if first.count(";") > first.count(",") else ","
+
+
+CSV_BATCH_SIZE = 200
+
+
+def parse_csv_import(
+    uploaded_file,
+    default_owner=None,
+    default_organization=None,
+    dry_run=False,
+    skip_errors=False,
+):
+    """Importe un fichier CSV de parcelles.
+
+    Paramètres
+    ----------
+    dry_run : bool
+        Si True, valide sans écrire en base.
+    skip_errors : bool
+        Si True, importe les lignes valides et signale les erreurs sans bloquer.
+        Si False (défaut, mode strict), bloque si la moindre ligne est invalide.
+    """
     from .serializers import ParcelCreateUpdateSerializer
 
     if (getattr(uploaded_file, "size", 0) or 0) > 10 * 1024 * 1024:
@@ -958,55 +993,106 @@ def parse_csv_import(uploaded_file, default_owner=None, default_organization=Non
     except UnicodeDecodeError:
         uploaded_file.seek(0)
         content = uploaded_file.read().decode("latin-1")
-    lines = content.splitlines()
-    if not lines:
+
+    if not content.strip():
         raise serializers.ValidationError("Le fichier CSV est vide.")
-    delimiter = ";" if lines[0].count(";") > lines[0].count(",") else ","
-    rows = list(csv.DictReader(io.StringIO(content), delimiter=delimiter))
-    if len(rows) > 5000:
-        raise serializers.ValidationError("Le fichier CSV dépasse la limite de 5 000 lignes.")
+
+    delimiter = _detect_csv_delimiter(content)
+    reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
+
+    # On lit les lignes via un itérateur pour éviter de charger tout en RAM d'un coup.
+    # On borne néanmoins à 5 000 lignes comme avant.
+    rows = []
+    for i, row in enumerate(reader, start=1):
+        if i > 5000:
+            raise serializers.ValidationError("Le fichier CSV dépasse la limite de 5 000 lignes.")
+        rows.append((i + 1, row))  # +1 car ligne 1 = en-tête
+
     if not rows:
-        raise serializers.ValidationError("Le fichier CSV est vide.")
+        raise serializers.ValidationError("Le fichier CSV est vide ou ne contient que l'en-tête.")
+
     created, updated, errors, prepared = [], [], [], []
-    for row_index, row in enumerate(rows, start=2):
+
+    for row_index, row in rows:
         try:
-            payload = build_parcel_payload_from_row(row, default_owner=default_owner, default_organization=default_organization)
+            payload = build_parcel_payload_from_row(
+                row,
+                default_owner=default_owner,
+                default_organization=default_organization,
+            )
             if default_organization and payload.get("organization") != default_organization.pk:
-                raise serializers.ValidationError("La ligne CSV cible une organisation différente de l'organisation d'import autorisée.")
-            existing_qs = Parcel.objects.filter(reference=payload["reference"], archived_at__isnull=True, organization_id=payload["organization"])
+                raise serializers.ValidationError(
+                    "La ligne CSV cible une organisation différente de l'organisation d'import autorisée."
+                )
+            existing_qs = Parcel.objects.filter(
+                reference=payload["reference"],
+                archived_at__isnull=True,
+                organization_id=payload["organization"],
+            )
             instance = existing_qs.first()
             if instance is not None and payload.get("geometry") and getattr(instance, "geometry_updated_at", None):
                 payload = dict(payload)
                 payload["expected_geometry_updated_at"] = instance.geometry_updated_at.isoformat()
-            serializer = ParcelCreateUpdateSerializer(instance=instance, data=payload, partial=instance is not None)
+            serializer = ParcelCreateUpdateSerializer(
+                instance=instance,
+                data=payload,
+                partial=instance is not None,
+            )
             serializer.is_valid(raise_exception=True)
             prepared.append((instance, serializer, payload))
         except Exception as exc:
-            errors.append({"row": row_index, "reference": row.get("reference") or row.get("ref") or row.get("parcel_reference"), "error": str(exc)})
+            errors.append({
+                "row": row_index,
+                "reference": (
+                    row.get("reference")
+                    or row.get("ref")
+                    or row.get("parcel_reference")
+                ),
+                "error": str(exc),
+            })
 
-    if errors:
+    # Mode strict : on bloque si la moindre ligne est invalide
+    if errors and not skip_errors:
         return {
             "created": [],
             "updated": [],
             "errors": errors,
             "dry_run": dry_run,
             "blocked": True,
-            "detail": "Import bloqué : corrigez toutes les lignes en erreur avant d'importer.",
+            "detail": (
+                f"Import bloqué : {len(errors)} ligne(s) en erreur sur {len(rows)}. "
+                "Corrigez les erreurs ou relancez avec skip_errors=true pour ignorer les lignes invalides."
+            ),
         }
 
     if dry_run:
         for instance, _serializer, payload in prepared:
             result = {"id": instance.id if instance else None, "reference": payload["reference"]}
             (updated if instance else created).append(result)
-        return {"created": created, "updated": updated, "errors": [], "dry_run": True, "blocked": False}
+        return {
+            "created": created,
+            "updated": updated,
+            "errors": errors,
+            "dry_run": True,
+            "blocked": False,
+        }
 
-    with transaction.atomic():
-        for instance, serializer, payload in prepared:
-            parcel = serializer.save()
-            result = {"id": parcel.id, "reference": parcel.reference}
-            (updated if instance else created).append(result)
+    # Commit par batch pour limiter la taille des transactions et la mémoire
+    for batch_start in range(0, len(prepared), CSV_BATCH_SIZE):
+        batch = prepared[batch_start : batch_start + CSV_BATCH_SIZE]
+        with transaction.atomic():
+            for instance, serializer, payload in batch:
+                parcel = serializer.save()
+                result = {"id": parcel.id, "reference": parcel.reference}
+                (updated if instance else created).append(result)
 
-    return {"created": created, "updated": updated, "errors": [], "dry_run": False, "blocked": False}
+    return {
+        "created": created,
+        "updated": updated,
+        "errors": errors,
+        "dry_run": False,
+        "blocked": False,
+    }
 
 
 def create_geometry_version_from_geom(parcel, geom, modified_by=None, reason=None):

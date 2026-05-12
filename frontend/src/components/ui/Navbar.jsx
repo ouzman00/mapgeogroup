@@ -1,4 +1,4 @@
-import { Bell, LogOut, Menu, Search, Sparkles, X } from "lucide-react";
+import { Bell, ChevronRight, LogOut, Menu, Search, Settings, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import useNotifications from "../../hooks/useNotifications";
@@ -33,6 +33,16 @@ export default function Navbar({ title, subtitle }) {
     () => getSidebarMenu({ isClientPortal, role: user?.role }),
     [isClientPortal, user?.role],
   );
+
+  // Chargement de la photo de profil stockée localement
+  const avatarUrl = useMemo(() => {
+    try {
+      const key = String(user?.id || user?.username || user?.email || "current-user");
+      const stored = window.localStorage.getItem("mapgeo_profile_avatars");
+      if (!stored) return "";
+      return JSON.parse(stored)?.[key] || "";
+    } catch { return ""; }
+  }, [user]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -103,9 +113,12 @@ export default function Navbar({ title, subtitle }) {
                 ) : null}
               </button>
 
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-mapgeo-line bg-white px-3 py-2.5 shadow-soft lg:min-w-[15rem]">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-mapgeo-primary text-sm font-extrabold text-white">
-                  {(displayName[0] || "U").toUpperCase()}
+              <Link to="/settings" className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-mapgeo-line bg-white px-3 py-2.5 shadow-soft transition hover:border-mapgeo-primary/20 hover:bg-mapgeo-ivory/60 lg:min-w-[15rem]" title="Mes paramètres">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-mapgeo-primary text-sm font-extrabold text-white">
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    : (displayName[0] || "U").toUpperCase()
+                  }
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-mapgeo-secondary/60">
@@ -116,8 +129,8 @@ export default function Navbar({ title, subtitle }) {
                     {isClientPortal ? `ID ${user?.client_code || "—"}` : user?.role || "Compte"}
                   </p>
                 </div>
-                <Sparkles size={16} className="hidden shrink-0 text-mapgeo-sand sm:block" />
-              </div>
+                <Settings size={15} className="hidden shrink-0 text-mapgeo-secondary/50 sm:block" />
+              </Link>
             </div>
           </div>
         </div>

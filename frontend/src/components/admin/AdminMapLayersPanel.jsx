@@ -1916,12 +1916,20 @@ export default function AdminMapLayersPanel({ clientId }) {
                 />
               </Field>
               {isWms(form) ? (
-                <Field label="Version / CRS WMS">
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <select value={form.wms_version} onChange={(e) => handleServiceVersionChange("wms_version", e.target.value)} className={inputClass()}>{WMS_VERSION_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-                    <select value={form.wms_crs} onChange={(e) => setForm({ ...form, wms_crs: e.target.value })} className={inputClass()}>{WMS_CRS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-                  </div>
-                </Field>
+                <>
+                  <Field label="Version / CRS WMS">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <select value={form.wms_version} onChange={(e) => handleServiceVersionChange("wms_version", e.target.value)} className={inputClass()}>{WMS_VERSION_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+                      <select value={form.wms_crs} onChange={(e) => setForm({ ...form, wms_crs: e.target.value })} className={inputClass()}>{WMS_CRS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+                    </div>
+                  </Field>
+                  {form.wms_crs && form.wms_crs !== "EPSG:3857" ? (
+                    <div className="lg:col-span-2 rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
+                      <AlertTriangle size={14} className="mr-1 inline shrink-0" />
+                      Le proxy WMS interne utilise <strong>EPSG:3857</strong> (Web Mercator) pour l'affichage Leaflet. Si votre serveur WMS ne supporte pas EPSG:3857, le rendu risque d'être incorrect. Privilégiez EPSG:3857 sauf si votre GeoServer supporte la reprojection.
+                    </div>
+                  ) : null}
+                </>
               ) : null}
               {isWfs(form) ? <Field label="Version WFS"><select value={form.wfs_version} onChange={(e) => handleServiceVersionChange("wfs_version", e.target.value)} className={inputClass()}>{WFS_VERSION_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field> : null}
               <div className="lg:col-span-2 rounded-3xl border border-mapgeo-line bg-white p-4">

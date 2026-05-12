@@ -22,6 +22,7 @@ import useAuth from "../hooks/useAuth";
 import authService from "../services/authService";
 import { getErrorMessage } from "../services/responseUtils";
 import { ROLE_LABELS, getRoleLabel as getSharedRoleLabel } from "../constants/roleConstants";
+import PasswordInput from "../components/ui/PasswordInput";
 
 const STORAGE_KEY_PREFERENCES = "mapgeo_preferences";
 const STORAGE_KEY_AVATARS = "mapgeo_profile_avatars";
@@ -407,8 +408,9 @@ function ProfileSection({
               <UserRound size={16} /> Choisir une photo
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
+                accept="image/*"
+                capture={undefined}
+                className="sr-only"
                 onChange={onAvatarChange}
               />
             </label>
@@ -445,34 +447,31 @@ function SecuritySection({
     <SectionBlock id="security" title="2. Sécurité / mot de passe">
       <form onSubmit={onPasswordSubmit} className="space-y-3">
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-          <TextInput
+          <PasswordInput
             label="Mot de passe actuel"
             name="current_password"
-            type="password"
             value={passwordForm.current_password}
             onChange={onPasswordChange}
             placeholder="••••••••••"
-            icon={LockKeyhole}
+            autoComplete="current-password"
           />
 
-          <TextInput
+          <PasswordInput
             label="Nouveau mot de passe"
             name="new_password"
-            type="password"
             value={passwordForm.new_password}
             onChange={onPasswordChange}
             placeholder="••••••••••"
-            icon={LockKeyhole}
+            autoComplete="new-password"
           />
 
-          <TextInput
+          <PasswordInput
             label="Confirmer le mot de passe"
             name="confirm_password"
-            type="password"
             value={passwordForm.confirm_password}
             onChange={onPasswordChange}
             placeholder="••••••••••"
-            icon={LockKeyhole}
+            autoComplete="new-password"
           />
         </div>
 
@@ -813,7 +812,8 @@ export default function SettingsPage() {
 
     setProfileForm(nextProfile);
     setInitialProfileForm(nextProfile);
-    setAvatarPreview(loadStoredAvatar(user));
+    const stored = loadStoredAvatar(user);
+    if (stored) setAvatarPreview(stored);
   }, [user]);
 
   useEffect(() => {

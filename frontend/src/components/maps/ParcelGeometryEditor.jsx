@@ -931,14 +931,14 @@ export default function ParcelGeometryEditor({ parcel, onGeometryChange }) {
               </label>
             </div>
             <p className="mt-2 text-xs leading-5 text-mapgeo-secondary/70">
-              Pour le Sénégal, sélectionne X/Y EPSG:32628 : X/Easting et Y/Northing restent stockés en mètres. La latitude/longitude n’est utilisée qu’en affichage WGS84.
+              Format rapide : colle x,y;x,y;x,y directement (ex. 287802,1633540;287820,1633548;287810,1633520), la détection est automatique. GeoJSON, KML et WKT sont aussi acceptés. Coordonnées en mètres EPSG:32628 par défaut.
             </p>
             <textarea
               value={importText}
               onChange={(event) => setImportText(event.target.value)}
               disabled={!isEditing}
               rows={5}
-              placeholder="Coller GeoJSON, CSV X/Y, KML ou WKT ici… Exemple CSV : X;Y puis une ligne par sommet."
+              placeholder="Format simple : x,y;x,y;x,y (ex. 287802,1633540;287820,1633548;287810,1633520) — GeoJSON, KML, WKT aussi acceptés"
               className="mt-3 w-full rounded-2xl border border-mapgeo-line bg-mapgeo-ivory/50 px-3 py-2 text-xs outline-none disabled:opacity-50"
             />
             <button type="button" onClick={importGeometry} disabled={!isEditing || !importText.trim()} className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-mapgeo-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-45">

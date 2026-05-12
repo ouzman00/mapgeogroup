@@ -84,9 +84,11 @@ function PortalRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  const target = user?.portal_type === "client"
-    ? "/client/dashboard"
-    : "/backoffice/dashboard";
+  // Fallback cohérent : si portal_type est absent, on se base sur le rôle
+  const isClient = user?.portal_type
+    ? user.portal_type === "client"
+    : user?.role === "client";
+  const target = isClient ? "/client/dashboard" : "/backoffice/dashboard";
 
   return <Navigate to={target} replace />;
 }

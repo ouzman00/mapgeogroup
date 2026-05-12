@@ -55,7 +55,7 @@ import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint 
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragend pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
 const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
-const SNAP_TOLERANCE_PX = 18;
+const SNAP_TOLERANCE_PX = 24; // Augmenté de 18 à 24px pour plus de confort
 const EDIT_VERTEX_TOLERANCE_PX = 16;
 const MAP_PANES = {
   parcels: "mapgeo-parcel-pane",
@@ -1753,8 +1753,12 @@ export default function PortfolioMapShell({
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
     const draftPoints = options.measurementPoints || measurementDraft.points || [];
     const measurementPoints = draftPoints.filter((_, index) => index !== draftPoints.length - 1);
-    return findNearestMeasurementSnap(map, point, displayedFeatures, measurementPoints, options);
-  }, [map, displayedFeatures, measurementDraft.points]);
+    // Inclut la parcelle active même si elle n'est pas dans displayedFeatures (viewport hors écran)
+    const snapFeatures = activeFeature
+      ? [activeFeature, ...displayedFeatures.filter((f) => f.id !== activeFeature.id)]
+      : displayedFeatures;
+    return findNearestMeasurementSnap(map, point, snapFeatures, measurementPoints, options);
+  }, [map, displayedFeatures, activeFeature, measurementDraft.points]);
 
   const finishMeasurementDraft = useCallback(() => {
     if (!showMeasurements) return;

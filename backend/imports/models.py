@@ -25,6 +25,7 @@ class ImportJob(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="import_jobs")
     default_owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="default_owner_import_jobs", blank=True, null=True)
     execute_on_process = models.BooleanField(default=False)
+    skip_errors = models.BooleanField(default=False, help_text="Si True, importe les lignes valides même en présence d'erreurs.")
     summary = models.JSONField(blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
     started_at = models.DateTimeField(blank=True, null=True)

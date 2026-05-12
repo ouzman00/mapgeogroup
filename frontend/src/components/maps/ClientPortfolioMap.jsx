@@ -578,7 +578,7 @@ export default function ClientPortfolioMap({
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-auto bg-[#07111b] px-3 pb-3 pt-2 text-mapgeo-primary md:px-4 md:pb-4 lg:overflow-hidden">
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)] min-[1180px]:grid-cols-[300px_minmax(0,1fr)_340px] 2xl:grid-cols-[320px_minmax(0,1fr)_360px]">
+      <div className="mapgeo-portfolio-grid grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)] min-[1180px]:grid-cols-[300px_minmax(0,1fr)_340px] 2xl:grid-cols-[320px_minmax(0,1fr)_360px]">
         <PortfolioSidebar
           clientCode={portfolioIdentity.clientCode}
           ownerName={portfolioIdentity.ownerName}
@@ -674,7 +674,7 @@ export default function ClientPortfolioMap({
           </div>
         ) : null}
 
-        <PortfolioInspector
+        <div className="mapgeo-portfolio-inspector"><PortfolioInspector
           activeFeature={portfolio.activeFeature}
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -690,8 +690,21 @@ export default function ClientPortfolioMap({
             canManageParcels ? createParcelDefaultOwnerId : null
           }
           onCancelCreateParcel={onCancelCreateParcel}
-          onParcelCreated={onParcelCreated}
+          onParcelCreated={async (newParcel) => {
+            // Ajoute immédiatement la nouvelle parcelle aux overrides pour l'afficher sur la carte
+            // avant que le viewport ne se rafraîchisse
+            if (newParcel?.id) {
+              setParcelOverrides((current) => ({
+                ...current,
+                [String(newParcel.id)]: newParcel,
+              }));
+              // Invalide le cache viewport pour forcer un refresh au prochain déplacement
+              viewportFetchKeyRef.current = "";
+            }
+            await onParcelCreated?.(newParcel);
+          }}
         />
+        </div>
       </div>
 
       <PrintMapDialog

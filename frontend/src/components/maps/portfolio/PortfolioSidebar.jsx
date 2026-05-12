@@ -15,7 +15,7 @@ function SelectBox({ value, onChange, children, label }) {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mapgeo-dark-select w-full rounded-xl border border-white/10 bg-[#0d1a27] px-3 py-3 text-sm font-medium text-white/80 outline-none transition focus:border-mapgeo-sand/50"
+        className="mapgeo-dark-select w-full rounded-xl border border-white/10 bg-[#0d1a27] px-3 py-3 text-sm font-medium text-white outline-none transition focus:border-mapgeo-sand/50 focus:bg-[#0f2035]"
       >
         {children}
       </select>
@@ -134,7 +134,7 @@ export default function PortfolioSidebar({
   };
 
   return (
-    <aside className="order-2 flex min-h-0 flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0c1a28]/96 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:order-1">
+    <aside className="mapgeo-portfolio-sidebar order-2 flex min-h-0 flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0c1a28]/96 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:order-1">
       <div className="min-h-0 flex-1 overflow-auto p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -169,7 +169,7 @@ export default function PortfolioSidebar({
                   if (!searchMode) onSearchModeChange("reference");
                 }}
                 placeholder="Référence, commune, client…"
-                className="w-full rounded-xl border border-white/10 bg-white/[0.045] py-3 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-mapgeo-sand/50"
+                className="w-full rounded-xl border border-white/10 bg-white/[0.07] py-3 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/40 focus:border-mapgeo-sand/50 focus:bg-white/[0.1] focus:shadow-[0_0_0_3px_rgba(199,178,153,0.12)] transition-all"
               />
             </div>
             <button type="submit" aria-label="Lancer la recherche" className="grid h-[46px] w-[46px] place-items-center rounded-xl bg-mapgeo-primary text-white shadow-soft">

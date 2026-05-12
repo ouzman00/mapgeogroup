@@ -113,7 +113,20 @@ class ParcelDetailView(ParcelQuerysetMixin, generics.RetrieveUpdateDestroyAPIVie
     permission_classes = [CanManageParcels]
 
     def get_queryset(self):
-        return self.get_base_queryset().prefetch_related("sides", "timeline_events", "documents", "geometry_versions")
+        from .models import ParcelTimelineEvent
+        timeline_queryset = ParcelTimelineEvent.objects.only(
+            "id", "parcel_id", "event_date", "progress"
+        ).order_by("event_date", "id")
+        return (
+            self.get_base_queryset()
+            .select_related("owner", "organization")
+            .prefetch_related(
+                "sides",
+                Prefetch("timeline_events", queryset=timeline_queryset),
+                "documents",
+                "geometry_versions",
+            )
+        )
 
     def get_serializer_class(self):
         return (
@@ -273,8 +286,17 @@ class ParcelCsvImportView(APIView):
         dry_run_value = str(request.data.get("dry_run", "")).strip().lower()
         dry_run = dry_run_value in {"1", "true", "yes", "on"}
 
+        skip_errors_value = str(request.data.get("skip_errors", "")).strip().lower()
+        skip_errors = skip_errors_value in {"1", "true", "yes", "on"}
+
         return Response(
-            parse_csv_import(csv_file, default_owner=default_owner, default_organization=default_organization, dry_run=dry_run),
+            parse_csv_import(
+                csv_file,
+                default_owner=default_owner,
+                default_organization=default_organization,
+                dry_run=dry_run,
+                skip_errors=skip_errors,
+            ),
             status=status.HTTP_200_OK,
         )
 

@@ -82,29 +82,17 @@ def notify_layer_available(layer, action="created"):
     )
 
 
-def _is_configured_geoserver_url(url):
-    configured = str(getattr(settings, "GEOSERVER_WMS_URL", "") or "").strip()
-    if not configured:
-        return False
-    try:
-        return urlparse(url).hostname == urlparse(configured).hostname
-    except Exception:
-        return False
-
-
 def public_http_url(url):
     parsed = urlparse(url)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         return False
-    if _is_configured_geoserver_url(url):
-        return True
 
     allowed_hosts = {host.lower() for host in getattr(settings, "EXTERNAL_MAP_PROXY_ALLOWED_HOSTS", [])}
     hostname = parsed.hostname.lower()
 
     # Production : allowlist obligatoire pour éviter qu'une couche WMS/WFS
-    # transforme l'API en proxy HTTP général. En développement uniquement,
-    # on conserve la compatibilité avec les hôtes publics non listés.
+    # transforme l'API en proxy HTTP général. GEOSERVER_WMS_URL doit aussi
+    # avoir son hôte dans EXTERNAL_MAP_PROXY_ALLOWED_HOSTS.
     if not allowed_hosts and not getattr(settings, "DEBUG", False):
         return False
     if allowed_hosts and hostname not in allowed_hosts:

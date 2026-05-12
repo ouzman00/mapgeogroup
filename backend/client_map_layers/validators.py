@@ -113,10 +113,9 @@ def _validate_public_url(value, label="URL"):
 
 
 def _validate_configured_geoserver_url(url, label="URL WMS GeoServer"):
-    parsed = urlparse(str(url or "").strip())
-    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
-        raise ValidationError(f"{label} invalide : utiliser une URL HTTP(S).")
-    return str(url or "").strip()
+    # Même configuré côté environnement, GeoServer reste une cible HTTP externe :
+    # allowlist obligatoire en production + résolution DNS sans IP privée/locale.
+    return _validate_public_url(url, label)
 
 
 def _validate_tile_template(tile_url):

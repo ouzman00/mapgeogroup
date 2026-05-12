@@ -153,7 +153,7 @@ export default function FloatingMapToolbar({
                   label="Géométrie"
                   forceLabel
                   className={compactToolButtonClass}
-                  title="Éditer la géométrie"
+                  title={!activeFeature ? "Sélectionnez une parcelle pour éditer sa géométrie" : inlineEditActive ? "Fermer l'édition géométrique" : "Éditer la géométrie de la parcelle sélectionnée"}
                   disabled={!activeFeature}
                   onClick={() => {
                     setActiveCommand("tools");
