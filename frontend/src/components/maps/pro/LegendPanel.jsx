@@ -444,7 +444,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
       {totalCount ? (
         <p className="mt-3 border-t border-white/10 pt-2 text-[11px] font-medium leading-4 text-white/50">
-          Activez ou masquez les couches visibles.
+          Couches visibles.
         </p>
       ) : null}
     </div>
