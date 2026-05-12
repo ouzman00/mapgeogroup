@@ -1017,9 +1017,7 @@ function MeasurementOverlay({ draft }) {
   );
 }
 
-function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onClose, onFinish }) {
-  const map = useMap();
-
+function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft, onClose, onFinish }) {
   if (!open) return null;
 
   const draftSummary = buildMeasurementDraftSummary(measurementDraft);
@@ -1201,13 +1199,14 @@ Activez les éléments à afficher sur la carte.
   );
 }
 
-function MapToolFeedbackPanel({ showMeasurements, showVertices, activeFeature, measurementSummary, measurementDraft, setMeasurementDraft, setShowMeasurements, setShowVertices, vertexDisplayOptions, onToggleVertexDisplay, onFinishMeasurement }) {
+function MapToolFeedbackPanel({ map, showMeasurements, showVertices, activeFeature, measurementSummary, measurementDraft, setMeasurementDraft, setShowMeasurements, setShowVertices, vertexDisplayOptions, onToggleVertexDisplay, onFinishMeasurement }) {
   if (!showMeasurements && !showVertices) return null;
 
   return (
     <>
       <MeasurementToolPanel
         open={showMeasurements}
+        map={map}
         measurementDraft={measurementDraft}
         setMeasurementDraft={setMeasurementDraft}
         onClose={() => setShowMeasurements(false)}
@@ -2360,6 +2359,7 @@ export default function PortfolioMapShell({
         ) : null}
 
         <MapToolFeedbackPanel
+          map={map}
           showMeasurements={showMeasurements}
           showVertices={showVertices}
           activeFeature={activeFeature}
