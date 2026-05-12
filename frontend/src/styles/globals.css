@@ -1762,3 +1762,20 @@ main > .mapgeo-carto-workspace,
     transform-origin: bottom left !important;
   }
 }
+\n
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE TOOLBAR COLLAPSE
+   Objectif :
+   - en mobile, la barre outils reste vraiment pliable
+   - aucun impact desktop
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-toolbar-shell {
+    overflow: hidden !important;
+  }
+
+  .mapgeo-inline-tools {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+}
