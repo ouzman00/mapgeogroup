@@ -912,6 +912,7 @@ function MeasurementOverlay({ draft }) {
 
   if (!previewPoints.length) return null;
 
+  const isMobileMeasureOverlay = isMobileCartographyViewport();
   const isSurface = draft.mode === "surface";
   const polygonPoints = isSurface
     ? stripMeasurementClosingPoint(previewPoints)
