@@ -170,6 +170,10 @@ function stripMeasurementClosingPoint(points) {
 
 function getMeasurementPreviewPoints(draft) {
   const points = Array.isArray(draft?.points) ? draft.points.filter((point) => Array.isArray(point) && point.length >= 2) : [];
+
+  // Mobile: no touch-driven preview line. Measurement geometry changes only with Ajouter.
+  if (isMobileCartographyViewport()) return points;
+
   if (draft?.finished || !draft?.cursorPoint) return points;
   const lastPoint = points[points.length - 1];
   if (lastPoint && pointsAreSame(lastPoint, draft.cursorPoint)) return points;
