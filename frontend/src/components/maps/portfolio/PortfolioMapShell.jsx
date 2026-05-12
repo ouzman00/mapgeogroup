@@ -1822,17 +1822,9 @@ export default function PortfolioMapShell({
       });
     };
 
-    syncCenterPreview();
-
-    map.on("move", syncCenterPreview);
-    map.on("moveend", syncCenterPreview);
-    map.on("zoomend", syncCenterPreview);
-
-    return () => {
-      map.off("move", syncCenterPreview);
-      map.off("moveend", syncCenterPreview);
-      map.off("zoomend", syncCenterPreview);
-    };
+    // Mobile: do not update the measurement line while the user touches or drags the map.
+    // The measurement changes only when the user presses Ajouter.
+    return undefined;
   }, [map, showMeasurements, setMeasurementDraft]);
 
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
