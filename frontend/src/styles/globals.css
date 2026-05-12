@@ -2726,3 +2726,125 @@ main > .mapgeo-carto-workspace,
     display: none !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE CARTO SIMPLE
+   Objectif :
+   - supprimer la bande Carte / Recherche / Fiche sur mobile
+   - afficher une flèche nord en haut
+   - afficher le bouton localisation en bas
+   - masquer les boutons zoom
+   - mobile uniquement, desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* 1. Supprime la bande Carte / Recherche / Fiche */
+  .mapgeo-mobile-carto-tabs {
+    display: none !important;
+  }
+
+  /* 2. Flèche nord visible en haut à droite sur mobile */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow,
+  .mapgeo-carto-workspace .mapgeo-north-arrow {
+    display: flex !important;
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+    right: 12px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 2240 !important;
+
+    width: 46px !important;
+    height: 58px !important;
+    min-width: 46px !important;
+    min-height: 58px !important;
+
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    background: rgba(7, 17, 27, 0.78) !important;
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.28) !important;
+    backdrop-filter: blur(14px) !important;
+    transform: none !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow svg,
+  .mapgeo-carto-workspace .mapgeo-north-arrow svg {
+    width: 30px !important;
+    height: 38px !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-label,
+  .mapgeo-carto-workspace .mapgeo-north-label {
+    font-size: 10px !important;
+  }
+
+  /* 3. Bloc localisation propre en bas à droite */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack,
+  .mapgeo-carto-workspace .mapgeo-map-control-stack {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+
+    position: fixed !important;
+    right: 12px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px) !important;
+    left: auto !important;
+    top: auto !important;
+    z-index: 2240 !important;
+
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+  }
+
+  /* Masquer uniquement + et - */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack .mapgeo-zoom-button,
+  .mapgeo-carto-workspace .mapgeo-map-control-stack .mapgeo-zoom-button,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-control-zoom,
+  .mapgeo-carto-workspace .leaflet-control-zoom {
+    display: none !important;
+  }
+
+  /* Afficher uniquement localisation */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack .mapgeo-location-button,
+  .mapgeo-carto-workspace .mapgeo-map-control-stack .mapgeo-location-button {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    max-width: 48px !important;
+    max-height: 48px !important;
+
+    place-items: center !important;
+    padding: 0 !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    background: rgba(7, 17, 27, 0.82) !important;
+    color: #ffffff !important;
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.30) !important;
+    backdrop-filter: blur(14px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-map-control-stack .mapgeo-location-button svg,
+  .mapgeo-carto-workspace .mapgeo-map-control-stack .mapgeo-location-button svg {
+    width: 21px !important;
+    height: 21px !important;
+  }
+}
