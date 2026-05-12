@@ -1887,6 +1887,11 @@ export default function PortfolioMapShell({
       return;
     }
 
+ if (isMobileCartographyViewport()) {
+      clearPendingMeasurementClick();
+      return;
+    }
+
     if (!showMeasurements || !Array.isArray(point) || point.length < 2) return;
     clearPendingMeasurementClick();
     measurementClickTimerRef.current = window.setTimeout(() => {
@@ -1983,6 +1988,13 @@ export default function PortfolioMapShell({
 
     if (showMeasurements) {
       setIdentifyState(null);
+
+      // Mobile: points are added only with the Ajouter button.
+      if (isMobileCartographyViewport()) {
+        clearPendingMeasurementClick();
+        return;
+      }
+
       if (event?.originalEvent?.detail > 1 || shouldIgnoreMeasurementClickAfterPan()) {
         clearPendingMeasurementClick();
         return;
