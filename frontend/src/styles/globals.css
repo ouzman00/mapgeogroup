@@ -1838,3 +1838,75 @@ main > .mapgeo-carto-workspace,
     flex-shrink: 0 !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE TOOLBAR REAL COLLAPSE
+   Objectif :
+   - la barre outils mobile se replie vraiment
+   - repliée : petit bloc Couches + flèche
+   - ouverte : bande outils
+   - desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-container.is-collapsed {
+    left: 10px !important;
+    right: auto !important;
+    width: 98px !important;
+    max-width: 98px !important;
+    min-width: 98px !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-container.is-expanded {
+    left: 10px !important;
+    right: 58px !important;
+    width: auto !important;
+    max-width: calc(100vw - 68px) !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-collapsed {
+    width: 98px !important;
+    max-width: 98px !important;
+    min-width: 98px !important;
+    height: 46px !important;
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-expanded {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 46px !important;
+    display: flex !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-collapsed .mapgeo-inline-tools,
+  body:has(.mapgeo-carto-page) .mapgeo-inline-tools.is-hidden {
+    display: none !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    min-width: 0 !important;
+    flex: 0 0 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-expanded .mapgeo-inline-tools,
+  body:has(.mapgeo-carto-page) .mapgeo-inline-tools.is-visible {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 158px) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-collapsed button,
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-expanded button {
+    flex-shrink: 0 !important;
+  }
+}
