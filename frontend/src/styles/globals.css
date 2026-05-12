@@ -2273,3 +2273,224 @@ main > .mapgeo-carto-workspace,
     top: calc(env(safe-area-inset-top, 0px) + 54px) !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE OUTILS CARTOGRAPHIQUES
+   Objectif :
+   - mobile uniquement : max-width 767px
+   - adapter Légende, Libellés, Fond de carte, Géométrie, Mesures,
+     Sommets, Exporter et leurs sous-panneaux
+   - empêcher les débordements horizontaux
+   - rendre les panneaux scrollables et repliables via l'onglet Carte
+   - desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Sécurité générale : aucun panneau cartographique ne doit élargir la page */
+  .mapgeo-carto-workspace,
+  .mapgeo-carto-workspace * {
+    max-width: 100vw;
+  }
+
+  .mapgeo-carto-workspace {
+    overflow-x: hidden !important;
+  }
+
+  /* Barre d'outils / boutons d'outils : compact et scroll horizontal discret */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-toolbar-shell,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-inline-tools,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-toolbar-scroll {
+    max-width: calc(100vw - 16px) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-toolbar-shell::-webkit-scrollbar,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-inline-tools::-webkit-scrollbar,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-toolbar-scroll::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Boutons outils carto : taille doigt, mais pas énormes */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-action-button,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-toolbar-shell button,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-inline-tools button,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-control button {
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-height: 44px !important;
+    padding: 0.45rem !important;
+    border-radius: 13px !important;
+  }
+
+  /* Fenêtres cartographiques larges : les transformer en panneau mobile */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="w-[420px]"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="w-[400px]"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="w-[380px]"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="w-[360px]"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="max-w-[420px]"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="max-w-[400px]"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="max-w-[380px]"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="max-w-[360px]"] {
+    width: calc(100vw - 18px) !important;
+    max-width: calc(100vw - 18px) !important;
+  }
+
+  /* Panneaux absolus/fixes des outils : bottom sheet propre */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="right-"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="left-"][class*="bottom-"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="right-"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="left-"][class*="bottom-"] {
+    max-width: calc(100vw - 18px) !important;
+  }
+
+  /* Les fenêtres d'outils ouvertes sont placées en bas, lisibles et scrollables */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="bottom-"][class*="rounded"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="top-"][class*="rounded"][class*="bg-"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="bottom-"][class*="rounded"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="top-"][class*="rounded"][class*="bg-"] {
+    left: 9px !important;
+    right: 9px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 9px) !important;
+    top: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(72dvh, 620px) !important;
+    overflow: hidden !important;
+    border-radius: 22px !important;
+    z-index: 2400 !important;
+  }
+
+  /* Intérieur des fenêtres : scroll vertical sans casser la carte */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="bottom-"][class*="rounded"] > *,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="top-"][class*="rounded"][class*="bg-"] > *,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="bottom-"][class*="rounded"] > *,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="top-"][class*="rounded"][class*="bg-"] > * {
+    max-height: calc(72dvh - 18px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Les listes internes : Légende, Libellés, Fonds, Sommets, Export */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="overflow-y-auto"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="overflow-auto"] {
+    max-height: min(58dvh, 520px) !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Champs dans les fenêtres outils */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] input,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] select,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 42px !important;
+    font-size: 16px !important;
+  }
+
+  /* Labels / libellés / badges sur carte : plus petits sur mobile */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-parcel-badge,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-side-label,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-area-label,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-vertex-icon,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-tooltip {
+    max-width: 210px !important;
+    font-size: 10.5px !important;
+    line-height: 1.15 !important;
+    padding: 3px 7px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Sommets : pastilles plus petites pour ne pas polluer la carte */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-vertex-icon {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    min-height: 22px !important;
+    font-size: 10px !important;
+  }
+
+  /* Mesures / géométrie : textes lisibles mais discrets */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-side-label.is-measure,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-side-label.is-edit {
+    font-size: 10px !important;
+    padding: 3px 6px !important;
+  }
+
+  /* Popup Leaflet : adaptée mobile */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-popup {
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-popup-content-wrapper {
+    max-width: calc(100vw - 24px) !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-popup-content {
+    width: auto !important;
+    max-width: calc(100vw - 48px) !important;
+    max-height: 52dvh !important;
+    overflow-y: auto !important;
+    margin: 12px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Leaflet controls : éviter collision avec les onglets */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-top {
+    top: calc(env(safe-area-inset-top, 0px) + 58px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-left {
+    left: 8px !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-right {
+    right: 8px !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-bottom {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-control {
+    margin: 0 0 8px 0 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+
+  /* Export : le footer reste accessible même si la fenêtre est haute */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] form,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] fieldset {
+    max-width: 100% !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] form button[type="submit"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] form button:not([type]) {
+    min-height: 44px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="bottom-"][class*="rounded"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="absolute"][class*="top-"][class*="rounded"][class*="bg-"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="bottom-"][class*="rounded"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] [class*="fixed"][class*="top-"][class*="rounded"][class*="bg-"] {
+    left: 7px !important;
+    right: 7px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 7px) !important;
+    max-height: 74dvh !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-parcel-badge,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-side-label,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-area-label,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-tooltip {
+    max-width: 180px !important;
+    font-size: 10px !important;
+  }
+}
