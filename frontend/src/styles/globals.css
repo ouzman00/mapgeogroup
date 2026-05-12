@@ -2298,3 +2298,20 @@ main > .mapgeo-carto-workspace,
     display: none !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE MEASURE CLEAN FINAL
+   Objectif :
+   - pas de page blanche au clic Mesures
+   - pas de point par tap carte/parcelle sur mobile
+   - pas de Premier point / Point suivant sur mobile
+   - pas de Accrochage auto / rond jaune sur mobile
+   - points blancs sur mobile
+   - desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-tooltip {
+    display: none !important;
+  }
+}

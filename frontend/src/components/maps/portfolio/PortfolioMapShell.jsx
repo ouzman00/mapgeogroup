@@ -912,6 +912,7 @@ function MeasurementOverlay({ draft }) {
 
   if (!previewPoints.length) return null;
 
+  const isMobileMeasureOverlay = isMobileCartographyViewport();
   const isSurface = draft.mode === "surface";
   const polygonPoints = isSurface
     ? stripMeasurementClosingPoint(previewPoints)
@@ -966,13 +967,13 @@ function MeasurementOverlay({ draft }) {
           key={`measure-point-${index}`}
           center={point}
           pane={MAP_PANES.measure}
-          radius={6}
+          radius={isMobileMeasureOverlay ? 5 : 6}
           pathOptions={{
-            color: MEASURE_STYLE.pointBorder,
-            fillColor: MEASURE_STYLE.pointFill,
+            color: isMobileMeasureOverlay ? "#ffffff" : MEASURE_STYLE.pointBorder,
+            fillColor: isMobileMeasureOverlay ? "#ffffff" : MEASURE_STYLE.pointFill,
             fillOpacity: 0.96,
             opacity: 1,
-            weight: 2.5,
+            weight: isMobileMeasureOverlay ? 2 : 2.5,
           }}
           interactive={false}
         />
@@ -982,19 +983,21 @@ function MeasurementOverlay({ draft }) {
         <CircleMarker
           center={draft.cursorPoint}
           pane={MAP_PANES.measure}
-          radius={7}
+          radius={isMobileMeasureOverlay ? 6 : 7}
           pathOptions={{
-            color: MEASURE_STYLE.cursorBorder,
-            fillColor: MEASURE_STYLE.cursorFill,
-            fillOpacity: 0.78,
+            color: isMobileMeasureOverlay ? "#ffffff" : MEASURE_STYLE.cursorBorder,
+            fillColor: isMobileMeasureOverlay ? "#ffffff" : MEASURE_STYLE.cursorFill,
+            fillOpacity: isMobileMeasureOverlay ? 0.92 : 0.78,
             opacity: 1,
-            weight: 2.4,
+            weight: isMobileMeasureOverlay ? 2 : 2.4,
           }}
           interactive={false}
         >
-          <Tooltip direction="top" permanent>
-            {cursorTooltip}
-          </Tooltip>
+          {!isMobileMeasureOverlay ? (
+            <Tooltip direction="top" permanent>
+              {cursorTooltip}
+            </Tooltip>
+          ) : null}
         </CircleMarker>
       ) : null}
 
@@ -1022,6 +1025,7 @@ function MeasurementOverlay({ draft }) {
   );
 }
 
+
 function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft, onClose, onFinish }) {
   if (!open) return null;
 
@@ -1040,12 +1044,14 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
     if (!map) return;
 
     const center = map.getCenter();
+    const point = [center.lat, center.lng];
+
     setMeasurementDraft((current) => ({
       mode: current?.mode || "distance",
-      points: [...(current?.points || []), [center.lat, center.lng]],
-      cursorPoint: null,
+      points: [...(current?.points || []), point],
+      cursorPoint: point,
       snapPoint: null,
-      snapKind: "center",
+      snapKind: null,
       finished: false,
     }));
   };
@@ -1887,12 +1893,8 @@ export default function PortfolioMapShell({
       return;
     }
 
- if (isMobileCartographyViewport()) {
-      clearPendingMeasurementClick();
-      return;
-    }
-
     if (!showMeasurements || !Array.isArray(point) || point.length < 2) return;
+
     clearPendingMeasurementClick();
     measurementClickTimerRef.current = window.setTimeout(() => {
       const snap = resolveMeasurementPoint(point);
@@ -1987,225 +1989,8 @@ export default function PortfolioMapShell({
     setActiveCommand(null);
 
     if (showMeasurements) {
-      setIdentifyState(null);
-
-      // Mobile: points are added only with the Ajouter button.
-      if (isMobileCartographyViewport()) {
-        clearPendingMeasurementClick();
-        return;
-      }
-
-      if (event?.originalEvent?.detail > 1 || shouldIgnoreMeasurementClickAfterPan()) {
-        clearPendingMeasurementClick();
-        return;
-      }
-
-      const latlng = event?.latlng;
-      const point = latlng ? [latlng.lat, latlng.lng] : fallbackPoint || feature.center;
-      if (!point) return;
-      queueMeasurementPoint(point);
-      return;
-    }
-
-    onFeatureSelection(feature);
-  }, [clearPendingMeasurementClick, inlineEditOpen, onFeatureSelection, queueMeasurementPoint, setIdentifyState, shouldIgnoreMeasurementClickAfterPan, showMeasurements]);
-
-  const startInlineEdit = useCallback((featureOverride = null) => {
-    const featureToEdit = featureOverride || activeFeature;
-    if (!canManageParcels || !featureToEdit) return;
-    const initialGeometry = normalizeToMultiPolygon(featureToEdit.parcel?.geometry);
-    setShowMeasurements(false);
-    setShowVertices(false);
-    setActiveCommand((current) => (current === "base" || current === "export" ? "tools" : current || "tools"));
-    setIdentifyState(null);
-    editGeometryRef.current = initialGeometry;
-    setEditGeometry(initialGeometry);
-    resetInlineEditHistory(initialGeometry);
-    setEditLayerResetKey((current) => current + 1);
-    setEditForm(buildInlineEditForm(featureToEdit));
-    setEditMessage("");
-    setDeleteVertexMode(false);
-    setInlineEditOpen(true);
-  }, [activeFeature, canManageParcels, resetInlineEditHistory, setIdentifyState, setShowMeasurements, setShowVertices]);
-
-  
-
-  const handleParcelLayerDoubleClick = useCallback((feature, event) => {
-  stopLeafletDomEvent(event);
-  if (!feature || inlineEditOpen) return;
-
-  if (showMeasurements) {
-    clearPendingMeasurementClick();
-    return;
-  }
-
-  // Double-clic = sélection uniquement.
-  // L'édition géométrique doit s'ouvrir uniquement via le bouton dédié.
-  onFeatureSelection(feature);
-}, [clearPendingMeasurementClick, inlineEditOpen, onFeatureSelection, showMeasurements]);
-
-
-    useEffect(() => {
-        if (!canManageParcels) return;
-        if (!editRequestKey || editRequestKey === previousEditRequestKeyRef.current) return;
-
-        previousEditRequestKeyRef.current = editRequestKey;
-        startInlineEdit();
-      }, [canManageParcels, editRequestKey, startInlineEdit]);
-    
-    useEffect(() => {
-        if (canManageParcels) return;
-
-        setInlineEditOpen(false);
-        setDeleteVertexMode(false);
-        setEditMessage("");
-        setEditHistory([]);
-        setEditHistoryIndex(-1);
-        editHistoryIndexRef.current = -1;
-      }, [canManageParcels]);
-
-  const closeInlineEdit = useCallback(() => {
-    if (editSaving) return;
-    setInlineEditOpen(false);
-    setDeleteVertexMode(false);
-    setEditMessage("");
-    setEditHistory([]);
-    setEditHistoryIndex(-1);
-    editHistoryIndexRef.current = -1;
-  }, [editSaving]);
-
-
-  const handleExportPng = async () => {
-    setShowLegend(false);
-    setShowMeasurements(false);
-    setShowVertices(false);
-    setActiveCommand(null);
-    await exportMapAsPng(mapContainerRef.current, activeFeature?.parcel?.reference ? `Carte ${activeFeature.parcel.reference}` : "Carte SIG");
-  };
-
-  const handleExportJpeg = async () => {
-    setShowLegend(false);
-    setShowMeasurements(false);
-    setShowVertices(false);
-    setActiveCommand(null);
-    await exportMapAsJpeg(mapContainerRef.current, activeFeature?.parcel?.reference ? `Carte ${activeFeature.parcel.reference}` : "Carte SIG");
-  };
-
-  const handleExportGeoJson = () => {
-    if (!activeFeature?.parcel?.geometry) return;
-    setActiveCommand(null);
-    exportGeometryAsGeoJson(
-      activeFeature.geojson || parcelToGeoJsonFeature(activeFeature.parcel),
-      activeFeature.parcel.reference || "parcelle",
-    );
-  };
-
-  const handleSaveInlineEdit = async () => {
-    if (!canManageParcels || !activeFeature?.id) return;
-    const liveGeometry = typeof editGeometryGetterRef.current === "function" ? editGeometryGetterRef.current() : editGeometryRef.current;
-    const normalized = normalizeToMultiPolygon(liveGeometry || editGeometryRef.current || editGeometry);
-    if (geometryHistoryKey(normalized) !== geometryHistoryKey(editGeometryRef.current)) {
-      editGeometryRef.current = normalized;
-      setEditGeometry(normalized);
-    }
-    if (!normalized) {
-      setEditMessage("La géométrie doit contenir au moins un polygone valide avant l’enregistrement.");
-      return;
-    }
-    const geometryChangeReason = editForm.geometry_change_reason?.trim() || "Correction cartographique depuis l’interface admin";
-
-    const validation = validateParcelGeometry(normalized, activeFeature.parcel || {});
-    const blockingIssues = validation.issues?.filter((entry) => entry.level === "blocking") || [];
-    if (blockingIssues.length) {
-      setEditMessage(`Enregistrement bloqué : ${blockingIssues.slice(0, 2).map((entry) => entry.message).join(" ")}`);
-      return;
-    }
-
-    const geometryTimestamp = activeFeature.parcel?.geometry_updated_at || null;
-    const apiGeometry = prepareGeometryForApi(normalized);
-
-    const payload = {
-      geometry: apiGeometry,
-      expected_geometry_updated_at: geometryTimestamp,
-      geometry_change_reason: geometryChangeReason,
-    };
-
-    setEditSaving(true);
-    setEditMessage("");
-    try {
-      await onSaveParcelEdit?.(activeFeature.id, payload);
-      setDeleteVertexMode(false);
-      setInlineEditOpen(false);
-      setEditHistory([]);
-      setEditHistoryIndex(-1);
-      editHistoryIndexRef.current = -1;
-    } catch (error) {
-      setEditMessage(error?.response?.data?.detail || error?.message || "Impossible d’enregistrer les modifications de la parcelle.");
-    } finally {
-      setEditSaving(false);
-    }
-  };
-
-  const archiveInlineParcel = async () => {
-    setEditSaving(true);
-    setEditMessage("");
-    try {
-      await onDeleteParcel?.(activeFeature.id);
-      setDeleteVertexMode(false);
-      setInlineEditOpen(false);
-      setEditHistory([]);
-      setEditHistoryIndex(-1);
-      editHistoryIndexRef.current = -1;
-    } catch (error) {
-      setEditMessage(error?.response?.data?.detail || error?.message || "Impossible de supprimer cette parcelle.");
-    } finally {
-      setEditSaving(false);
-    }
-  };
-
-  const handleDeleteInlineParcel = () => {
-    if (!canManageParcels || !activeFeature?.id || editSaving) return;
-    const reference = editForm.reference || activeFeature.parcel?.reference || "cette parcelle";
-    setConfirmConfig({
-      title: "Archiver cette parcelle ?",
-      message: `La parcelle « ${reference} » disparaîtra des listes actives, mais ses géométries, documents et historiques seront conservés.`,
-      confirmLabel: "Archiver",
-      onConfirm: () => {
-        setConfirmConfig(null);
-        archiveInlineParcel();
-      },
-    });
-  };
-
-  return (
-    <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
-      <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
-        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={false} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
-          <MapPaneController />
-          <PortfolioViewport mode={viewMode} activeFeature={activeFeature} features={viewportFeatures} onMapReady={setMap} viewportRequest={viewportRequest} onZoomChange={setMapZoom} />
-          <MapRuntimeObserver
-            onMouseMove={(point) => {
-              setCursorPosition(point);
-              if (showMeasurements) {
-                if (!point) {
-                  setMeasurementDraft((current) => (current?.finished ? current : { ...current, cursorPoint: null, snapPoint: null, snapKind: null }));
-                  return;
-                }
-                const snap = resolveMeasurementPoint(point);
-                setMeasurementDraft((current) => (
-                  current?.finished
-                    ? current
-                    : { ...current, cursorPoint: snap.point, snapPoint: snap.snapped ? snap.point : null, snapKind: snap.snapped ? snap.kind : null }
-                ));
-              }
-            }}
-            onMapClick={(point, event) => {
-              if (inlineEditOpen) return;
-              setActiveCommand(null);
-              if (showMeasurements) {
                 setIdentifyState(null);
 
-                // Mobile: points are added only with the Ajouter button.
                 if (isMobileCartographyViewport()) {
                   clearPendingMeasurementClick();
                   return;
