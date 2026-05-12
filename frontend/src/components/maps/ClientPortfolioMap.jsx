@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useProfessionalLayers from "./pro/useProfessionalLayers";
 import PrintMapDialog from "./pro/PrintMapDialog";
 import PortfolioSidebar from "./portfolio/PortfolioSidebar";
@@ -596,7 +596,7 @@ export default function ClientPortfolioMap({
           activeFeature={portfolio.activeFeature}
           onFeatureSelection={handleSidebarFeatureSelection}
           canCreateParcel={canManageParcels && canCreateParcel}
-          onCreateParcel={canManageParcels ? onCreateParcel : undefined}
+          onCreateParcel={canManageParcels ? handleCreateParcelRequest : undefined}
         />
 
         <PortfolioMapShell

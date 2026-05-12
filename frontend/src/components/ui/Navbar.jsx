@@ -58,7 +58,7 @@ export default function Navbar({ title, subtitle }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-mapgeo-line/80 bg-white/[0.92] shadow-none backdrop-blur-xl">
+    <header className="relative z-30 border-b border-mapgeo-line/80 bg-white/[0.92] shadow-none backdrop-blur-xl md:sticky md:top-0">
       <div className="px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-start justify-between gap-4">
