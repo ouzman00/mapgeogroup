@@ -1,4 +1,4 @@
-import { CalendarCheck2, CheckCircle2, Edit3, FileText, FolderOpen, Printer, Route, Save, ShieldCheck, X } from "lucide-react";
+﻿import { CalendarCheck2, CheckCircle2, Edit3, FileText, FolderOpen, Printer, Route, Save, ShieldCheck, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import documentService from "../../../services/documentService";
@@ -9,9 +9,9 @@ import { SENEGAL_PROJECTED_CRS, SENEGAL_PROJECTED_CRS_LABEL, latLngPairToProject
 import { formatProjectedCoordinate } from "./mapUtils";
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "â€”";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "â€”";
   return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
@@ -19,7 +19,7 @@ function InfoRow({ label, value }) {
   return (
     <div className="flex items-start justify-between gap-3 text-sm">
       <span className="text-white/50">{label}</span>
-      <strong className="max-w-[160px] truncate text-right font-semibold text-white/80">{value || "—"}</strong>
+      <strong className="max-w-[160px] truncate text-right font-semibold text-white/80">{value || "â€”"}</strong>
     </div>
   );
 }
@@ -48,7 +48,7 @@ function buildVertexRows(activeFeature) {
         const projected = latLngPairToProjected(point);
         return {
           id: `${ringIndex + 1}-${vertexIndex + 1}-${point[0]}-${point[1]}`,
-          label: rings.length > 1 ? `Contour ${ringIndex + 1} · Sommet ${vertexIndex + 1}` : `Sommet ${vertexIndex + 1}`,
+          label: rings.length > 1 ? `Contour ${ringIndex + 1} Â· Sommet ${vertexIndex + 1}` : `Sommet ${vertexIndex + 1}`,
           x: projected?.[0] ?? null,
           y: projected?.[1] ?? null,
         };
@@ -59,25 +59,25 @@ function buildVertexRows(activeFeature) {
 function DataQualityCard({ feature }) {
   if (!feature) return null;
   const checks = [
-    { label: "Géométrie", ok: feature.rings.length > 0 },
-    { label: "Surface", ok: feature.areaLabel !== "—" },
-    { label: "Périmètre", ok: feature.perimeterLabel !== "—" },
+    { label: "GÃ©omÃ©trie", ok: feature.rings.length > 0 },
+    { label: "Surface", ok: feature.areaLabel !== "â€”" },
+    { label: "PÃ©rimÃ¨tre", ok: feature.perimeterLabel !== "â€”" },
     { label: "Commune", ok: Boolean(feature.parcel.commune) },
     { label: "Document", ok: feature.documents.length > 0 },
   ];
   const score = Math.round((checks.filter((check) => check.ok).length / checks.length) * 100);
 
   return (
-    <DarkCard title="Qualité SIG" icon={ShieldCheck}>
+    <DarkCard title="QualitÃ© SIG" icon={ShieldCheck}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <span className="text-sm text-white/60">Score de complétude</span>
+        <span className="text-sm text-white/60">Score de complÃ©tude</span>
         <strong className="rounded-full bg-mapgeo-sand/20 px-2.5 py-1 text-sm text-mapgeo-sand ring-1 ring-mapgeo-sand/20">{score}%</strong>
       </div>
       <div className="space-y-2 text-xs">
         {checks.map((check) => (
           <div key={check.label} className="flex items-center justify-between gap-3 text-white/50">
             <span>{check.label}</span>
-            <span className={check.ok ? "font-bold text-mapgeo-sand" : "font-bold text-mapgeo-sand"}>{check.ok ? "OK" : "À compléter"}</span>
+            <span className={check.ok ? "font-bold text-mapgeo-sand" : "font-bold text-mapgeo-sand"}>{check.ok ? "OK" : "Ã€ complÃ©ter"}</span>
           </div>
         ))}
       </div>
@@ -87,10 +87,10 @@ function DataQualityCard({ feature }) {
 
 function ProgressStepper({ progress = 0 }) {
   const steps = [
-    { label: "Créée", threshold: 1 },
-    { label: "Vérification", threshold: 15 },
-    { label: "Mission planifiée", threshold: 45 },
-    { label: "Rapport finalisé", threshold: 100 },
+    { label: "CrÃ©Ã©e", threshold: 1 },
+    { label: "VÃ©rification", threshold: 15 },
+    { label: "Mission planifiÃ©e", threshold: 45 },
+    { label: "Rapport finalisÃ©", threshold: 100 },
   ];
 
   return (
@@ -127,15 +127,15 @@ function ProgressStepper({ progress = 0 }) {
 
   return (
     <div className="space-y-4">
-      <DarkCard title="Résumé" icon={ShieldCheck}>
+      <DarkCard title="RÃ©sumÃ©" icon={ShieldCheck}>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-white/40">Surface</p>
             <p className="mt-1 text-base font-extrabold text-white">{activeFeature.areaLabel}</p>
           </div>
           <div>
-            <p className="text-xs text-white/40">Référence</p>
-            <p className="mt-1 truncate text-base font-extrabold text-white">{parcel.reference || "—"}</p>
+            <p className="text-xs text-white/40">RÃ©fÃ©rence</p>
+            <p className="mt-1 truncate text-base font-extrabold text-white">{parcel.reference || "â€”"}</p>
           </div>
         </div>
         <div className="mt-5">
@@ -173,14 +173,14 @@ function ProgressStepper({ progress = 0 }) {
         </div>
       </DarkCard>
 
-      <DarkCard title="Informations clés">
+      <DarkCard title="Informations clÃ©s">
         <div className="space-y-3">
           <InfoRow label="Commune" value={parcel.commune || parcel.location} />
           <InfoRow label="Client" value={parcel.owner_client_code || clientCode} />
-          <InfoRow label="Propriétaire" value={parcel.owner_name || "—"} />
+          <InfoRow label="PropriÃ©taire" value={parcel.owner_name || "â€”"} />
           <InfoRow label="Titre foncier" value={parcel.title_number || parcel.land_title} />
           <InfoRow label="Section" value={parcel.section} />
-          <InfoRow label="N° parcellaire" value={parcel.parcel_number || parcel.cadastral_number} />
+          <InfoRow label="NÂ° parcellaire" value={parcel.parcel_number || parcel.cadastral_number} />
         </div>
       </DarkCard>
 
@@ -189,7 +189,7 @@ function ProgressStepper({ progress = 0 }) {
           <CalendarCheck2 size={14} /> {activeFeature.statusLabel}
         </span>
         <p className="mt-3 text-sm leading-6 text-white/60">
-          Planifiée le <strong className="ml-2 text-white">{formatDate(parcel.planned_date || parcel.planned_at || parcel.created_at)}</strong>
+          PlanifiÃ©e le <strong className="ml-2 text-white">{formatDate(parcel.planned_date || parcel.planned_at || parcel.created_at)}</strong>
         </p>
         <ProgressStepper progress={activeFeature.progress} />
       </DarkCard>
@@ -208,17 +208,17 @@ function AttributesPanel({ activeFeature, clientCode, ownerName }) {
   const parcel = activeFeature.parcel || {};
   const vertexRows = buildVertexRows(activeFeature);
   const rows = [
-    ["Référence", parcel.reference],
+    ["RÃ©fÃ©rence", parcel.reference],
     ["Client", parcel.owner_client_code || clientCode],
-    ["Propriétaire", parcel.owner_name || ownerName],
+    ["PropriÃ©taire", parcel.owner_name || ownerName],
     ["Commune", parcel.commune],
-    ["Région", parcel.region],
+    ["RÃ©gion", parcel.region],
     ["Adresse", parcel.address || parcel.location || parcel.village],
     ["Surface officielle", activeFeature.officialAreaLabel],
-    ["Surface calculée", activeFeature.computedAreaLabel],
-    ["Périmètre", activeFeature.perimeterLabel],
-    ["Méthode de levé", parcel.method || parcel.survey_method],
-    ["Précision GPS", parcel.gps_accuracy || parcel.gps_precision || parcel.accuracy],
+    ["Surface calculÃ©e", activeFeature.computedAreaLabel],
+    ["PÃ©rimÃ¨tre", activeFeature.perimeterLabel],
+    ["MÃ©thode de levÃ©", parcel.method || parcel.survey_method],
+    ["PrÃ©cision GPS", parcel.gps_accuracy || parcel.gps_precision || parcel.accuracy],
     ["Usage foncier", parcel.land_use || parcel.usage],
   ];
 
@@ -227,13 +227,13 @@ function AttributesPanel({ activeFeature, clientCode, ownerName }) {
       {rows.map(([label, value]) => (
         <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
           <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/40">{label}</p>
-          <p className="mt-1 text-sm font-semibold text-white/80">{value || "—"}</p>
+          <p className="mt-1 text-sm font-semibold text-white/80">{value || "â€”"}</p>
         </div>
       ))}
 
-      <DarkCard title="Coordonnées des sommets">
+      <DarkCard title="CoordonnÃ©es des sommets">
         <p className="mb-3 text-xs leading-5 text-white/50">
-          CRS affiché : {SENEGAL_PROJECTED_CRS} — {SENEGAL_PROJECTED_CRS_LABEL}. Les points Leaflet [lat, lng] sont convertis en X/Y projetés avant affichage.
+          CRS affichÃ© : {SENEGAL_PROJECTED_CRS} â€” {SENEGAL_PROJECTED_CRS_LABEL}. Les points Leaflet [lat, lng] sont convertis en X/Y projetÃ©s avant affichage.
         </p>
         {vertexRows.length ? (
           <div className="max-h-72 overflow-auto rounded-2xl border border-white/10 bg-black/10">
@@ -252,7 +252,7 @@ function AttributesPanel({ activeFeature, clientCode, ownerName }) {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.025] p-4 text-sm leading-6 text-white/50">
-            Aucun sommet renseigné pour cette parcelle.
+            Aucun sommet renseignÃ© pour cette parcelle.
           </div>
         )}
       </DarkCard>
@@ -379,11 +379,11 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
 
     if (!activeFeature?.id) return;
     if (!form.reference.trim()) {
-      setMessage("La référence est obligatoire.");
+      setMessage("La rÃ©fÃ©rence est obligatoire.");
       return;
     }
     if (form.area !== "" && Number.isNaN(Number(form.area))) {
-      setMessage("La surface doit être un nombre valide.");
+      setMessage("La surface doit Ãªtre un nombre valide.");
       return;
     }
 
@@ -394,7 +394,7 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
       await onSave?.(activeFeature.id, payload);
       onCancel?.();
     } catch (error) {
-      setMessage(error?.response?.data?.detail || error?.message || "Impossible d’enregistrer les informations de la parcelle.");
+      setMessage(error?.response?.data?.detail || error?.message || "Impossible dâ€™enregistrer les informations de la parcelle.");
     } finally {
       setSaving(false);
     }
@@ -405,10 +405,10 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 p-3 text-xs font-semibold leading-5 text-mapgeo-ivory/80">
-        Modifiez ici uniquement les informations de fiche : référence, statut, propriétaire et données administratives. La géométrie, les sommets et les dimensions se modifient avec l’action <strong>Géométrie</strong> sur la carte.
+        Modifiez ici uniquement les informations de fiche : rÃ©fÃ©rence, statut, propriÃ©taire et donnÃ©es administratives. La gÃ©omÃ©trie, les sommets et les dimensions se modifient avec lâ€™action <strong>GÃ©omÃ©trie</strong> sur la carte.
       </div>
 
-      <label className="block text-[11px] font-bold text-white/60">Référence *
+      <label className="block text-[11px] font-bold text-white/60">RÃ©fÃ©rence *
         <input value={form.reference} onChange={(event) => update("reference", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
       </label>
 
@@ -421,41 +421,41 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
       </label>
 
       {owners.length ? (
-        <label className="block text-[11px] font-bold text-white/60">Propriétaire
+        <label className="block text-[11px] font-bold text-white/60">PropriÃ©taire
           <select value={form.owner} onChange={(event) => handleOwnerChange(event.target.value)} className="mapgeo-dark-select mt-1 w-full rounded-xl border border-white/10 bg-[#123B5D] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60">
-            <option value="">Sélectionner un propriétaire</option>
+            <option value="">SÃ©lectionner un propriÃ©taire</option>
             {owners.map((owner) => (
-              <option key={owner.id} value={owner.id}>{owner.label || owner.name || owner.full_name || `Propriétaire #${owner.id}`}</option>
+              <option key={owner.id} value={owner.id}>{owner.label || owner.name || owner.full_name || `PropriÃ©taire #${owner.id}`}</option>
             ))}
           </select>
         </label>
       ) : (
-        <label className="block text-[11px] font-bold text-white/60">Propriétaire
-          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.ownerName || "—"}</p>
+        <label className="block text-[11px] font-bold text-white/60">PropriÃ©taire
+          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.ownerName || "â€”"}</p>
         </label>
       )}
 
       {organizationOptions.length ? (
         <label className="block text-[11px] font-bold text-white/60">Client / organisation
           <select value={form.organization} onChange={(event) => handleOrganizationChange(event.target.value)} className="mapgeo-dark-select mt-1 w-full rounded-xl border border-white/10 bg-[#123B5D] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60">
-            <option value="">Sélectionner l’organisation cliente</option>
+            <option value="">SÃ©lectionner lâ€™organisation cliente</option>
             {organizationOptions.map((organization) => (
-              <option key={organization.id} value={organization.id}>{organization.name} · {organization.code}</option>
+              <option key={organization.id} value={organization.id}>{organization.name} Â· {organization.code}</option>
             ))}
           </select>
         </label>
       ) : (
         <label className="block text-[11px] font-bold text-white/60">Client
-          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.clientCode || "—"}</p>
+          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.clientCode || "â€”"}</p>
         </label>
       )}
 
       <div className="grid grid-cols-2 gap-2.5">
-        <label className="block text-[11px] font-bold text-white/60">Surface officielle (m²)
+        <label className="block text-[11px] font-bold text-white/60">Surface officielle (mÂ²)
           <input type="number" step="0.01" value={form.area} onChange={(event) => update("area", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
         </label>
-        <label className="block text-[11px] font-bold text-white/60">Créée le
-          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.createdAt || "—"}</p>
+        <label className="block text-[11px] font-bold text-white/60">CrÃ©Ã©e le
+          <p className="mt-1 w-full rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2 text-sm font-semibold text-white/60 cursor-default select-all">{form.createdAt || "â€”"}</p>
         </label>
       </div>
 
@@ -475,7 +475,7 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
 
       <div className="grid grid-cols-[1fr_auto] gap-2 pt-1">
         <button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-mapgeo-primary px-3 py-2.5 text-sm font-extrabold text-white transition hover:bg-mapgeo-sand disabled:cursor-not-allowed disabled:opacity-55">
-          <Save size={15} /> {saving ? "Enregistrement…" : "Enregistrer les informations"}
+          <Save size={15} /> {saving ? "Enregistrementâ€¦" : "Enregistrer les informations"}
         </button>
         <button type="button" onClick={onCancel} disabled={saving} className="rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-white/70 transition hover:bg-white/10 disabled:opacity-55">
           Annuler
@@ -502,7 +502,7 @@ function DocumentsPanel({ documents }) {
       window.open(blobUrl, "_blank", "noopener,noreferrer");
       window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (error) {
-      setMessage(getErrorMessage(error, "Impossible d’ouvrir ce document."));
+      setMessage(getErrorMessage(error, "Impossible dâ€™ouvrir ce document."));
     } finally {
       setOpeningId(null);
     }
@@ -525,14 +525,14 @@ function DocumentsPanel({ documents }) {
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (error) {
-      setMessage(getErrorMessage(error, "Impossible de télécharger ce document."));
+      setMessage(getErrorMessage(error, "Impossible de tÃ©lÃ©charger ce document."));
     } finally {
       setDownloadingId(null);
     }
   };
 
   if (!documents?.length) {
-    return <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm text-white/60">Aucun document lié à cette parcelle.</div>;
+    return <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-sm text-white/60">Aucun document liÃ© Ã  cette parcelle.</div>;
   }
 
   return (
@@ -543,7 +543,7 @@ function DocumentsPanel({ documents }) {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h4 className="truncate font-bold text-white">{doc.title}</h4>
-              <p className="mt-1 text-xs text-white/50">{doc.document_type || "Document"} · {doc.version || "v1"}</p>
+              <p className="mt-1 text-xs text-white/50">{doc.document_type || "Document"} Â· {doc.version || "v1"}</p>
             </div>
             {doc.id ? (
               <div className="flex shrink-0 items-center gap-2">
@@ -553,7 +553,7 @@ function DocumentsPanel({ documents }) {
                   disabled={openingId === doc.id || downloadingId === doc.id}
                   onClick={() => openDocument(doc)}
                 >
-                  {openingId === doc.id ? "Ouverture…" : "Ouvrir"}
+                  {openingId === doc.id ? "Ouvertureâ€¦" : "Ouvrir"}
                 </button>
                 <button
                   type="button"
@@ -561,7 +561,7 @@ function DocumentsPanel({ documents }) {
                   disabled={openingId === doc.id || downloadingId === doc.id}
                   onClick={() => downloadDocument(doc)}
                 >
-                  {downloadingId === doc.id ? "Téléchargement…" : "Télécharger"}
+                  {downloadingId === doc.id ? "TÃ©lÃ©chargementâ€¦" : "TÃ©lÃ©charger"}
                 </button>
               </div>
             ) : null}
@@ -588,8 +588,8 @@ function TimelinePanel({ timeline }) {
               <span className="rounded-full bg-mapgeo-sand/20 px-2.5 py-1 text-xs font-bold text-mapgeo-sand">{event.progress}%</span>
             ) : null}
           </div>
-          <p className="mt-2 text-sm leading-6 text-white/60">{event.description || "Pas de détail fourni."}</p>
-          <p className="mt-3 text-xs text-white/40">{event.date ? formatDate(event.date) : "Date non renseignée"}</p>
+          <p className="mt-2 text-sm leading-6 text-white/60">{event.description || "Pas de dÃ©tail fourni."}</p>
+          <p className="mt-3 text-xs text-white/40">{event.date ? formatDate(event.date) : "Date non renseignÃ©e"}</p>
         </div>
       ))}
     </div>
@@ -627,15 +627,15 @@ export default function PortfolioInspector({
 }) {
   const emptyInspector = (
     <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-5 text-sm leading-6 text-white/60">
-      <p className="font-bold text-white">Aucune parcelle sélectionnée</p>
-      <p className="mt-2">Sélectionnez une parcelle dans le panneau de gauche pour afficher sa synthèse, ses attributs, ses documents et ses jalons.</p>
+      <p className="font-bold text-white">Aucune parcelle sÃ©lectionnÃ©e</p>
+      <p className="mt-2">SÃ©lectionnez une parcelle dans le panneau de gauche pour afficher sa synthÃ¨se, ses attributs, ses documents et ses jalons.</p>
     </div>
   );
 
   const createInitialValues = useMemo(() => {
     if (!createParcelDefaultOwnerId) return null;
-    // Dérive l'organisation depuis la parcelle active si disponible
-    // Évite la déduction silencieuse côté backend
+    // DÃ©rive l'organisation depuis la parcelle active si disponible
+    // Ã‰vite la dÃ©duction silencieuse cÃ´tÃ© backend
     const contextOrg = activeFeature?.parcel?.organization
       || createParcelOwners.find((o) => String(o.id) === String(createParcelDefaultOwnerId))
           ?.organizations?.find((org) => org.is_primary)?.id
@@ -670,7 +670,7 @@ export default function PortfolioInspector({
       initialValues={createInitialValues}
       title=""
       subtitle=""
-      submitLabel="Créer"
+      submitLabel="CrÃ©er"
       onSuccess={onParcelCreated}
       variant="dark"
       compact
@@ -703,7 +703,7 @@ export default function PortfolioInspector({
     : emptyInspector;
 
   return (
-    <aside className="order-3 flex min-h-0 flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0c1a28]/96 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:col-span-2 min-[1180px]:col-span-1 min-[1180px]:order-3">
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0c1a28]/96 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
       <div className="shrink-0 border-b border-white/10 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -712,14 +712,14 @@ export default function PortfolioInspector({
                 ? "Nouvelle parcelle"
                 : infoEditOpen && canManageParcels
                   ? "Modifier la fiche parcelle"
-                  : activeFeature?.parcel.reference || "Aucune parcelle sélectionnée"}
+                  : activeFeature?.parcel.reference || "Aucune parcelle sÃ©lectionnÃ©e"}
             </h3>
             <p className="mt-2 truncate text-sm text-white/50">
               {createParcelActive && canManageParcels
-                ? "Créer depuis la cartographie"
+                ? "CrÃ©er depuis la cartographie"
                 : infoEditOpen && canManageParcels
                   ? activeFeature?.parcel.reference || "Fiche parcelle"
-                  : activeFeature?.parcel.location || activeFeature?.parcel.commune || "Localisation non renseignée"}
+                  : activeFeature?.parcel.location || activeFeature?.parcel.commune || "Localisation non renseignÃ©e"}
             </p>
           </div>
                     {(createParcelActive && canManageParcels) || (infoEditOpen && canManageParcels) ? (
@@ -728,8 +728,8 @@ export default function PortfolioInspector({
                 type="button"
                 onClick={createParcelActive ? onCancelCreateParcel : () => setInfoEditOpen(false)}
                 className="grid h-9 w-9 place-items-center rounded-xl text-white/50 hover:bg-white/10 hover:text-white"
-                aria-label={createParcelActive ? "Fermer la création" : "Fermer l’édition des informations"}
-                title={createParcelActive ? "Fermer" : "Fermer l’édition"}
+                aria-label={createParcelActive ? "Fermer la crÃ©ation" : "Fermer lâ€™Ã©dition des informations"}
+                title={createParcelActive ? "Fermer" : "Fermer lâ€™Ã©dition"}
               >
                 <X size={18} />
               </button>
@@ -739,7 +739,7 @@ export default function PortfolioInspector({
 
                 {activeFeature && !(createParcelActive && canManageParcels) && !(infoEditOpen && canManageParcels) ? (
           <div className="mt-4 flex items-center gap-4 overflow-x-auto">
-            <TabButton active={activeTab === "summary"} icon={ShieldCheck} label="Synthèse" onClick={() => onTabChange("summary")} />
+            <TabButton active={activeTab === "summary"} icon={ShieldCheck} label="SynthÃ¨se" onClick={() => onTabChange("summary")} />
             <TabButton active={activeTab === "attributes"} icon={FileText} label="Attributs" onClick={() => onTabChange("attributes")} />
             <TabButton active={activeTab === "documents"} icon={FileText} label="Documents" onClick={() => onTabChange("documents")} />
             <TabButton active={activeTab === "timeline"} icon={Route} label="Jalons" onClick={() => onTabChange("timeline")} />
@@ -751,3 +751,4 @@ export default function PortfolioInspector({
     </aside>
   );
 }
+
