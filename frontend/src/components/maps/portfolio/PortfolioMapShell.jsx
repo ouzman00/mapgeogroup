@@ -170,6 +170,10 @@ function stripMeasurementClosingPoint(points) {
 
 function getMeasurementPreviewPoints(draft) {
   const points = Array.isArray(draft?.points) ? draft.points.filter((point) => Array.isArray(point) && point.length >= 2) : [];
+
+  // Mobile: no touch-driven preview line. Measurement geometry changes only with Ajouter.
+  if (isMobileCartographyViewport()) return points;
+
   if (draft?.finished || !draft?.cursorPoint) return points;
   const lastPoint = points[points.length - 1];
   if (lastPoint && pointsAreSame(lastPoint, draft.cursorPoint)) return points;
@@ -1822,17 +1826,9 @@ export default function PortfolioMapShell({
       });
     };
 
-    syncCenterPreview();
-
-    map.on("move", syncCenterPreview);
-    map.on("moveend", syncCenterPreview);
-    map.on("zoomend", syncCenterPreview);
-
-    return () => {
-      map.off("move", syncCenterPreview);
-      map.off("moveend", syncCenterPreview);
-      map.off("zoomend", syncCenterPreview);
-    };
+    // Mobile: do not update the measurement line while the user touches or drags the map.
+    // The measurement changes only when the user presses Ajouter.
+    return undefined;
   }, [map, showMeasurements, setMeasurementDraft]);
 
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
@@ -1884,11 +1880,6 @@ export default function PortfolioMapShell({
 
   const queueMeasurementPoint = useCallback((point) => {
     if (isMobileCartographyViewport()) {
-      clearPendingMeasurementClick();
-      return;
-    }
-
- if (isMobileCartographyViewport()) {
       clearPendingMeasurementClick();
       return;
     }
@@ -2187,11 +2178,16 @@ export default function PortfolioMapShell({
           <MapRuntimeObserver
             onMouseMove={(point) => {
               setCursorPosition(point);
+
               if (showMeasurements) {
+                // Mobile : le toucher écran ne doit ni créer, ni déplacer, ni prévisualiser un point.
+                if (isMobileCartographyViewport()) return;
+
                 if (!point) {
                   setMeasurementDraft((current) => (current?.finished ? current : { ...current, cursorPoint: null, snapPoint: null, snapKind: null }));
                   return;
                 }
+
                 const snap = resolveMeasurementPoint(point);
                 setMeasurementDraft((current) => (
                   current?.finished
