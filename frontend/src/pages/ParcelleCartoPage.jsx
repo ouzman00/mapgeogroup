@@ -605,7 +605,7 @@ export default function ParcelleCartoPage() {
 
   return (
     <DashboardLayout immersive>
-      <div className="mapgeo-carto-workspace flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-[#0B2236] text-[#F7F5F2]">
+      <div className="mapgeo-carto-page mapgeo-carto-workspace flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-[#0B2236] text-[#F7F5F2]">
         <MapTopbar parcel={activeParcel} ownerLabel={ownerLabel} user={user} returnTo={returnTo} />
 
         <div className="mapgeo-carto-body flex min-h-0 flex-1 overflow-hidden bg-[#0B2236]">
