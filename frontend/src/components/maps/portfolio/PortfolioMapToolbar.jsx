@@ -194,7 +194,7 @@ export default function FloatingMapToolbar({
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">Exporter</p>
             <h3 className="truncate text-sm font-extrabold text-white">Carte et géométrie</h3>
           </div>
-          <p className="mt-2 text-xs leading-5 text-white/60">Export rapide de la carte ou de la géométrie.</p>
+          <p className="mt-2 text-xs leading-5 text-white/60">Choisissez un format.</p>
           <button type="button" onClick={() => { setActiveCommand(null); onOpenExportOptions?.(); }} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-mapgeo-primary px-3 py-2.5 text-sm font-extrabold text-white mapgeo-action-button hover:bg-mapgeo-sand">
             <FileDown size={15} /> Assistant d’export
           </button>

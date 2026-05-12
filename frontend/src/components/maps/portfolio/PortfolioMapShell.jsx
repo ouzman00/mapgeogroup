@@ -1090,7 +1090,7 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
               </button>
             </div>
             <p className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/50">
-              Touchez la carte pour mesurer. Déplacez la carte librement, puis terminez.
+              Touchez la carte pour ajouter des points.
             </p>
           </div>
         </>
