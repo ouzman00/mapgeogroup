@@ -3374,3 +3374,257 @@ main > .mapgeo-carto-workspace,
     max-height: min(30dvh, 260px) !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE CARTO OUTILS PRO
+   Objectif :
+   - outils cartographiques plus petits et cohérents sur téléphone
+   - Mesures simplifié
+   - Légende, Fond, Géométrie, Sommets, Exporter compacts
+   - ne pas cacher l’échelle ni la flèche nord
+   - mobile uniquement, desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Bande mobile supprimée */
+  .mapgeo-mobile-carto-tabs {
+    display: none !important;
+  }
+
+  /* Mesure au doigt : comportement visuel plus naturel */
+  .mapgeo-measure-mode,
+  .mapgeo-measure-mode .leaflet-container,
+  .mapgeo-measure-mode .leaflet-interactive {
+    cursor: grab !important;
+  }
+
+  .mapgeo-measure-mode:active,
+  .mapgeo-measure-mode .leaflet-container:active {
+    cursor: grabbing !important;
+  }
+
+  /* Fenêtres outils : compactes, pas plein écran, en haut pour ne pas masquer l’échelle */
+  .mapgeo-mobile-tool-panel {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 72px) !important;
+    left: 10px !important;
+    right: auto !important;
+    bottom: auto !important;
+
+    z-index: 2450 !important;
+
+    width: min(318px, calc(100vw - 20px)) !important;
+    max-width: min(318px, calc(100vw - 20px)) !important;
+    max-height: min(42dvh, 340px) !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+
+    border-radius: 18px !important;
+    padding: 0.65rem !important;
+    background: rgba(7, 17, 27, 0.92) !important;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34) !important;
+    backdrop-filter: blur(16px) !important;
+    transform: none !important;
+  }
+
+  /* Mesures : très compact */
+  .mapgeo-measure-panel {
+    width: min(286px, calc(100vw - 20px)) !important;
+    max-width: min(286px, calc(100vw - 20px)) !important;
+    max-height: min(32dvh, 260px) !important;
+  }
+
+  /* Fond de carte : reste en haut, sous la barre outils */
+  .mapgeo-basemap-panel {
+    top: calc(env(safe-area-inset-top, 0px) + 74px) !important;
+    width: min(300px, calc(100vw - 20px)) !important;
+    max-width: min(300px, calc(100vw - 20px)) !important;
+    max-height: min(38dvh, 300px) !important;
+  }
+
+  /* Légende : compacte */
+  .mapgeo-legend-panel {
+    width: min(306px, calc(100vw - 20px)) !important;
+    max-width: min(306px, calc(100vw - 20px)) !important;
+    max-height: min(40dvh, 320px) !important;
+  }
+
+  /* Sommets / Géométrie / Export */
+  .mapgeo-vertices-panel,
+  .mapgeo-geometry-panel,
+  .mapgeo-export-panel {
+    width: min(300px, calc(100vw - 20px)) !important;
+    max-width: min(300px, calc(100vw - 20px)) !important;
+    max-height: min(38dvh, 300px) !important;
+  }
+
+  /* Ne jamais couvrir la flèche nord */
+  .mapgeo-north-arrow {
+    z-index: 2600 !important;
+  }
+
+  /* Ne jamais couvrir le bouton localisation */
+  .mapgeo-map-control-stack {
+    z-index: 2600 !important;
+  }
+
+  /* Textes réduits */
+  .mapgeo-mobile-tool-panel h2,
+  .mapgeo-mobile-tool-panel h3,
+  .mapgeo-mobile-tool-panel h4 {
+    font-size: 0.84rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: normal !important;
+  }
+
+  .mapgeo-mobile-tool-panel p,
+  .mapgeo-mobile-tool-panel label,
+  .mapgeo-mobile-tool-panel span {
+    font-size: 0.72rem !important;
+    line-height: 1.22 !important;
+  }
+
+  /* Paragraphes d’aide très discrets */
+  .mapgeo-mobile-tool-panel p[class*="leading-5"],
+  .mapgeo-mobile-tool-panel p[class*="leading-6"] {
+    font-size: 0.68rem !important;
+    line-height: 1.18 !important;
+    opacity: 0.58 !important;
+    padding: 0.42rem 0.5rem !important;
+  }
+
+  /* Mesures : cacher les infos techniques non nécessaires sur téléphone */
+  .mapgeo-measure-panel .mapgeo-measure-secondary-row {
+    display: none !important;
+  }
+
+  .mapgeo-measure-panel .mapgeo-measure-main-row {
+    border-color: rgba(199, 178, 153, 0.35) !important;
+    background: rgba(199, 178, 153, 0.10) !important;
+  }
+
+  .mapgeo-measure-panel .mapgeo-measure-main-row strong {
+    font-size: 0.9rem !important;
+  }
+
+  /* Boutons plus petits */
+  .mapgeo-mobile-tool-panel button {
+    min-height: 32px !important;
+    min-width: 32px !important;
+    border-radius: 10px !important;
+    padding: 0.38rem 0.52rem !important;
+    font-size: 0.7rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .mapgeo-mobile-tool-panel button svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  /* Inputs plus sobres */
+  .mapgeo-mobile-tool-panel input,
+  .mapgeo-mobile-tool-panel select,
+  .mapgeo-mobile-tool-panel textarea {
+    min-height: 36px !important;
+    font-size: 16px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Espacements réduits */
+  .mapgeo-mobile-tool-panel .mt-3 {
+    margin-top: 0.48rem !important;
+  }
+
+  .mapgeo-mobile-tool-panel .mt-2 {
+    margin-top: 0.38rem !important;
+  }
+
+  .mapgeo-mobile-tool-panel .gap-3 {
+    gap: 0.42rem !important;
+  }
+
+  .mapgeo-mobile-tool-panel .gap-2 {
+    gap: 0.34rem !important;
+  }
+
+  .mapgeo-mobile-tool-panel .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.38rem !important;
+  }
+
+  /* Fond de carte : vignettes petites */
+  .mapgeo-basemap-panel [class*="h-[34px]"] {
+    height: 26px !important;
+  }
+
+  .mapgeo-basemap-panel .grid {
+    gap: 0.38rem !important;
+  }
+
+  /* Légende : lignes compactes */
+  .mapgeo-legend-panel [class*="space-y-1.5"] > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.3rem !important;
+  }
+
+  .mapgeo-legend-panel img {
+    max-height: 38px !important;
+  }
+
+  .mapgeo-legend-panel p:last-child {
+    display: none !important;
+  }
+
+  /* Export : très direct */
+  .mapgeo-export-panel p[class*="leading-5"] {
+    display: none !important;
+  }
+
+  .mapgeo-export-panel .grid {
+    gap: 0.38rem !important;
+  }
+
+  /* Géométrie : masquer les aides longues sur mobile */
+  .mapgeo-geometry-panel textarea {
+    max-height: 76px !important;
+  }
+
+  .mapgeo-geometry-panel [class*="leading-4"],
+  .mapgeo-geometry-panel [class*="leading-5"] {
+    font-size: 0.68rem !important;
+  }
+
+  /* Popups Leaflet compactes */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-popup {
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-popup-content-wrapper {
+    max-width: calc(100vw - 24px) !important;
+    border-radius: 16px !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-popup-content {
+    max-width: calc(100vw - 48px) !important;
+    max-height: 34dvh !important;
+    overflow-y: auto !important;
+    margin: 10px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .mapgeo-mobile-tool-panel {
+    top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
+    left: 8px !important;
+    width: min(292px, calc(100vw - 16px)) !important;
+    max-width: min(292px, calc(100vw - 16px)) !important;
+    max-height: min(38dvh, 300px) !important;
+  }
+
+  .mapgeo-measure-panel {
+    width: min(274px, calc(100vw - 16px)) !important;
+    max-width: min(274px, calc(100vw - 16px)) !important;
+    max-height: min(30dvh, 245px) !important;
+  }
+}
