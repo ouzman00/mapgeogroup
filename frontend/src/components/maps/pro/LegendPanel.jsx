@@ -400,7 +400,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
   return (
     <div
-      className="mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] max-h-[58%] overflow-y-auto rounded-[20px] border border-white/10 bg-[#07111b]/78 p-3 text-white shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[300px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
+      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] max-h-[58%] overflow-y-auto rounded-[20px] border border-white/10 bg-[#07111b]/78 p-3 text-white shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[300px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
@@ -444,7 +444,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
       {totalCount ? (
         <p className="mt-3 border-t border-white/10 pt-2 text-[11px] font-medium leading-4 text-white/50">
-          Une couche masquée reste dans cette légende pour pouvoir être réactivée. Les couches sans donnée ou non raccordées sont masquées pour éviter les entrées fantômes.
+          Activez ou masquez les couches visibles.
         </p>
       ) : null}
     </div>

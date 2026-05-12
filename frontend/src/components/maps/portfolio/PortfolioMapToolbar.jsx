@@ -69,7 +69,7 @@ function BaseMapPicker({ layers, activeBaseLayerId, onBaseSelect }) {
   const visibleLayers = Array.isArray(layers) && layers.length ? layers : [];
 
   return (
-    <div className="mapgeo-popover-enter mt-2 w-full max-w-[calc(100vw-1.5rem)] rounded-[16px] sm:w-[460px] sm:max-w-[calc(100vw-2rem)] border border-white/10 bg-[#07111b]/96 p-2.5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl">
+    <div className="mapgeo-mobile-tool-panel mapgeo-basemap-panel mapgeo-popover-enter mt-2 w-full max-w-[calc(100vw-1.5rem)] rounded-[16px] sm:w-[460px] sm:max-w-[calc(100vw-2rem)] border border-white/10 bg-[#07111b]/96 p-2.5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="text-xs font-black uppercase tracking-[0.16em] text-white/60">Fond de carte</h3>
       </div>
@@ -189,12 +189,12 @@ export default function FloatingMapToolbar({
       ) : null}
 
       {activeCommand === "export" ? (
-        <div className="mapgeo-popover-enter mt-2 w-full max-w-[calc(100vw-1.5rem)] rounded-[16px] sm:w-[300px] sm:max-w-[calc(100vw-2rem)] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl">
+        <div className="mapgeo-mobile-tool-panel mapgeo-export-panel mapgeo-popover-enter mt-2 w-full max-w-[calc(100vw-1.5rem)] rounded-[16px] sm:w-[300px] sm:max-w-[calc(100vw-2rem)] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl">
           <div className="border-b border-white/10 pb-2">
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">Exporter</p>
             <h3 className="truncate text-sm font-extrabold text-white">Carte et géométrie</h3>
           </div>
-          <p className="mt-2 text-xs leading-5 text-white/60">Format PDF/PNG/JPEG/GeoJSON, résolution, légende, nord, échelle et attributs.</p>
+          <p className="mt-2 text-xs leading-5 text-white/60">Export rapide de la carte ou de la géométrie.</p>
           <button type="button" onClick={() => { setActiveCommand(null); onOpenExportOptions?.(); }} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-mapgeo-primary px-3 py-2.5 text-sm font-extrabold text-white mapgeo-action-button hover:bg-mapgeo-sand">
             <FileDown size={15} /> Assistant d’export
           </button>
