@@ -1880,11 +1880,6 @@ export default function PortfolioMapShell({
       return;
     }
 
- if (isMobileCartographyViewport()) {
-      clearPendingMeasurementClick();
-      return;
-    }
-
     if (!showMeasurements || !Array.isArray(point) || point.length < 2) return;
     clearPendingMeasurementClick();
     measurementClickTimerRef.current = window.setTimeout(() => {
@@ -2179,11 +2174,16 @@ export default function PortfolioMapShell({
           <MapRuntimeObserver
             onMouseMove={(point) => {
               setCursorPosition(point);
+
               if (showMeasurements) {
+                // Mobile : le toucher écran ne doit ni créer, ni déplacer, ni prévisualiser un point.
+                if (isMobileCartographyViewport()) return;
+
                 if (!point) {
                   setMeasurementDraft((current) => (current?.finished ? current : { ...current, cursorPoint: null, snapPoint: null, snapKind: null }));
                   return;
                 }
+
                 const snap = resolveMeasurementPoint(point);
                 setMeasurementDraft((current) => (
                   current?.finished
