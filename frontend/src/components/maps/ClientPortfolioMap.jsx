@@ -41,14 +41,14 @@ function getAccessErrorMessage(error) {
   const status = getHttpStatus(error);
 
   if (status === 401) {
-    return "Session expirÃ©e. Veuillez vous reconnecter.";
+    return "Session expirée. Veuillez vous reconnecter.";
   }
 
   if (status === 403) {
-    return "AccÃ¨s refusÃ© ou session expirÃ©e. Veuillez vÃ©rifier votre connexion.";
+    return "Accès refusé ou session expirée. Veuillez vérifier votre connexion.";
   }
 
-  return "Impossible de charger les donnÃ©es cartographiques.";
+  return "Impossible de charger les données cartographiques.";
 }
 
 export default function ClientPortfolioMap({
@@ -479,7 +479,7 @@ export default function ClientPortfolioMap({
           }
 
           console.warn(
-            "La parcelle a Ã©tÃ© enregistrÃ©e, mais le rechargement dÃ©taillÃ© a Ã©chouÃ©.",
+            "La parcelle a été enregistrée, mais le rechargement détaillé a échoué.",
             error,
           );
         }
@@ -519,7 +519,7 @@ export default function ClientPortfolioMap({
           await onParcelUpdated?.(mergedParcel);
         } catch (error) {
           console.warn(
-            "La parcelle a Ã©tÃ© enregistrÃ©e, mais le rafraÃ®chissement parent a Ã©chouÃ©.",
+            "La parcelle a été enregistrée, mais le rafraîchissement parent a échoué.",
             error,
           );
         }
@@ -559,7 +559,7 @@ export default function ClientPortfolioMap({
           await onParcelDeleted?.(parcelId);
         } catch (error) {
           console.warn(
-            "La parcelle a Ã©tÃ© archivÃ©e, mais le rafraÃ®chissement parent a Ã©chouÃ©.",
+            "La parcelle a été archivée, mais le rafraîchissement parent a échoué.",
             error,
           );
         }
@@ -644,14 +644,14 @@ export default function ClientPortfolioMap({
 
         {viewportLoading && !mapAccessBlocked ? (
           <div className="pointer-events-none fixed bottom-5 right-5 z-[1100] rounded-full border border-white/10 bg-[#07111b]/82 px-3 py-1.5 text-xs font-bold text-white/70 shadow-[0_12px_32px_rgba(0,0,0,0.28)] backdrop-blur">
-            Mise Ã  jour des parcelles visiblesâ€¦
+            Mise à jour des parcelles visibles…
           </div>
         ) : null}
 
         {mapAccessBlocked ? (
           <div className="fixed bottom-5 right-5 z-[1200] max-w-[360px] rounded-2xl border border-amber-300/30 bg-[#07111b]/94 p-3 text-sm font-semibold text-white shadow-[0_18px_55px_rgba(0,0,0,0.38)] backdrop-blur-xl">
             <p className="text-amber-100">
-              {mapAccessMessage || "Session expirÃ©e ou accÃ¨s refusÃ©."}
+              {mapAccessMessage || "Session expirée ou accès refusé."}
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -660,7 +660,7 @@ export default function ClientPortfolioMap({
                 onClick={retryViewportRequests}
                 className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-bold text-white/80 transition hover:bg-white/10"
               >
-                RÃ©essayer
+                Réessayer
               </button>
 
               <button
@@ -691,14 +691,14 @@ export default function ClientPortfolioMap({
           }
           onCancelCreateParcel={onCancelCreateParcel}
           onParcelCreated={async (newParcel) => {
-            // Ajoute immÃ©diatement la nouvelle parcelle aux overrides pour l'afficher sur la carte
-            // avant que le viewport ne se rafraÃ®chisse
+            // Ajoute immédiatement la nouvelle parcelle aux overrides pour l'afficher sur la carte
+            // avant que le viewport ne se rafraîchisse
             if (newParcel?.id) {
               setParcelOverrides((current) => ({
                 ...current,
                 [String(newParcel.id)]: newParcel,
               }));
-              // Invalide le cache viewport pour forcer un refresh au prochain dÃ©placement
+              // Invalide le cache viewport pour forcer un refresh au prochain déplacement
               viewportFetchKeyRef.current = "";
             }
             await onParcelCreated?.(newParcel);
