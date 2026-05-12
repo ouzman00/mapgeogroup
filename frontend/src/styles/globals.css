@@ -1779,3 +1779,62 @@ main > .mapgeo-carto-workspace,
     overflow-y: hidden !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE TOOLBAR CLOSED WIDTH
+   Objectif :
+   - barre outils vraiment repliée sur mobile
+   - repliée : petit bloc Couches + flèche
+   - ouverte : bande outils
+   - aucun impact desktop
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-container {
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-collapsed {
+    width: auto !important;
+    max-width: none !important;
+    min-width: 92px !important;
+    height: 46px !important;
+    display: inline-flex !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-expanded {
+    width: min(390px, calc(100vw - 68px)) !important;
+    max-width: calc(100vw - 68px) !important;
+    min-width: 0 !important;
+    height: 46px !important;
+    display: flex !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-collapsed .mapgeo-inline-tools,
+  body:has(.mapgeo-carto-page) .mapgeo-inline-tools.is-hidden {
+    display: none !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-expanded .mapgeo-inline-tools,
+  body:has(.mapgeo-carto-page) .mapgeo-inline-tools.is-visible {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 158px) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-collapsed button,
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell.is-expanded button {
+    flex-shrink: 0 !important;
+  }
+}
