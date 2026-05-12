@@ -159,7 +159,7 @@ function MapTopbar({ parcel, ownerLabel, user, returnTo = "/parcelles" }) {
   })();
 
   return (
-    <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-[#C7B299]/16 bg-[#123B5D]/96 px-5 text-[#F7F5F2] shadow-[0_14px_40px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+    <header className="mapgeo-carto-topbar flex h-auto min-h-[64px] shrink-0 items-center justify-between border-b border-[#C7B299]/16 bg-[#123B5D]/96 px-3 py-2 text-[#F7F5F2] shadow-[0_14px_40px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:h-[72px] sm:px-5 sm:py-0">
       <div className="flex min-w-0 items-center gap-5">
         <AppLogo />
 
@@ -608,7 +608,7 @@ export default function ParcelleCartoPage() {
       <div className="mapgeo-carto-workspace flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-[#0B2236] text-[#F7F5F2]">
         <MapTopbar parcel={activeParcel} ownerLabel={ownerLabel} user={user} returnTo={returnTo} />
 
-        <div className="flex min-h-0 flex-1 overflow-hidden bg-[#0B2236]">
+        <div className="mapgeo-carto-body flex min-h-0 flex-1 overflow-hidden bg-[#0B2236]">
           <div className="relative min-w-0 flex-1 overflow-hidden">
                         <ClientPortfolioMap
               clientCode={activeParcel?.owner_client_code}
