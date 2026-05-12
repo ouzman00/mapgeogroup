@@ -1600,3 +1600,165 @@ main > .mapgeo-carto-workspace,
     right: 60px !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE CARTOGRAPHIE PLEIN ÉCRAN
+   Objectif :
+   - cacher la barre applicative logo/recherche/notifications/profil sur mobile cartographie
+   - carte plein écran utile
+   - barre outils plus lisible
+   - mobile uniquement, desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /*
+   * Cache la barre haute globale uniquement quand on est sur la page cartographie.
+   * On utilise :has() pour ne pas toucher aux autres pages mobile.
+   */
+  body:has(.mapgeo-carto-page) header:not(.mapgeo-carto-topbar) {
+    display: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) main,
+  body:has(.mapgeo-carto-page) .mapgeo-carto-page,
+  body:has(.mapgeo-carto-page) .mapgeo-carto-workspace,
+  body:has(.mapgeo-carto-page) .mapgeo-carto-body {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-carto-topbar {
+    display: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-root {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-grid {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    display: block !important;
+    overflow: hidden !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-shell {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-printable-map,
+  body:has(.mapgeo-carto-page) .mapgeo-printable-map .leaflet-container {
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-sidebar,
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-inspector,
+  body:has(.mapgeo-carto-page) .mapgeo-mobile-carto-tabs {
+    display: none !important;
+  }
+
+  /*
+   * Barre outils : un peu plus large et plus confortable,
+   * sans couvrir la flèche nord.
+   */
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-container {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+    left: 10px !important;
+    right: 58px !important;
+    bottom: auto !important;
+    z-index: 2450 !important;
+    width: auto !important;
+    max-width: calc(100vw - 68px) !important;
+    transform: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell {
+    height: 46px !important;
+    min-height: 46px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.28rem !important;
+    border-radius: 16px !important;
+    background: rgba(7, 17, 27, 0.84) !important;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell button {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-toolbar-shell button svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-inline-tools {
+    max-width: calc(100vw - 128px) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-inline-tools::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /*
+   * Flèche nord et localisation au-dessus de tout.
+   */
+  body:has(.mapgeo-carto-page) .mapgeo-north-arrow {
+    top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+    right: 8px !important;
+    z-index: 2700 !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-map-control-stack {
+    right: 12px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px) !important;
+    z-index: 2700 !important;
+  }
+
+  /*
+   * Le message "Carte : emprise courante" prend trop de place sur mobile.
+   */
+  body:has(.mapgeo-carto-page) .mapgeo-viewport-notice {
+    display: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .leaflet-control-attribution {
+    display: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .leaflet-control-scale {
+    z-index: 2600 !important;
+    margin-left: 10px !important;
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+    transform: scale(0.84) !important;
+    transform-origin: bottom left !important;
+  }
+}
