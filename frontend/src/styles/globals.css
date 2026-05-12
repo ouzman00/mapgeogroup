@@ -1910,3 +1910,173 @@ main > .mapgeo-carto-workspace,
     flex-shrink: 0 !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX FINAL MOBILE MESURE GOOGLE EARTH + LEGENDE COMPACTE
+   Objectif :
+   - mesure mobile par point central, type Google Earth
+   - fenêtre mesure compacte
+   - légende réduite avec scroll si plus de 2 couches
+   - aucun impact desktop
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* Réticule central visible seulement quand Mesures est actif */
+  .mapgeo-measure-center-reticle {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    z-index: 2500 !important;
+    width: 34px !important;
+    height: 34px !important;
+    transform: translate(-50%, -50%) !important;
+    pointer-events: none !important;
+    display: grid !important;
+    place-items: center !important;
+  }
+
+  .mapgeo-measure-center-reticle::before,
+  .mapgeo-measure-center-reticle::after {
+    content: "" !important;
+    position: absolute !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    box-shadow: 0 0 0 1px rgba(7, 17, 27, 0.55) !important;
+  }
+
+  .mapgeo-measure-center-reticle::before {
+    width: 22px !important;
+    height: 2px !important;
+  }
+
+  .mapgeo-measure-center-reticle::after {
+    width: 2px !important;
+    height: 22px !important;
+  }
+
+  .mapgeo-measure-center-reticle span {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 999px !important;
+    border: 2px solid #ffffff !important;
+    background: rgba(7, 17, 27, 0.45) !important;
+    box-shadow: 0 0 0 1px rgba(7, 17, 27, 0.65) !important;
+  }
+
+  /* Mesure : panneau court, pas sur l’échelle ni localisation */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-panel {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
+    transform: translateX(-50%) !important;
+
+    width: min(292px, calc(100vw - 104px)) !important;
+    max-width: min(292px, calc(100vw - 104px)) !important;
+    max-height: min(30dvh, 245px) !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    border-radius: 16px !important;
+    padding: 0.55rem !important;
+    z-index: 2460 !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-help {
+    font-size: 0.68rem !important;
+    line-height: 1.15 !important;
+    padding: 0.38rem 0.5rem !important;
+    opacity: 0.62 !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-result-row {
+    padding: 0.34rem 0.5rem !important;
+    border-radius: 10px !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-result-row strong {
+    font-size: 0.78rem !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-actions {
+    gap: 0.34rem !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-actions button {
+    min-height: 30px !important;
+    padding: 0.32rem 0.46rem !important;
+    font-size: 0.66rem !important;
+    border-radius: 9px !important;
+  }
+
+  /* Légende : encore plus compacte + scroll après 2 couches */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel {
+    position: fixed !important;
+    left: 10px !important;
+    right: auto !important;
+    top: calc(env(safe-area-inset-top, 0px) + 58px) !important;
+    bottom: auto !important;
+    transform: none !important;
+
+    width: min(236px, calc(100vw - 92px)) !important;
+    max-width: min(236px, calc(100vw - 92px)) !important;
+    max-height: 190px !important;
+
+    overflow: hidden !important;
+    border-radius: 14px !important;
+    padding: 0.45rem !important;
+    z-index: 2460 !important;
+  }
+
+  /* La liste des couches devient un menu scrollable.
+     En pratique, 2 couches visibles, le reste défile. */
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel [class*="space-y-1.5"],
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel [class*="space-y-2"] {
+    max-height: 104px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 2px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel [class*="space-y-1.5"] > :not([hidden]) ~ :not([hidden]),
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel [class*="space-y-2"] > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.28rem !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel h2,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel h3 {
+    font-size: 0.76rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel p,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel span,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel button {
+    font-size: 0.64rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel button {
+    min-height: 28px !important;
+    padding: 0.3rem 0.42rem !important;
+    border-radius: 9px !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel p:last-child {
+    display: none !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-panel {
+    width: min(274px, calc(100vw - 92px)) !important;
+    max-width: min(274px, calc(100vw - 92px)) !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 86px) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel {
+    width: min(224px, calc(100vw - 84px)) !important;
+    max-width: min(224px, calc(100vw - 84px)) !important;
+  }
+}

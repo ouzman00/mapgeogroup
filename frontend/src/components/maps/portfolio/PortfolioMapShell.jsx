@@ -1018,24 +1018,44 @@ function MeasurementOverlay({ draft }) {
 }
 
 function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onClose, onFinish }) {
+  const map = useMap();
+
   if (!open) return null;
 
   const draftSummary = buildMeasurementDraftSummary(measurementDraft);
+
   const setMode = (mode) => setMeasurementDraft((current) => ({
     mode,
     points: current?.mode === mode ? current.points : [],
-    cursorPoint: current?.cursorPoint || null,
-    snapPoint: current?.snapPoint || null,
-    snapKind: current?.snapKind || null,
-    finished: false,
-  }));
-  const undoPoint = () => setMeasurementDraft((current) => ({
-    ...current,
-    points: (current?.points || []).slice(0, -1),
+    cursorPoint: null,
     snapPoint: null,
     snapKind: null,
     finished: false,
   }));
+
+  const addPointFromCenter = () => {
+    if (!map) return;
+
+    const center = map.getCenter();
+    setMeasurementDraft((current) => ({
+      mode: current?.mode || "distance",
+      points: [...(current?.points || []), [center.lat, center.lng]],
+      cursorPoint: null,
+      snapPoint: null,
+      snapKind: "center",
+      finished: false,
+    }));
+  };
+
+  const undoPoint = () => setMeasurementDraft((current) => ({
+    ...current,
+    points: (current?.points || []).slice(0, -1),
+    cursorPoint: null,
+    snapPoint: null,
+    snapKind: null,
+    finished: false,
+  }));
+
   const resetPoints = () => setMeasurementDraft((current) => ({
     ...current,
     points: [],
@@ -1045,25 +1065,37 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
     finished: false,
   }));
 
+  const pointCount = measurementDraft?.points?.length || 0;
+
   return (
-    <DraggableMapPanel
-      className="mapgeo-mobile-tool-panel mapgeo-measure-panel mapgeo-export-hidden mapgeo-panel-enter absolute bottom-3 left-3 right-3 top-auto z-[950] max-h-[45%] overflow-y-auto rounded-[18px] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_22px_68px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[300px] sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-160px)]"
-      ariaLabel="Déplacer le bloc Mesures"
-    >
-      {({ dragHandleProps, resetPosition }) => (
-        <>
-          <PanelMoveHandle dragHandleProps={dragHandleProps} onReset={resetPosition} onClose={onClose} closeLabel="Fermer les mesures" />
+    <>
+      <div className="mapgeo-measure-center-reticle" aria-hidden="true">
+        <span />
+      </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <Ruler size={16} className="text-mapgeo-sand" />
-              <h3 className="truncate text-sm font-extrabold">Mesurer</h3>
+      <DraggableMapPanel
+        className="mapgeo-mobile-tool-panel mapgeo-measure-panel mapgeo-export-hidden mapgeo-panel-enter absolute bottom-3 left-3 right-3 top-auto z-[950] max-h-[45%] overflow-y-auto rounded-[18px] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_22px_68px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[300px] sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-160px)]"
+        ariaLabel="Déplacer le bloc Mesures"
+      >
+        {({ dragHandleProps, resetPosition }) => (
+          <>
+            <PanelMoveHandle dragHandleProps={dragHandleProps} onReset={resetPosition} onClose={onClose} closeLabel="Fermer les mesures" />
+
+            <div className="mapgeo-mobile-measure-header flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <Ruler size={16} className="text-mapgeo-sand" />
+                <h3 className="truncate text-sm font-extrabold">Mesurer</h3>
+              </div>
+              <span className="rounded-full bg-mapgeo-sand/20 px-2 py-0.5 text-[10px] font-bold text-mapgeo-sand">
+                {pointCount} pt{pointCount > 1 ? "s" : ""}
+              </span>
             </div>
-            <span className="rounded-full bg-mapgeo-sand/20 px-2 py-0.5 text-[10px] font-bold text-mapgeo-sand">Actif</span>
-          </div>
 
-          <div className="mt-2 space-y-2 text-sm">
-            <div className="grid grid-cols-2 gap-2">
+            <p className="mapgeo-measure-help mt-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/55">
+              Centrez la carte sur le point, puis ajoutez-le.
+            </p>
+
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setMode("distance")} className={`rounded-xl px-3 py-2 text-xs font-extrabold transition ${measurementDraft.mode === "distance" ? "bg-mapgeo-primary text-white" : "bg-white/[0.055] text-white/70 hover:bg-white/10"}`}>
                 Distance
               </button>
@@ -1072,7 +1104,7 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
               </button>
             </div>
 
-            <div className="grid gap-1.5">
+            <div className="mt-2 grid gap-1.5">
               <div className="mapgeo-measure-result-row flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
                 <span className="text-white/60">Distance</span>
                 <strong className="text-right text-white">{draftSummary.distanceLabel}</strong>
@@ -1087,25 +1119,24 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
               </div>
             </div>
 
-            <p className="mapgeo-measure-help rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/50">
-              Ajoutez les points sur la carte, puis terminez.
-            </p>
-
-            <div className="mapgeo-measure-actions flex flex-wrap gap-2">
-              <button type="button" onClick={onFinish} disabled={!measurementDraft.points.length} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-35">
+            <div className="mapgeo-measure-actions mt-2 flex flex-wrap gap-2">
+              <button type="button" onClick={addPointFromCenter} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/25">
+                <Plus size={14} /> Ajouter
+              </button>
+              <button type="button" onClick={onFinish} disabled={!pointCount} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-35">
                 <Check size={14} /> Terminer
               </button>
-              <button type="button" onClick={undoPoint} disabled={!measurementDraft.points.length} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35">
+              <button type="button" onClick={undoPoint} disabled={!pointCount} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35">
                 <Undo2 size={14} /> Annuler
               </button>
-              <button type="button" onClick={resetPoints} disabled={!measurementDraft.points.length} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35">
+              <button type="button" onClick={resetPoints} disabled={!pointCount} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35">
                 <Trash2 size={14} /> Vider
               </button>
             </div>
-          </div>
-        </>
-      )}
-    </DraggableMapPanel>
+          </>
+        )}
+      </DraggableMapPanel>
+    </>
   );
 }
 
