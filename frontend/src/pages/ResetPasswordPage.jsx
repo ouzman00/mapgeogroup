@@ -4,6 +4,7 @@ import { CheckCircle2, KeyRound } from "lucide-react";
 import AuthLayout from "../layouts/AuthLayout";
 import authService from "../services/authService";
 import { getErrorMessage } from "../services/responseUtils";
+import PasswordInput from "../components/ui/PasswordInput";
 
 export default function ResetPasswordPage() {
   const { uid, token } = useParams();
@@ -110,29 +111,21 @@ export default function ResetPasswordPage() {
               </strong>
             </div>
 
-            <label className="block">
-              <span className="text-xs font-bold text-mapgeo-primary">Nouveau mot de passe</span>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(event) => update("password", event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-mapgeo-line px-4 py-3 text-sm outline-none focus:border-mapgeo-primary"
-                autoComplete="new-password"
-                required
-              />
-            </label>
+            <PasswordInput
+              label="Nouveau mot de passe"
+              value={form.password}
+              onChange={(event) => update("password", event.target.value)}
+              autoComplete="new-password"
+              required
+            />
 
-            <label className="block">
-              <span className="text-xs font-bold text-mapgeo-primary">Confirmer le mot de passe</span>
-              <input
-                type="password"
-                value={form.password_confirm}
-                onChange={(event) => update("password_confirm", event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-mapgeo-line px-4 py-3 text-sm outline-none focus:border-mapgeo-primary"
-                autoComplete="new-password"
-                required
-              />
-            </label>
+            <PasswordInput
+              label="Confirmer le mot de passe"
+              value={form.password_confirm}
+              onChange={(event) => update("password_confirm", event.target.value)}
+              autoComplete="new-password"
+              required
+            />
 
             <button
               type="submit"

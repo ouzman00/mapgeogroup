@@ -55,11 +55,14 @@ class ImportJobListCreateView(ImportJobQuerysetMixin, generics.ListCreateAPIView
                 raise PermissionDenied("Propriétaire par défaut non autorisé pour votre périmètre.")
         if organization and default_owner and not default_owner.organization_memberships.filter(organization=organization, is_active=True).exists():
             raise PermissionDenied("Le propriétaire par défaut n'appartient pas à l'organisation sélectionnée.")
+        skip_errors_raw = str(self.request.data.get("skip_errors", "false")).strip().lower()
+        skip_errors = skip_errors_raw in {"true", "1", "yes", "on"}
         serializer.save(
             created_by=self.request.user,
             organization=organization,
             default_owner=default_owner,
             original_filename=getattr(self.request.FILES.get("file"), "name", None),
+            skip_errors=skip_errors,
         )
 
 

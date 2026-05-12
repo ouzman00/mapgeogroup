@@ -84,7 +84,7 @@ export function AuthProvider({ children }) {
 
       try {
         let activeTokens = tokens;
-        if (!activeTokens?.access && activeTokens?.refresh && !manualLogoutRef.current) {
+        if (!activeTokens?.access && !manualLogoutRef.current) {
           activeTokens = await refreshAccessToken();
           if (activeTokens?.access && canCommit()) {
             setTokens(activeTokens);
@@ -151,8 +151,13 @@ export function AuthProvider({ children }) {
       tokens,
       loading,
       isAuthenticated: Boolean(tokens?.access),
-      isClientPortal: user?.portal_type === "client",
-      isInternalPortal: user?.portal_type === "internal",
+      // Fallback : si portal_type est absent du profil, on le dérive du rôle
+      isClientPortal: user?.portal_type
+        ? user.portal_type === "client"
+        : user?.role === "client",
+      isInternalPortal: user?.portal_type
+        ? user.portal_type === "internal"
+        : Boolean(user?.role && user.role !== "client"),
       login,
       loginWithGoogle,
       logout,

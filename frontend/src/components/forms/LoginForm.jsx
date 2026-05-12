@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { getErrorMessage } from "../../services/responseUtils";
 import { premium } from "../ui/designSystem";
+import PasswordInput from "../ui/PasswordInput";
 
 const inputClass = premium.input;
 
@@ -156,15 +157,13 @@ export default function LoginForm() {
             Mot de passe oublié ?
           </Link>
         </div>
-        <input
+        <PasswordInput
           name="password"
-          type="password"
           value={formData.password}
           onChange={handleChange}
           placeholder="••••••••"
-          className={inputClass}
-          autoComplete="current-password"
           required
+          autoComplete="current-password"
         />
       </div>
 

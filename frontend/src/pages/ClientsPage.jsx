@@ -31,6 +31,7 @@ import {
   normalizePortalAccessStatus,
 } from "../constants/clientConstants";
 import { formatDateLabel } from "../utils/dateUtils";
+import PasswordInput from "../components/ui/PasswordInput";
 
 const emptyForm = {
   name: "",
@@ -346,7 +347,19 @@ function SelectField({ label, icon: Icon, value, onChange, children }) {
   );
 }
 
+const CLIENTS_PAGE_SIZE = 20;
+
 function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onResetAccess }) {
+  const [page, setPage] = useState(1);
+
+  // Reset page when clients list changes (filter applied)
+  useEffect(() => { setPage(1); }, [clients]);
+
+  const totalPages = Math.max(1, Math.ceil(clients.length / CLIENTS_PAGE_SIZE));
+  const pageClients = clients.slice((page - 1) * CLIENTS_PAGE_SIZE, page * CLIENTS_PAGE_SIZE);
+  const start = clients.length ? (page - 1) * CLIENTS_PAGE_SIZE + 1 : 0;
+  const end = Math.min(page * CLIENTS_PAGE_SIZE, clients.length);
+
   return (
     <section className="rounded-3xl border border-mapgeo-line bg-white shadow-soft">
       <div className="flex flex-col gap-3 border-b border-mapgeo-line p-6 lg:flex-row lg:items-center lg:justify-between">
@@ -391,7 +404,7 @@ function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onRese
                 </td>
               </tr>
             ) : (
-              clients.map((client) => (
+              pageClients.map((client) => (
                 <tr key={client.id} className="transition hover:bg-mapgeo-ivory/40">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -470,20 +483,55 @@ function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onRese
       <div className="flex flex-col gap-3 border-t border-mapgeo-line px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-mapgeo-secondary/70">
           {clients.length
-            ? `Affichage de 1 à ${clients.length} sur ${clients.length} client${clients.length > 1 ? "s" : ""}`
+            ? `Affichage de ${start} à ${end} sur ${clients.length} client${clients.length > 1 ? "s" : ""}`
             : "Aucun client à afficher"}
         </p>
-        <div className="flex items-center gap-2">
-          <button type="button" disabled className="rounded-xl border border-mapgeo-line p-2 text-mapgeo-secondary opacity-50" aria-label="Page précédente indisponible">
-            <ChevronLeft size={16} />
-          </button>
-          <button type="button" disabled aria-current="page" className="rounded-xl bg-mapgeo-primary px-3 py-2 text-sm font-bold text-white opacity-90">
-            1
-          </button>
-          <button type="button" disabled className="rounded-xl border border-mapgeo-line p-2 text-mapgeo-secondary opacity-50" aria-label="Page suivante indisponible">
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        {totalPages > 1 ? (
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-xl border border-mapgeo-line p-2 text-mapgeo-secondary transition hover:bg-mapgeo-ivory disabled:opacity-40"
+              aria-label="Page précédente"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push("…");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) =>
+                p === "…"
+                  ? <span key={`ellipsis-${idx}`} className="px-1 text-mapgeo-secondary/50 text-sm select-none">…</span>
+                  : <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPage(p)}
+                      aria-current={page === p ? "page" : undefined}
+                      className={`min-w-[34px] rounded-xl px-2 py-2 text-sm font-bold transition ${
+                        page === p
+                          ? "bg-mapgeo-primary text-white shadow-soft"
+                          : "border border-mapgeo-line text-mapgeo-primary hover:bg-mapgeo-ivory"
+                      }`}
+                    >
+                      {p}
+                    </button>
+              )}
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded-xl border border-mapgeo-line p-2 text-mapgeo-secondary transition hover:bg-mapgeo-ivory disabled:opacity-40"
+              aria-label="Page suivante"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -652,13 +700,13 @@ function ClientFormPanel({ form, setForm, editingClient, saving, onSubmit, onCan
             ) : null}
 
             {!editingClient && form.portalAccess && !form.sendInvitation ? (
-              <TextInput
+              <PasswordInput
                 label="Mot de passe initial"
-                type="password"
-                required
                 value={form.password}
-                onChange={(value) => update("password", value)}
+                onChange={(event) => update("password", event.target.value)}
                 placeholder="••••••••"
+                required
+                autoComplete="new-password"
               />
             ) : null}
 

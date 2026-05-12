@@ -31,6 +31,35 @@ from .services import (
 
 User = get_user_model()
 
+
+# ---------------------------------------------------------------------------
+# Mixin mutualisé : owner / organization  (évite la copie dans List/Map/Detail)
+# ---------------------------------------------------------------------------
+
+class ParcelOwnerOrgMixin:
+    """Fournit get_owner_name, get_owner_client_code, get_organization_name,
+    get_organization_code et get_progress à tous les serializers en lecture."""
+
+    def get_owner_name(self, obj):
+        full_name = f"{obj.owner.first_name} {obj.owner.last_name}".strip()
+        return full_name or obj.owner.company_name or obj.owner.username
+
+    def get_owner_client_code(self, obj):
+        return obj.owner.client_code
+
+    def get_organization_name(self, obj):
+        return obj.organization.name if obj.organization_id else None
+
+    def get_organization_code(self, obj):
+        return obj.organization.code if obj.organization_id else None
+
+    def get_progress(self, obj):
+        return get_parcel_progress(obj)
+
+    def get_crs(self, obj):
+        return "EPSG:32628"
+
+
 def _projected_point_to_wgs84(point):
     if point is None:
         return None
@@ -189,7 +218,7 @@ class ParcelGeometryVersionSerializer(serializers.ModelSerializer):
         return full_name or obj.modified_by.company_name or obj.modified_by.username
 
 
-class ParcelListSerializer(serializers.ModelSerializer):
+class ParcelListSerializer(ParcelOwnerOrgMixin, serializers.ModelSerializer):
     owner_name = serializers.SerializerMethodField()
     owner_client_code = serializers.SerializerMethodField()
     organization_name = serializers.SerializerMethodField()
@@ -251,9 +280,6 @@ class ParcelListSerializer(serializers.ModelSerializer):
     def get_geometry(self, obj):
         return geos_to_geojson(obj.geom) if obj.geom is not None else obj.geometry
 
-    def get_crs(self, obj):
-        return "EPSG:32628"
-
     def get_centroid_x(self, obj):
         return obj.longitude
 
@@ -274,24 +300,8 @@ class ParcelListSerializer(serializers.ModelSerializer):
         lon, _ = _parcel_centroid_lon_lat(obj)
         return lon
 
-    def get_owner_name(self, obj):
-        full_name = f"{obj.owner.first_name} {obj.owner.last_name}".strip()
-        return full_name or obj.owner.company_name or obj.owner.username
 
-    def get_owner_client_code(self, obj):
-        return obj.owner.client_code
-
-    def get_organization_name(self, obj):
-        return obj.organization.name if obj.organization_id else None
-
-    def get_organization_code(self, obj):
-        return obj.organization.code if obj.organization_id else None
-
-    def get_progress(self, obj):
-        return get_parcel_progress(obj)
-
-
-class ParcelMapSerializer(serializers.ModelSerializer):
+class ParcelMapSerializer(ParcelOwnerOrgMixin, serializers.ModelSerializer):
     """Serializer léger réservé à la fenêtre cartographique.
 
     Il évite d'exposer toute la fiche parcellaire à chaque déplacement de carte
@@ -353,9 +363,6 @@ class ParcelMapSerializer(serializers.ModelSerializer):
         geom = self._simplified_geom(obj)
         return geos_to_geojson(geom) if geom is not None else obj.geometry
 
-    def get_crs(self, obj):
-        return "EPSG:32628"
-
     def get_centroid_lat(self, obj):
         _, lat = _parcel_centroid_lon_lat(obj)
         return lat
@@ -364,24 +371,8 @@ class ParcelMapSerializer(serializers.ModelSerializer):
         lon, _ = _parcel_centroid_lon_lat(obj)
         return lon
 
-    def get_owner_name(self, obj):
-        full_name = f"{obj.owner.first_name} {obj.owner.last_name}".strip()
-        return full_name or obj.owner.company_name or obj.owner.username
 
-    def get_owner_client_code(self, obj):
-        return obj.owner.client_code
-
-    def get_organization_name(self, obj):
-        return obj.organization.name if obj.organization_id else None
-
-    def get_organization_code(self, obj):
-        return obj.organization.code if obj.organization_id else None
-
-    def get_progress(self, obj):
-        return get_parcel_progress(obj)
-
-
-class ParcelDetailSerializer(serializers.ModelSerializer):
+class ParcelDetailSerializer(ParcelOwnerOrgMixin, serializers.ModelSerializer):
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
     owner_name = serializers.SerializerMethodField()
     owner_client_code = serializers.SerializerMethodField()
@@ -460,9 +451,6 @@ class ParcelDetailSerializer(serializers.ModelSerializer):
     def get_geometry(self, obj):
         return geos_to_geojson(obj.geom) if obj.geom is not None else obj.geometry
 
-    def get_crs(self, obj):
-        return "EPSG:32628"
-
     def get_centroid_x(self, obj):
         return obj.longitude
 
@@ -483,19 +471,6 @@ class ParcelDetailSerializer(serializers.ModelSerializer):
         lon, _ = _parcel_centroid_lon_lat(obj)
         return lon
 
-    def get_owner_name(self, obj):
-        full_name = f"{obj.owner.first_name} {obj.owner.last_name}".strip()
-        return full_name or obj.owner.company_name or obj.owner.username
-
-    def get_owner_client_code(self, obj):
-        return obj.owner.client_code
-
-    def get_organization_name(self, obj):
-        return obj.organization.name if obj.organization_id else None
-
-    def get_organization_code(self, obj):
-        return obj.organization.code if obj.organization_id else None
-
     def get_documents(self, obj):
         request = self.context.get("request")
         queryset = obj.documents.none()
@@ -506,10 +481,17 @@ class ParcelDetailSerializer(serializers.ModelSerializer):
         return ParcelDocumentSerializer(queryset, many=True, context=self.context).data
 
     def get_computed_area(self, obj):
+        # Sert les valeurs calculées déjà en base pour éviter un recalcul PostGIS
+        # inutile à chaque sérialisation. Si geom est présent mais area absente
+        # (parcelle ancienne), on recalcule une fois à la demande.
+        if obj.area is not None:
+            return obj.area
         area, _ = compute_area_perimeter_from_geometry(geom=obj.geom)
         return area
 
     def get_computed_perimeter(self, obj):
+        if obj.perimeter is not None:
+            return obj.perimeter
         _, perimeter = compute_area_perimeter_from_geometry(geom=obj.geom)
         return perimeter
 

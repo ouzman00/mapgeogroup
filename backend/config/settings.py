@@ -276,12 +276,53 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+
+
+def env_path(name: str, default: Path) -> Path:
+    raw_value = env(name)
+    path = Path(raw_value).expanduser() if raw_value else default
+    if not path.is_absolute():
+        path = BASE_DIR / path
+    return path.resolve(strict=False)
+
+
+def ensure_storage_directory(path: Path, *, private: bool) -> Path:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        if os.name != "nt":
+            path.chmod(0o750 if private else 0o755)
+    except OSError as exc:
+        raise ImproperlyConfigured(f"Impossible de créer le dossier de stockage {path}: {exc}") from exc
+    return path
+
+
+def validate_private_storage_root(path: Path, *, name: str, public_media_root: Path) -> Path:
+    if path == public_media_root or path.is_relative_to(public_media_root):
+        raise ImproperlyConfigured(
+            f"{name} ne doit pas être dans MEDIA_ROOT. Les fichiers privés doivent rester hors URL publique."
+        )
+    return path
+
+
+MEDIA_ROOT = ensure_storage_directory(env_path("MEDIA_ROOT", BASE_DIR / "media"), private=False)
 
 # Fichiers privés servis uniquement par des vues API authentifiées.
-PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
-PRIVATE_GEOJSON_ROOT = PRIVATE_MEDIA_ROOT / "geojson"
-PRIVATE_MAP_LAYERS_ROOT = PRIVATE_MEDIA_ROOT / "map_layers"
+# En production Render, pointer ces racines vers le Persistent Disk, par exemple /mnt/render-disk/*.
+PRIVATE_MEDIA_ROOT = validate_private_storage_root(
+    ensure_storage_directory(env_path("PRIVATE_MEDIA_ROOT", BASE_DIR / "private_media"), private=True),
+    name="PRIVATE_MEDIA_ROOT",
+    public_media_root=MEDIA_ROOT,
+)
+PRIVATE_GEOJSON_ROOT = validate_private_storage_root(
+    ensure_storage_directory(env_path("PRIVATE_GEOJSON_ROOT", BASE_DIR / "private_geojson"), private=True),
+    name="PRIVATE_GEOJSON_ROOT",
+    public_media_root=MEDIA_ROOT,
+)
+PRIVATE_MAP_LAYERS_ROOT = validate_private_storage_root(
+    ensure_storage_directory(env_path("PRIVATE_MAP_LAYERS_ROOT", BASE_DIR / "private_map_layers"), private=True),
+    name="PRIVATE_MAP_LAYERS_ROOT",
+    public_media_root=MEDIA_ROOT,
+)
 MAX_GEOJSON_UPLOAD_SIZE = env_int("MAX_GEOJSON_UPLOAD_SIZE", 20 * 1024 * 1024)
 MAX_GEOJSON_FEATURES = env_int("MAX_GEOJSON_FEATURES", 50000)
 MAX_VECTOR_UPLOAD_SIZE = env_int("MAX_VECTOR_UPLOAD_SIZE", 20 * 1024 * 1024)
@@ -308,6 +349,18 @@ if not DEBUG and cors_allow_all_requested:
         "DJANGO_CORS_ALLOW_ALL_ORIGINS=True est interdit en production."
     )
 
+if not DEBUG and not cors_allowed_origins:
+    raise ImproperlyConfigured(
+        "DJANGO_CORS_ALLOWED_ORIGINS doit contenir l'origine Vercel exacte en production, "
+        "ex: https://mapgeogroup.vercel.app."
+    )
+
+for origin in cors_allowed_origins:
+    if origin == "*" or origin.endswith("/"):
+        raise ImproperlyConfigured(
+            "DJANGO_CORS_ALLOWED_ORIGINS doit contenir des origines exactes sans wildcard ni slash final."
+        )
+
 CORS_ALLOW_ALL_ORIGINS = DEBUG and (cors_allow_all_requested or not cors_allowed_origins)
 CORS_ALLOWED_ORIGINS = [] if CORS_ALLOW_ALL_ORIGINS else cors_allowed_origins
 CORS_ALLOW_CREDENTIALS = env_bool("DJANGO_CORS_ALLOW_CREDENTIALS", True)
@@ -316,6 +369,12 @@ CSRF_TRUSTED_ORIGINS = env_list(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
     ",".join(cors_allowed_origins),
 )
+
+for origin in CSRF_TRUSTED_ORIGINS:
+    if origin == "*" or origin.endswith("/"):
+        raise ImproperlyConfigured(
+            "DJANGO_CSRF_TRUSTED_ORIGINS doit contenir des origines exactes sans wildcard ni slash final."
+        )
 
 MAP_VIEWPORT_PAGE_SIZE = env_int("MAP_VIEWPORT_PAGE_SIZE", 500)
 MAP_VIEWPORT_MAX_PAGE_SIZE = env_int("MAP_VIEWPORT_MAX_PAGE_SIZE", 1000)
@@ -370,9 +429,31 @@ JWT_REFRESH_COOKIE_ENABLED = env_bool("JWT_REFRESH_COOKIE_ENABLED", True)
 JWT_REFRESH_COOKIE_BODY_ENABLED = env_bool("JWT_REFRESH_COOKIE_BODY_ENABLED", DEBUG)
 JWT_REFRESH_COOKIE_NAME = env("JWT_REFRESH_COOKIE_NAME", "mapgeo_refresh")
 JWT_REFRESH_COOKIE_PATH = env("JWT_REFRESH_COOKIE_PATH", "/api/auth/refresh/")
-JWT_REFRESH_COOKIE_SAMESITE = env("JWT_REFRESH_COOKIE_SAMESITE", "Lax")
+# Frontend Vercel et backend Render sont sur deux sites différents :
+# le cookie refresh HttpOnly doit donc être cross-site en production.
+JWT_REFRESH_COOKIE_SAMESITE = env("JWT_REFRESH_COOKIE_SAMESITE", "None" if not DEBUG else "Lax")
 JWT_REFRESH_COOKIE_SECURE = env_bool("JWT_REFRESH_COOKIE_SECURE", not DEBUG)
-JWT_REFRESH_COOKIE_HTTPONLY = True
+JWT_REFRESH_COOKIE_HTTPONLY = env_bool("JWT_REFRESH_COOKIE_HTTPONLY", True)
+
+_valid_cookie_samesite_values = {"Lax", "Strict", "None"}
+if JWT_REFRESH_COOKIE_SAMESITE not in _valid_cookie_samesite_values:
+    raise ImproperlyConfigured("JWT_REFRESH_COOKIE_SAMESITE doit valoir Lax, Strict ou None.")
+
+if not DEBUG and JWT_REFRESH_COOKIE_ENABLED:
+    if not JWT_REFRESH_COOKIE_HTTPONLY:
+        raise ImproperlyConfigured("JWT_REFRESH_COOKIE_HTTPONLY=True est obligatoire en production.")
+    if JWT_REFRESH_COOKIE_SAMESITE != "None":
+        raise ImproperlyConfigured(
+            "JWT_REFRESH_COOKIE_SAMESITE=None est requis pour le refresh cookie HttpOnly "
+            "entre le frontend Vercel et le backend Render."
+        )
+    if not JWT_REFRESH_COOKIE_SECURE:
+        raise ImproperlyConfigured("JWT_REFRESH_COOKIE_SECURE=True est obligatoire en production.")
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = env("DJANGO_SESSION_COOKIE_SAMESITE", "None" if not DEBUG else "Lax")
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = env("DJANGO_CSRF_COOKIE_SAMESITE", "None" if not DEBUG else "Lax")
 
 if JWT_ACCESS_MINUTES <= 0:
     raise ImproperlyConfigured("JWT_ACCESS_MINUTES doit être supérieur à 0.")

@@ -131,137 +131,6 @@ textarea:focus {
   box-shadow: 0 8px 18px rgba(15, 33, 49, 0.18);
 }
 
-.mapgeo-side-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 72px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(15, 33, 49, 0.88);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  box-shadow: 0 8px 18px rgba(15, 33, 49, 0.22);
-}
-
-.mapgeo-parcel-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  min-width: 148px;
-  padding: 10px 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(180, 199, 218, 0.8);
-  box-shadow: 0 14px 30px rgba(15, 33, 49, 0.18);
-  text-align: center;
-}
-
-.mapgeo-parcel-badge strong {
-  color: #123B5D;
-  font-size: 14px;
-  line-height: 1.1;
-}
-
-.mapgeo-parcel-badge span {
-  color: rgba(15, 33, 49, 0.72);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.mapgeo-parcel-badge.is-active {
-  border-color: rgba(183, 146, 103, 0.95);
-  box-shadow: 0 16px 32px rgba(15, 33, 49, 0.24);
-}
-
-.mapgeo-parcel-badge.is-active strong {
-  color: #123B5D;
-}
-
-.mapgeo-range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: white;
-  border: 3px solid #123B5D;
-  box-shadow: 0 8px 18px rgba(15, 33, 49, 0.18);
-}
-
-.mapgeo-range::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: white;
-  border: 3px solid #123B5D;
-  box-shadow: 0 8px 18px rgba(15, 33, 49, 0.18);
-}
-
-.mapgeo-range::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.35) 100%);
-}
-
-.mapgeo-range::-moz-range-track {
-  height: 8px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.35) 100%);
-}
-
-
-.leaflet-tooltip {
-  border: none !important;
-  box-shadow: 0 8px 24px rgba(15, 33, 49, 0.14) !important;
-  border-radius: 12px !important;
-  color: #123B5D !important;
-}
-
-
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .mapgeo-printable-map,
-  .mapgeo-printable-map * {
-    visibility: visible;
-  }
-
-  .mapgeo-printable-map {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 999999 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    border: none !important;
-    border-radius: 0 !important;
-  }
-
-  .mapgeo-printable-map .leaflet-control-attribution,
-  .mapgeo-printable-map .leaflet-control-scale {
-    visibility: visible;
-  }
-}
-
-.mapgeo-printable-map:fullscreen {
-  border-radius: 0;
-}
-
-.mapgeo-exporting .mapgeo-export-hidden,
-.mapgeo-exporting .leaflet-control-container,
-.mapgeo-exporting .leaflet-tooltip,
-.mapgeo-exporting .leaflet-popup {
-  visibility: hidden !important;
-}
-
-
-/* Carte pro inspirée de GeoCadastre : marqueurs, contrôles et surcouches sombres. */
 .mapgeo-parcel-badge {
   min-width: auto;
   padding: 9px 12px;
@@ -1330,8 +1199,28 @@ main > .mapgeo-carto-workspace,
 .mapgeo-carto-workspace input,
 .mapgeo-carto-workspace select,
 .mapgeo-carto-workspace textarea {
-  color: #ffffff;
-  box-shadow: none;
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+.mapgeo-carto-workspace input:focus,
+.mapgeo-carto-workspace select:focus,
+.mapgeo-carto-workspace textarea:focus {
+  background-color: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(199, 178, 153, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(199, 178, 153, 0.12) !important;
+  outline: none !important;
+}
+
+.mapgeo-carto-workspace input:disabled,
+.mapgeo-carto-workspace select:disabled,
+.mapgeo-carto-workspace textarea:disabled {
+  color: rgba(255, 255, 255, 0.32) !important;
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  cursor: not-allowed !important;
 }
 
 .mapgeo-carto-workspace input::placeholder,
@@ -1343,6 +1232,90 @@ main > .mapgeo-carto-workspace,
   color: inherit !important;
 }
 
+
+/* --------------------------------------------------------------------------
+   Responsivité mobile – fenêtre cartographique
+   Sur petits écrans (<768px) : sidebar masquée par défaut, carte plein écran,
+   inspecteur en drawer bas, toolbar icons uniquement.
+-------------------------------------------------------------------------- */
+/* ============================================================
+   Responsive mobile — fenêtre cartographique
+   ============================================================ */
+
+/* Grille portfolio : colonne unique sous lg */
+@media (max-width: 1023px) {
+  .mapgeo-portfolio-grid {
+    grid-template-columns: 1fr !important;
+    overflow: auto !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Shell (conteneur carte) : hauteur min réduite */
+  .mapgeo-portfolio-shell,
+  .mapgeo-printable-map {
+    min-height: 280px !important;
+  }
+
+  /* Sidebar : scrollable, placée sous la carte */
+  .mapgeo-portfolio-sidebar {
+    order: 2 !important;
+    max-height: 40vh !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    border-radius: 18px 18px 0 0 !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  }
+
+  /* Carte en premier */
+  .mapgeo-portfolio-shell {
+    order: 1 !important;
+    min-height: 0 !important;
+    flex: 1 !important;
+  }
+
+  /* Inspecteur : drawer fixe en bas sur mobile */
+  .mapgeo-portfolio-inspector {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    z-index: 1400 !important;
+    border-radius: 18px 18px 0 0 !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  /* Toolbar : scroll horizontal silencieux */
+  .mapgeo-toolbar-shell,
+  .mapgeo-inline-tools {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .mapgeo-toolbar-shell::-webkit-scrollbar,
+  .mapgeo-inline-tools::-webkit-scrollbar { display: none !important; }
+
+  /* Champs tactiles */
+  .mapgeo-carto-workspace input,
+  .mapgeo-carto-workspace select,
+  .mapgeo-carto-workspace textarea {
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+  .mapgeo-carto-workspace button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  /* Titre topbar masqué sur mobile */
+  .mapgeo-topbar-title { display: none !important; }
+}
+
+@media (max-width: 480px) {
+  .mapgeo-portfolio-sidebar { max-height: 35vh !important; }
+  .mapgeo-portfolio-inspector { max-height: 78vh !important; }
+}
 /* --------------------------------------------------------------------------
    MAPGEO optional dark mode
    Thème sombre premium activable sans casser la fenêtre cartographique.
@@ -1561,79 +1534,6 @@ main > .mapgeo-carto-workspace,
   background: #07111b !important;
 }
 
-
-/* MAPGEO cartographic readability overrides.
-   Les dimensions restent discrètes et lisibles ; les métriques complètes restent dans les panneaux. */
-.mapgeo-side-label {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 0 !important;
-  border-radius: 999px !important;
-  border: 1px solid rgba(18, 59, 93, 0.18) !important;
-  background: rgba(255, 255, 255, 0.92) !important;
-  padding: 2px 7px !important;
-  color: #123B5D !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  line-height: 1.15 !important;
-  letter-spacing: 0.01em !important;
-  box-shadow: 0 1px 4px rgba(7, 17, 27, 0.14) !important;
-  text-shadow: none !important;
-  white-space: nowrap !important;
-}
-
-.mapgeo-side-label.is-edit,
-.mapgeo-side-label.is-measure {
-  background: rgba(255, 255, 255, 0.94) !important;
-  color: #123B5D !important;
-  border-color: rgba(199, 178, 153, 0.45) !important;
-}
-
-.mapgeo-area-label,
-.mapgeo-area-label-shell {
-  display: none !important;
-}
-
-
-/* Corrections lisibilité mesures cartographiques.
-   Les longueurs restent uniquement sur la parcelle sélectionnée ; surface/périmètre restent dans l'inspecteur. */
-.mapgeo-side-label-shell {
-  background: transparent !important;
-  border: 0 !important;
-  pointer-events: none !important;
-}
-
-.mapgeo-side-label {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 0 !important;
-  border-radius: 999px !important;
-  border: 1px solid rgba(18, 59, 93, 0.18) !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  padding: 2px 7px !important;
-  color: #123B5D !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  line-height: 1.15 !important;
-  letter-spacing: 0.01em !important;
-  box-shadow: 0 1px 4px rgba(7, 17, 27, 0.14) !important;
-  text-shadow: none !important;
-  white-space: nowrap !important;
-}
-
-.mapgeo-side-label.is-edit,
-.mapgeo-side-label.is-measure {
-  background: rgba(255, 255, 255, 0.94) !important;
-  color: #123B5D !important;
-  border-color: rgba(199, 178, 153, 0.45) !important;
-}
-
-.mapgeo-area-label,
-.mapgeo-area-label-shell {
-  display: none !important;
-}
 
 /* Correctif cartographique : labels de dimensions sobres et lisibles.
    Surface/périmètre restent dans l'inspecteur, jamais en bloc sur la carte. */

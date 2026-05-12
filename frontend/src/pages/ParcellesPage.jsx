@@ -473,6 +473,7 @@ function ParcelSummary({ total, rows, onSelectAlert, isInternalPortal }) {
 function CsvImportPanel({ owners, canManageParcels, onImported }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [defaultOwnerId, setDefaultOwnerId] = useState("");
+  const [skipErrors, setSkipErrors] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -505,13 +506,13 @@ function CsvImportPanel({ owners, canManageParcels, onImported }) {
     setMessage("");
 
     try {
-      const importOptions = { organization };
+      const importOptions = { organization, skip_errors: skipErrors ? "true" : "false" };
 
       const job = await parcelService.createImportJob(selectedFile, defaultOwnerId, importOptions);
       const validatedJob = await parcelService.validateImportJob(job.id);
       const validationSummary = getImportSummary(validatedJob);
 
-      if (validationSummary.errors > 0) {
+      if (validationSummary.errors > 0 && !skipErrors) {
         setMessage(formatImportResultMessage(validatedJob));
         return;
       }
@@ -520,6 +521,7 @@ function CsvImportPanel({ owners, canManageParcels, onImported }) {
 
       setSelectedFile(null);
       setDefaultOwnerId("");
+      setSkipErrors(false);
       setMessage(formatImportResultMessage(executedJob));
 
       await onImported?.();
@@ -533,10 +535,9 @@ function CsvImportPanel({ owners, canManageParcels, onImported }) {
   return (
     <section className="rounded-3xl border border-mapgeo-line bg-white p-5 shadow-soft">
       <div>
-        <h3 className="text-xl font-extrabold text-mapgeo-primary">Import CSV</h3>
+        <h3 className="text-xl font-extrabold text-mapgeo-primary">Importer des parcelles CSV</h3>
         <p className="mt-1 text-sm text-mapgeo-secondary/70">
-          Import strict : l’ensemble du fichier est bloqué si une seule ligne contient une erreur. Le propriétaire choisi doit être rattaché à une organisation client active.
-        </p>
+          Importez un fichier CSV contenant plusieurs parcelles. En mode strict, l'import est bloqué si une ligne est invalide. En mode souple, les lignes valides sont importées et les erreurs signalées. Le propriétaire choisi doit être rattaché à une organisation client active.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -574,6 +575,16 @@ function CsvImportPanel({ owners, canManageParcels, onImported }) {
             {message}
           </p>
         ) : null}
+
+        <label className="flex items-center gap-2 text-sm text-mapgeo-secondary cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={skipErrors}
+            onChange={(e) => setSkipErrors(e.target.checked)}
+            className="rounded border-mapgeo-line"
+          />
+          Mode souple — importer les lignes valides, signaler les erreurs sans bloquer
+        </label>
 
         <button
           type="submit"

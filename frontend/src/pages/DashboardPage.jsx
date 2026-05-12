@@ -40,8 +40,6 @@ const FALLBACK_STATS = {
   active_clients: 0,
 };
 
-const RECENT_PARCELS_PAGE_SIZE = 100;
-
 const EMPTY_DASHBOARD_FILTERS = {
   organization_code: "",
   status: "",
@@ -654,24 +652,25 @@ export default function DashboardPage() {
   const [clientDirectory, setClientDirectory] = useState([]);
   const [filters, setFilters] = useState(EMPTY_DASHBOARD_FILTERS);
   const [loading, setLoading] = useState(true);
+  const [parcelsLoading, setParcelsLoading] = useState(false);
+  const [parcelsError, setParcelsError] = useState("");
   const [error, setError] = useState("");
 
+  // Chargement initial : stats + annuaire clients (pas les parcelles)
   useEffect(() => {
     const loadDashboard = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const [statsPayload, parcelPayload, clientsPayload] = await Promise.all([
+        const [statsPayload, clientsPayload] = await Promise.all([
           dashboardService.getStats(),
-          parcelService.getParcels({ page_size: RECENT_PARCELS_PAGE_SIZE }),
           isInternalPortal
             ? fetchAllClients({ ordering: "name" }).catch(() => ({ results: [] }))
             : Promise.resolve({ results: [] }),
         ]);
 
         setStats(statsPayload);
-        setRecentParcels(parcelPayload.results || []);
         setClientDirectory(clientsPayload.results || []);
       } catch (loadError) {
         console.error(loadError);
@@ -684,21 +683,39 @@ export default function DashboardPage() {
     loadDashboard();
   }, [isInternalPortal]);
 
+  // Rechargement des parcelles à chaque changement de filtre (requête backend)
+  useEffect(() => {
+    const loadParcels = async () => {
+      setParcelsLoading(true);
+      setParcelsError("");
+      try {
+        const params = { page_size: 100 };
+        if (filters.organization_code) params.organization_code = filters.organization_code;
+        if (filters.status) params.status = filters.status;
+        if (filters.commune) params.commune = filters.commune;
+        if (filters.period) params.period = filters.period;
+        const parcelPayload = await parcelService.getParcels(params);
+        setRecentParcels(parcelPayload.results || []);
+      } catch (e) {
+        console.error(e);
+        setParcelsError("Impossible de charger les parcelles. Vérifiez votre connexion.");
+      } finally {
+        setParcelsLoading(false);
+      }
+    };
+    loadParcels();
+  }, [filters.organization_code, filters.status, filters.commune, filters.period]);
+
   const resolvedStats = useMemo(() => ({ ...FALLBACK_STATS, ...(stats || {}) }), [stats]);
 
+  // Le filtre "progress" reste côté client (calculé côté UI, pas en base)
   const filteredRecentParcels = useMemo(() => {
+    if (!filters.progress) return recentParcels;
     return recentParcels.filter((parcel) => {
       const progress = Number(parcel.progress ?? progressFromStatus(parcel.status) ?? 0);
-      const commune = String(parcel.commune || parcel.location || "").trim();
-      const matchesClient = !isInternalPortal || !filters.organization_code || parcelMatchesClientFilter(parcel, filters.organization_code);
-      const matchesStatus = !filters.status || normalizeParcelStatus(parcel.status) === filters.status;
-      const matchesCommune = !filters.commune || commune === filters.commune;
-      const matchesPeriod = parcelDateMatchesPeriod(parcel, filters.period);
-      const matchesProgress = progressMatchesBucket(progress, filters.progress);
-
-      return matchesClient && matchesStatus && matchesCommune && matchesPeriod && matchesProgress;
+      return progressMatchesBucket(progress, filters.progress);
     });
-  }, [filters, isInternalPortal, recentParcels]);
+  }, [filters.progress, recentParcels]);
 
   const filterOptions = useMemo(() => ({
     clients: clientDirectory.length
@@ -832,7 +849,11 @@ export default function DashboardPage() {
           status: getParcelStatusLabel(parcel.status),
           progressValues: [],
           updatedAt: formatDateLabel(parcel.updated_at),
-          href: clientFilterValue ? buildDashboardMapUrl({ ...filters, organization_code: clientFilterValue }, dashboardReturnTo) : buildParcelMapUrl(parcel, filters, dashboardReturnTo),
+          href: buildParcelMapUrl(parcel, {
+              ...filters,
+              organization_code: parcel.organization_code || filters.organization_code || "",
+              owner_client_code: parcel.owner_client_code || filters.owner_client_code || "",
+            }, dashboardReturnTo),
           action: "Voir la carte",
           accent: "bg-mapgeo-primary",
         });
@@ -894,8 +915,8 @@ export default function DashboardPage() {
         <section className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
           <PortfolioTable
             rows={portfolioRows}
-            loading={loading}
-            error={error}
+            loading={loading || parcelsLoading}
+            error={error || parcelsError}
             isClientPortal={isClientPortal}
             isInternalPortal={isInternalPortal}
             returnTo={dashboardReturnTo}

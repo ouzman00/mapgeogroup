@@ -31,7 +31,7 @@ class ImportJobSerializer(serializers.ModelSerializer):
         model = ImportJob
         fields = [
             "id", "job_type", "status", "file", "original_filename", "organization", "organization_name", "created_by", "created_by_name",
-            "default_owner", "execute_on_process", "summary", "error_message", "started_at", "finished_at", "created_at", "updated_at", "rows",
+            "default_owner", "execute_on_process", "skip_errors", "summary", "error_message", "started_at", "finished_at", "created_at", "updated_at", "rows",
         ]
         read_only_fields = [
             "id", "status", "summary", "error_message", "started_at", "finished_at", "created_at", "updated_at", "rows",

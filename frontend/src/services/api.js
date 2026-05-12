@@ -293,7 +293,11 @@ function normalizeStoredTokens(tokens) {
   if (!tokens || typeof tokens !== "object") return null;
   const normalized = {};
   if (tokens.access) normalized.access = tokens.access;
-  if (tokens.refresh) normalized.refresh = tokens.refresh;
+
+  // En mode cookie HttpOnly, le refresh token ne doit jamais être conservé
+  // dans localStorage/sessionStorage ni requis par le code frontend.
+  if (!USE_REFRESH_COOKIE && tokens.refresh) normalized.refresh = tokens.refresh;
+
   return normalized.access || normalized.refresh ? normalized : null;
 }
 
@@ -303,18 +307,11 @@ export function getStoredTokens() {
 
   try {
     if (USE_MEMORY_ACCESS_TOKEN) {
-      // L'access token reste en mémoire, mais le refresh token est gardé par onglet
-      // en sessionStorage. Ainsi deux onglets peuvent rester sur deux comptes
-      // différents sans réutiliser le cookie refresh global du navigateur.
+      // Access token en mémoire uniquement. Le refresh est porté par le cookie
+      // HttpOnly/Secure ; tout ancien refresh JS est supprimé.
+      sessionStorageRef?.removeItem(TOKEN_STORAGE_KEY);
       localStorageRef?.removeItem(TOKEN_STORAGE_KEY);
-      const sessionTokens = normalizeStoredTokens(readSessionTokens());
-      const memoryTokens = normalizeStoredTokens(inMemoryTokens);
-      const mergedTokens = normalizeStoredTokens({
-        ...sessionTokens,
-        ...memoryTokens,
-        refresh: memoryTokens?.refresh || sessionTokens?.refresh,
-      });
-      return mergedTokens;
+      return normalizeStoredTokens(inMemoryTokens);
     }
 
     // Même en mode stockage session, ne jamais restaurer l'auth depuis
@@ -344,15 +341,8 @@ export function saveStoredTokens(tokens) {
   }
 
   if (USE_MEMORY_ACCESS_TOKEN) {
-    inMemoryTokens = safeTokens?.access ? { access: safeTokens.access, refresh: safeTokens.refresh } : null;
-
-    if (safeTokens?.refresh) {
-      // Ne jamais mettre le refresh token dans localStorage : il serait partagé
-      // entre onglets et recréerait le changement/déconnexion de compte.
-      sessionStorageRef?.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ refresh: safeTokens.refresh }));
-    } else {
-      sessionStorageRef?.removeItem(TOKEN_STORAGE_KEY);
-    }
+    inMemoryTokens = safeTokens?.access ? { access: safeTokens.access } : null;
+    sessionStorageRef?.removeItem(TOKEN_STORAGE_KEY);
     localStorageRef?.removeItem(TOKEN_STORAGE_KEY);
     return;
   }
@@ -404,10 +394,7 @@ export async function refreshAccessToken() {
     throw createForeignRefreshSessionError();
   }
 
-  // Ne pas tenter un refresh vide basé uniquement sur le cookie HttpOnly global :
-  // ce cookie est partagé par tous les onglets et peut appartenir au dernier
-  // compte connecté. Le refresh token de l'onglet doit être envoyé dans le body.
-  if (!storedTokens?.refresh) {
+  if (!USE_REFRESH_COOKIE && !storedTokens?.refresh) {
     return null;
   }
 
@@ -415,20 +402,21 @@ export async function refreshAccessToken() {
 
   refreshTokenPromise = (async () => {
     const tokens = storedTokens || {};
+    const refreshPayload = !USE_REFRESH_COOKIE && tokens.refresh ? { refresh: tokens.refresh } : {};
     const refreshResponse = await axios.post(
       joinApiUrl(API_BASE_URL, REFRESH_ENDPOINT),
-      tokens.refresh ? { refresh: tokens.refresh } : {},
+      refreshPayload,
       {
         withCredentials: true,
         headers: { "Content-Type": "application/json" },
       },
     );
 
-    const nextTokens = {
+    const nextTokens = normalizeStoredTokens({
       ...tokens,
       access: refreshResponse.data.access,
-      refresh: refreshResponse.data.refresh || tokens.refresh,
-    };
+      refresh: !USE_REFRESH_COOKIE ? (refreshResponse.data.refresh || tokens.refresh) : undefined,
+    });
 
     if (rejectForeignRefreshSession(nextTokens)) {
       throw createForeignRefreshSessionError();
@@ -504,9 +492,7 @@ api.interceptors.response.use(
 
     const tokens = getStoredTokens();
 
-    // Sans refresh token propre à cet onglet, ne pas utiliser le cookie global
-    // du navigateur : il peut appartenir à un autre compte ouvert ailleurs.
-    if (!tokens?.refresh) {
+    if (!USE_REFRESH_COOKIE && !tokens?.refresh) {
       clearSession();
       return Promise.reject(error);
     }

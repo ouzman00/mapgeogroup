@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://mapgeogroup.onrender.com/api/:path*"
-    },
-    {
       "source": "/:path*",
       "destination": "/index.html"
     }
@@ -25,4 +21,3 @@
     }
   ]
 }
-

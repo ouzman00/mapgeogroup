@@ -154,6 +154,10 @@ const parcelService = {
     formData.append("file", file);
     if (defaultOwnerId) formData.append("default_owner", defaultOwnerId);
     if (options.organization) formData.append("organization", options.organization);
+    // Transmet le mode souple au backend — "true" ou "false" (string FormData)
+    if (options.skip_errors !== undefined) {
+      formData.append("skip_errors", options.skip_errors ? "true" : "false");
+    }
     const response = await api.post("/imports/", formData);
     const job = response.data;
     if (options.validateImmediately) return this.validateImportJob(job.id);

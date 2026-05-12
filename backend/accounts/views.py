@@ -73,6 +73,13 @@ def _refresh_cookie_base_kwargs():
     return cookie_kwargs
 
 
+def _refresh_cookie_delete_kwargs():
+    cookie_kwargs = _refresh_cookie_base_kwargs()
+    # Les navigateurs exigent Secure pour supprimer proprement un cookie SameSite=None.
+    cookie_kwargs["secure"] = bool(getattr(settings, "JWT_REFRESH_COOKIE_SECURE", not settings.DEBUG))
+    return cookie_kwargs
+
+
 def set_refresh_cookie(response, refresh_token):
     if not refresh_cookie_enabled():
         return response
@@ -81,7 +88,7 @@ def set_refresh_cookie(response, refresh_token):
         "key": getattr(settings, "JWT_REFRESH_COOKIE_NAME", "mapgeo_refresh"),
         "value": str(refresh_token),
         "max_age": max_age,
-        "httponly": True,
+        "httponly": bool(getattr(settings, "JWT_REFRESH_COOKIE_HTTPONLY", True)),
         "secure": bool(getattr(settings, "JWT_REFRESH_COOKIE_SECURE", not settings.DEBUG)),
         **_refresh_cookie_base_kwargs(),
     }
@@ -94,7 +101,7 @@ def delete_refresh_cookie(response):
         return response
     response.delete_cookie(
         getattr(settings, "JWT_REFRESH_COOKIE_NAME", "mapgeo_refresh"),
-        **_refresh_cookie_base_kwargs(),
+        **_refresh_cookie_delete_kwargs(),
     )
     return response
 

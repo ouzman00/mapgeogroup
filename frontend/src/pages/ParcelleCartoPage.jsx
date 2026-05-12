@@ -116,12 +116,12 @@ function StatusPill({ parcel }) {
 
 function AppLogo() {
   return (
-    <Link to="/" className="flex min-w-0 items-center gap-3 text-[#F7F5F2]">
+    <span className="flex min-w-0 items-center gap-3 text-[#F7F5F2]" aria-label="MAPGEO">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[#C7B299]/25 bg-[#123B5D] shadow-[0_12px_32px_rgba(0,0,0,0.22)]">
         <span className="h-5 w-5 rotate-45 rounded-[5px] border-2 border-[#C7B299] bg-[#C7B299]/20" />
       </span>
-      <span className="truncate text-lg font-extrabold tracking-tight">MAPGEO</span>
-    </Link>
+      <span className="hidden truncate text-lg font-extrabold tracking-tight md:block">MAPGEO</span>
+    </span>
   );
 }
 
@@ -148,6 +148,15 @@ function MapTopbar({ parcel, ownerLabel, user, returnTo = "/parcelles" }) {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join("") || "U";
+  // Photo de profil depuis localStorage (même clé que SettingsPage)
+  const cartoAvatar = (() => {
+    try {
+      const key = String(user?.id || user?.username || user?.email || "current-user");
+      const stored = window.localStorage.getItem("mapgeo_profile_avatars");
+      if (!stored) return "";
+      return JSON.parse(stored)?.[key] || "";
+    } catch { return ""; }
+  })();
 
   return (
     <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-[#C7B299]/16 bg-[#123B5D]/96 px-5 text-[#F7F5F2] shadow-[0_14px_40px_rgba(0,0,0,0.22)] backdrop-blur-xl">
@@ -164,7 +173,7 @@ function MapTopbar({ parcel, ownerLabel, user, returnTo = "/parcelles" }) {
             <ArrowLeft size={16} className="text-[#C7B299]" /> Parcelles
           </Link>
           <span className="h-5 w-px bg-[#C7B299]/18" />
-          <h1 className="truncate text-xl font-extrabold tracking-tight text-[#F7F5F2]">
+          <h1 className="mapgeo-topbar-title truncate text-xl font-extrabold tracking-tight text-[#F7F5F2]">
             {parcel?.reference || parcel?.title_number || "Cartographie"}
           </h1>
           {parcel?.id ? <StatusPill parcel={parcel} /> : null}
@@ -187,8 +196,10 @@ function MapTopbar({ parcel, ownerLabel, user, returnTo = "/parcelles" }) {
           className="flex items-center gap-3 rounded-2xl px-2 py-1.5 transition hover:bg-[#F7F5F2]/8"
           aria-label="Ouvrir les paramètres utilisateur"
         >
-          <span className="grid h-11 w-11 place-items-center rounded-full border border-[#C7B299]/35 bg-[#F7F5F2] text-sm font-extrabold text-[#123B5D]">
-            {initials}
+          <span className="grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-[#C7B299]/35 bg-[#F7F5F2] text-sm font-extrabold text-[#123B5D]">
+            {cartoAvatar
+              ? <img src={cartoAvatar} alt="Avatar" className="h-full w-full object-cover" />
+              : initials}
           </span>
           <span className="hidden text-left lg:block">
             <span className="block max-w-[160px] truncate text-sm font-bold text-[#F7F5F2]">{displayName}</span>
@@ -629,9 +640,7 @@ export default function ParcelleCartoPage() {
               mapFilters={dashboardMapFilters}
             />
 
-            <div className="absolute bottom-6 right-6 z-[1100] max-w-xs rounded-2xl border border-[#C7B299]/22 bg-[#123B5D]/92 px-4 py-3 text-xs font-semibold text-[#F7F5F2]/80 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur">
-              Carte chargée sur les 500 premières parcelles correspondant aux filtres.
-            </div>
+
 
             {loadingSelection ? (
               <div className="absolute bottom-6 left-1/2 z-[1100] -translate-x-1/2 rounded-full border border-[#C7B299]/22 bg-[#123B5D]/92 px-4 py-2 text-sm font-medium text-[#F7F5F2] shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur">

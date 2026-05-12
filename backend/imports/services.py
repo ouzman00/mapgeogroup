@@ -203,9 +203,11 @@ def process_import_job(import_job: ImportJob):
                     error_message=str(exc),
                 )
 
-        if error_count > 0:
+        # Mode strict : bloquer si au moins une ligne est en erreur
+        # Mode souple (skip_errors=True) : continuer avec les lignes valides
+        if error_count > 0 and not import_job.skip_errors:
             import_job.status = "failed"
-            import_job.error_message = "Import bloqué : corrigez toutes les lignes en erreur avant d'importer."
+            import_job.error_message = f"Import bloqué : {error_count} ligne(s) en erreur. Activez le mode souple pour importer les lignes valides."
             import_job.finished_at = timezone.now()
             import_job.summary = {
                 "validated_rows": valid_count,
@@ -214,9 +216,15 @@ def process_import_job(import_job: ImportJob):
                 "updated": updated_count,
                 "processed_at": timezone.now().isoformat(),
                 "strict_blocked": True,
+                "skip_errors": False,
             }
             import_job.save(update_fields=["status", "error_message", "finished_at", "summary", "updated_at"])
             return import_job
+        elif error_count > 0 and import_job.skip_errors:
+            # Mode souple : les lignes en erreur sont déjà dans ImportRowResult avec status="error"
+            # prepared_rows ne contient que les lignes valides (l'append n'a lieu que dans le try)
+            # On continue simplement avec l'import des lignes valides
+            pass
 
         import_job.status = "ready"
         import_job.summary = {
@@ -226,6 +234,8 @@ def process_import_job(import_job: ImportJob):
             "updated": updated_count,
             "processed_at": timezone.now().isoformat(),
             "strict_blocked": False,
+            "skip_errors": import_job.skip_errors,
+            "skipped_rows": error_count if import_job.skip_errors else 0,
         }
         import_job.save(update_fields=["status", "summary", "updated_at"])
 
@@ -266,6 +276,8 @@ def process_import_job(import_job: ImportJob):
             "created": created_count,
             "updated": updated_count,
             "processed_at": timezone.now().isoformat(),
+            "skip_errors": import_job.skip_errors,
+            "skipped_rows": error_count if import_job.skip_errors else 0,
         }
         import_job.save(update_fields=["status", "finished_at", "summary", "updated_at"])
         return import_job
