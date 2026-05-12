@@ -596,7 +596,7 @@ export default function ClientPortfolioMap({
           activeFeature={portfolio.activeFeature}
           onFeatureSelection={handleSidebarFeatureSelection}
           canCreateParcel={canManageParcels && canCreateParcel}
-          onCreateParcel={canManageParcels ? handleCreateParcelRequest : undefined}
+          onCreateParcel={canManageParcels ? onCreateParcel : undefined}
         />
 
         <PortfolioMapShell
