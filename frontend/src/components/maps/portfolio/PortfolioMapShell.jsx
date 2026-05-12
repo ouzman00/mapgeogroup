@@ -1882,6 +1882,11 @@ export default function PortfolioMapShell({
   }, []);
 
   const queueMeasurementPoint = useCallback((point) => {
+    if (isMobileCartographyViewport()) {
+      clearPendingMeasurementClick();
+      return;
+    }
+
     if (!showMeasurements || !Array.isArray(point) || point.length < 2) return;
     clearPendingMeasurementClick();
     measurementClickTimerRef.current = window.setTimeout(() => {
@@ -2188,8 +2193,7 @@ export default function PortfolioMapShell({
               if (showMeasurements) {
                 setIdentifyState(null);
 
-                // Mobile : mesure par réticule central + bouton Ajouter.
-                // Le tap sur la carte ne doit pas ajouter de point.
+                // Mobile: points are added only with the Ajouter button.
                 if (isMobileCartographyViewport()) {
                   clearPendingMeasurementClick();
                   return;
