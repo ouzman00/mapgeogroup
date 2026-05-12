@@ -91,6 +91,11 @@ const MEASURE_STYLE = {
   vertexFill: "#FFF7E6",
 };
 
+function isMobileCartographyViewport() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia?.("(max-width: 767px)")?.matches || window.innerWidth < 768;
+}
+
 function stopLeafletPropagation(event) {
   event?.stopPropagation?.();
   const originalEvent = event?.originalEvent || event?.nativeEvent;
@@ -1791,6 +1796,44 @@ export default function PortfolioMapShell({
     if (showMeasurements) setIdentifyState(null);
   }, [showMeasurements, setIdentifyState]);
 
+
+  // MOBILE_MEASURE_CENTER_PREVIEW_EFFECT_FINAL
+  // Sur téléphone, le trait de mesure suit le réticule central pendant le déplacement de la carte.
+  useEffect(() => {
+    if (!map || !showMeasurements) return undefined;
+    if (!isMobileCartographyViewport()) return undefined;
+
+    const syncCenterPreview = () => {
+      const center = map.getCenter?.();
+      if (!center) return;
+
+      const point = [center.lat, center.lng];
+
+      setMeasurementDraft((current) => {
+        if (!current || current.finished) return current;
+
+        return {
+          ...current,
+          cursorPoint: point,
+          snapPoint: point,
+          snapKind: "center",
+        };
+      });
+    };
+
+    syncCenterPreview();
+
+    map.on("move", syncCenterPreview);
+    map.on("moveend", syncCenterPreview);
+    map.on("zoomend", syncCenterPreview);
+
+    return () => {
+      map.off("move", syncCenterPreview);
+      map.off("moveend", syncCenterPreview);
+      map.off("zoomend", syncCenterPreview);
+    };
+  }, [map, showMeasurements, setMeasurementDraft]);
+
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
     const draftPoints = options.measurementPoints || measurementDraft.points || [];
     const measurementPoints = draftPoints.filter((_, index) => index !== draftPoints.length - 1);
@@ -2144,6 +2187,14 @@ export default function PortfolioMapShell({
               setActiveCommand(null);
               if (showMeasurements) {
                 setIdentifyState(null);
+
+                // Mobile : mesure par réticule central + bouton Ajouter.
+                // Le tap sur la carte ne doit pas ajouter de point.
+                if (isMobileCartographyViewport()) {
+                  clearPendingMeasurementClick();
+                  return;
+                }
+
                 if (event?.originalEvent?.detail > 1 || shouldIgnoreMeasurementClickAfterPan()) {
                   clearPendingMeasurementClick();
                   return;
@@ -2400,3 +2451,5 @@ export default function PortfolioMapShell({
     </section>
   );
 }
+
+
