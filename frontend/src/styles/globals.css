@@ -2236,3 +2236,28 @@ main > .mapgeo-carto-workspace,
     display: none !important;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HOTFIX MOBILE MEASURE CLEAN OVERLAY
+   Objectif :
+   - supprimer les libelles Premier point / Point suivant sur mobile
+   - supprimer Accrochage auto sur mobile
+   - supprimer le rond jaune d'accrochage sur mobile
+   - points de mesure blancs sur mobile
+   - desktop inchange
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-mode .leaflet-tooltip,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-tooltip {
+    display: none !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-mode .leaflet-interactive {
+    cursor: grab !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-measure-mode .leaflet-interactive:active {
+    cursor: grabbing !important;
+  }
+}

@@ -998,7 +998,7 @@ function MeasurementOverlay({ draft }) {
         </CircleMarker>
       ) : null}
 
-      {draft?.snapPoint && !draft?.finished ? (
+      {draft?.snapPoint && !draft?.finished && !isMobileMeasureOverlay ? (
         <CircleMarker
           center={draft.snapPoint}
           pane={MAP_PANES.measure}
