@@ -1027,7 +1027,7 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
 
   return (
     <DraggableMapPanel
-      className="mapgeo-export-hidden mapgeo-panel-enter absolute bottom-3 left-3 right-3 top-auto z-[950] max-h-[45%] overflow-y-auto rounded-[18px] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_22px_68px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[300px] sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-160px)]"
+      className="mapgeo-mobile-tool-panel mapgeo-measure-panel mapgeo-export-hidden mapgeo-panel-enter absolute bottom-3 left-3 right-3 top-auto z-[950] max-h-[45%] overflow-y-auto rounded-[18px] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_22px_68px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[300px] sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-160px)]"
       ariaLabel="Déplacer le bloc Mesures"
     >
       {({ dragHandleProps, resetPosition }) => (
@@ -1090,7 +1090,7 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
               </button>
             </div>
             <p className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/50">
-              Clic simple : ajouter un point. Glisser la carte : déplacer. Double-clic : naviguer/zoomer sans ajouter de point. Clic droit ou Terminer : finaliser.
+              Touchez la carte pour mesurer. Déplacez la carte librement, puis terminez.
             </p>
           </div>
         </>
@@ -1110,7 +1110,7 @@ function VertexToolPanel({ open, activeFeature, measurementSummary, displayOptio
 
   return (
     <DraggableMapPanel
-      className="mapgeo-export-hidden mapgeo-panel-enter absolute bottom-3 left-3 right-3 top-auto z-[949] max-h-[45%] overflow-y-auto rounded-[18px] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_22px_68px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[270px] sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-160px)]"
+      className="mapgeo-mobile-tool-panel mapgeo-vertices-panel mapgeo-export-hidden mapgeo-panel-enter absolute bottom-3 left-3 right-3 top-auto z-[949] max-h-[45%] overflow-y-auto rounded-[18px] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_22px_68px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[270px] sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-160px)]"
       initialOffset={shiftLeft ? { x: -316, y: 0 } : { x: 0, y: 0 }}
       ariaLabel="Déplacer le bloc Sommets"
     >
@@ -1145,7 +1145,7 @@ function VertexToolPanel({ open, activeFeature, measurementSummary, displayOptio
                 })}
               </div>
               <p className="mt-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/50">
-Cliquez sur une bande pour activer ou désactiver l’affichage léger sur la parcelle sélectionnée. Surface, périmètre et coordonnées restent dans le panneau d’information.
+Activez les éléments à afficher sur la carte.
               </p>
             </>
           ) : (
