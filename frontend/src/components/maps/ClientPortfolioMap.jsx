@@ -74,6 +74,8 @@ export default function ClientPortfolioMap({
 }) {
   const mapContainerRef = useRef(null);
 
+  const [mobilePanel, setMobilePanel] = useState("map");
+
   const [map, setMap] = useState(null);
   const [mapZoom, setMapZoom] = useState(16);
   const [cursorPosition, setCursorPosition] = useState(null);
@@ -429,6 +431,7 @@ export default function ClientPortfolioMap({
         return;
       }
 
+      setMobilePanel("inspector");
       onSelectParcel?.(feature.parcel);
       setIdentifyState({ feature, point: feature.center });
       setViewMode("selection");
@@ -454,6 +457,7 @@ export default function ClientPortfolioMap({
     const firstFeature = portfolio.filteredFeatures[0];
 
     if (firstFeature) {
+      setMobilePanel("inspector");
       handleFeatureSelection(firstFeature, {
         focus: true,
         reason: "search",
@@ -576,8 +580,27 @@ export default function ClientPortfolioMap({
     [blockViewportRequests, onParcelDeleted],
   );
 
+  const handleCreateParcelRequest = useCallback(() => {
+    setMobilePanel("inspector");
+    onCreateParcel?.();
+  }, [onCreateParcel]);
+
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-auto bg-[#07111b] px-3 pb-3 pt-2 text-mapgeo-primary md:px-4 md:pb-4 lg:overflow-hidden">
+    <div
+      className="mapgeo-portfolio-root flex h-full min-h-0 flex-col overflow-auto bg-[#07111b] px-3 pb-3 pt-2 text-mapgeo-primary md:px-4 md:pb-4 lg:overflow-hidden"
+      data-mobile-panel={mobilePanel}
+    >
+      <div className="mapgeo-mobile-carto-tabs md:hidden" role="tablist" aria-label="Navigation cartographie mobile">
+        <button type="button" aria-pressed={mobilePanel === "map"} onClick={() => setMobilePanel("map")}>
+          Carte
+        </button>
+        <button type="button" aria-pressed={mobilePanel === "search"} onClick={() => setMobilePanel("search")}>
+          Recherche
+        </button>
+        <button type="button" aria-pressed={mobilePanel === "inspector"} onClick={() => setMobilePanel("inspector")}>
+          Fiche
+        </button>
+      </div>
       <div className="mapgeo-portfolio-grid grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)] min-[1180px]:grid-cols-[300px_minmax(0,1fr)_340px] 2xl:grid-cols-[320px_minmax(0,1fr)_360px]">
         <PortfolioSidebar
           clientCode={portfolioIdentity.clientCode}
@@ -596,7 +619,7 @@ export default function ClientPortfolioMap({
           activeFeature={portfolio.activeFeature}
           onFeatureSelection={handleSidebarFeatureSelection}
           canCreateParcel={canManageParcels && canCreateParcel}
-          onCreateParcel={canManageParcels ? onCreateParcel : undefined}
+          onCreateParcel={canManageParcels ? handleCreateParcelRequest : undefined}
         />
 
         <PortfolioMapShell
