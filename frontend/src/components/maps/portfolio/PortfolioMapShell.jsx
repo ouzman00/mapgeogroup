@@ -1021,9 +1021,29 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
   if (!open) return null;
 
   const draftSummary = buildMeasurementDraftSummary(measurementDraft);
-  const setMode = (mode) => setMeasurementDraft((current) => ({ mode, points: current?.mode === mode ? current.points : [], cursorPoint: current?.cursorPoint || null, snapPoint: current?.snapPoint || null, snapKind: current?.snapKind || null, finished: false }));
-  const undoPoint = () => setMeasurementDraft((current) => ({ ...current, points: (current?.points || []).slice(0, -1), snapPoint: null, snapKind: null, finished: false }));
-  const resetPoints = () => setMeasurementDraft((current) => ({ ...current, points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false }));
+  const setMode = (mode) => setMeasurementDraft((current) => ({
+    mode,
+    points: current?.mode === mode ? current.points : [],
+    cursorPoint: current?.cursorPoint || null,
+    snapPoint: current?.snapPoint || null,
+    snapKind: current?.snapKind || null,
+    finished: false,
+  }));
+  const undoPoint = () => setMeasurementDraft((current) => ({
+    ...current,
+    points: (current?.points || []).slice(0, -1),
+    snapPoint: null,
+    snapKind: null,
+    finished: false,
+  }));
+  const resetPoints = () => setMeasurementDraft((current) => ({
+    ...current,
+    points: [],
+    cursorPoint: null,
+    snapPoint: null,
+    snapKind: null,
+    finished: false,
+  }));
 
   return (
     <DraggableMapPanel
@@ -1033,10 +1053,11 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
       {({ dragHandleProps, resetPosition }) => (
         <>
           <PanelMoveHandle dragHandleProps={dragHandleProps} onReset={resetPosition} onClose={onClose} closeLabel="Fermer les mesures" />
+
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
               <Ruler size={16} className="text-mapgeo-sand" />
-              <h3 className="truncate text-sm font-extrabold">Mesures</h3>
+              <h3 className="truncate text-sm font-extrabold">Mesurer</h3>
             </div>
             <span className="rounded-full bg-mapgeo-sand/20 px-2 py-0.5 text-[10px] font-bold text-mapgeo-sand">Actif</span>
           </div>
@@ -1052,33 +1073,25 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
             </div>
 
             <div className="grid gap-1.5">
-              <div className="flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
-                <span className="text-white/60">{draftSummary.hasCursorPreview ? "Distance curseur" : "Distance"}</span>
+              <div className="mapgeo-measure-result-row flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
+                <span className="text-white/60">Distance</span>
                 <strong className="text-right text-white">{draftSummary.distanceLabel}</strong>
               </div>
-              {measurementDraft.mode === "surface" ? (
-                <>
-                  <div className="flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
-                    <span className="text-white/60">Surface</span>
-                    <strong className="text-right text-white">{draftSummary.surfaceLabel}</strong>
-                  </div>
-                  <div className="flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
-                    <span className="text-white/60">Périmètre</span>
-                    <strong className="text-right text-white">{draftSummary.perimeterLabel}</strong>
-                  </div>
-                </>
-              ) : null}
-              <div className="flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
-                <span className="text-white/60">Points</span>
-                <strong className="text-right text-white">{draftSummary.pointsCount}</strong>
+              <div className="mapgeo-measure-result-row flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
+                <span className="text-white/60">Surface</span>
+                <strong className="text-right text-white">{draftSummary.surfaceLabel}</strong>
               </div>
-              <div className="flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
-                <span className="text-white/60">Accrochage</span>
-                <strong className="text-right text-white">{measurementDraft.snapPoint ? getSnapKindLabel(measurementDraft.snapKind) : "Auto"}</strong>
+              <div className="mapgeo-measure-result-row flex justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-1.5">
+                <span className="text-white/60">Périmètre</span>
+                <strong className="text-right text-white">{draftSummary.perimeterLabel}</strong>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <p className="mapgeo-measure-help rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/50">
+              Ajoutez les points sur la carte, puis terminez.
+            </p>
+
+            <div className="mapgeo-measure-actions flex flex-wrap gap-2">
               <button type="button" onClick={onFinish} disabled={!measurementDraft.points.length} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-35">
                 <Check size={14} /> Terminer
               </button>
@@ -1089,15 +1102,13 @@ function MeasurementToolPanel({ open, measurementDraft, setMeasurementDraft, onC
                 <Trash2 size={14} /> Vider
               </button>
             </div>
-            <p className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/50">
-              Touchez la carte pour ajouter des points.
-            </p>
           </div>
         </>
       )}
     </DraggableMapPanel>
   );
 }
+
 
 function VertexToolPanel({ open, activeFeature, measurementSummary, displayOptions = DEFAULT_VERTEX_DISPLAY_OPTIONS, onToggleDisplay, onClose, shiftLeft = false }) {
   if (!open) return null;
