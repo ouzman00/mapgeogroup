@@ -1046,7 +1046,7 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
       points: [...(current?.points || []), [center.lat, center.lng]],
       cursorPoint: null,
       snapPoint: null,
-      snapKind: "center",
+      snapKind: null,
       finished: false,
     }));
   };
@@ -1816,8 +1816,8 @@ export default function PortfolioMapShell({
         return {
           ...current,
           cursorPoint: point,
-          snapPoint: point,
-          snapKind: "center",
+          snapPoint: null,
+          snapKind: null,
         };
       });
     };
