@@ -979,7 +979,7 @@ function MeasurementOverlay({ draft }) {
         />
       ))}
 
-      {hasCursorPreview ? (
+      {hasCursorPreview && !isMobileMeasureOverlay ? (
         <CircleMarker
           center={draft.cursorPoint}
           pane={MAP_PANES.measure}
