@@ -57,10 +57,10 @@ const DEFAULT_STYLE = {
   style_radius: 7,
 };
 const LOCAL_POSTGIS_DEFAULTS = {
-  host: "127.0.0.1",
-  port: "5432",
-  database: "mapgeo_db",
-  username: "mapgeo",
+  host: "",
+  port: "",
+  database: "",
+  username: "",
   schema: "donnees_mapgeo",
   geometryColumn: "geom",
   idColumn: "id",

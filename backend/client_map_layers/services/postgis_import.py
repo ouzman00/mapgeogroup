@@ -47,29 +47,45 @@ def _clean_where_clause(value: Any) -> str:
 
 
 def _default_postgis_connection() -> dict[str, str]:
-    """Connexion PostGIS locale utilisée pour les imports portefeuille.
+    """Connexion PostGIS utilisée pour les imports portefeuille.
 
-    Le frontend n'a pas besoin d'exposer l'hôte, la base, l'utilisateur ou le mot de passe :
-    ces valeurs viennent de la configuration Django/PostgreSQL déjà validée dans settings.py.
+    En production, on utilise exclusivement la connexion Django DATABASE_URL/DB_SCHEMA.
+    Les variables POSTGIS_IMPORT_DEFAULT_* ne sont prises en compte que si
+    POSTGIS_IMPORT_ALLOW_CONNECTION_OVERRIDE est explicitement activé.
     """
     default_db = getattr(settings, "DATABASES", {}).get("default", {}) or {}
+    allow_connection_override = getattr(settings, "POSTGIS_IMPORT_ALLOW_CONNECTION_OVERRIDE", False)
+    override = {
+        "host": getattr(settings, "POSTGIS_IMPORT_DEFAULT_HOST", "") if allow_connection_override else "",
+        "port": getattr(settings, "POSTGIS_IMPORT_DEFAULT_PORT", "") if allow_connection_override else "",
+        "database": getattr(settings, "POSTGIS_IMPORT_DEFAULT_DATABASE", "") if allow_connection_override else "",
+        "username": getattr(settings, "POSTGIS_IMPORT_DEFAULT_USER", "") if allow_connection_override else "",
+        "password": getattr(settings, "POSTGIS_IMPORT_DEFAULT_PASSWORD", "") if allow_connection_override else "",
+        "schema": getattr(settings, "POSTGIS_IMPORT_DEFAULT_SCHEMA", "") if allow_connection_override else "",
+    }
     return {
-        "host": str(getattr(settings, "POSTGIS_IMPORT_DEFAULT_HOST", "") or default_db.get("HOST") or "127.0.0.1"),
-        "port": str(getattr(settings, "POSTGIS_IMPORT_DEFAULT_PORT", "") or default_db.get("PORT") or "5432"),
-        "database": str(getattr(settings, "POSTGIS_IMPORT_DEFAULT_DATABASE", "") or default_db.get("NAME") or "mapgeo_db"),
-        "username": str(getattr(settings, "POSTGIS_IMPORT_DEFAULT_USER", "") or default_db.get("USER") or "mapgeo"),
-        "password": str(getattr(settings, "POSTGIS_IMPORT_DEFAULT_PASSWORD", "") or default_db.get("PASSWORD") or ""),
-        "schema": str(getattr(settings, "POSTGIS_IMPORT_DEFAULT_SCHEMA", "") or getattr(settings, "DB_SCHEMA", "donnees_mapgeo") or "donnees_mapgeo"),
+        "host": str(override["host"] or default_db.get("HOST") or "127.0.0.1"),
+        "port": str(override["port"] or default_db.get("PORT") or "5432"),
+        "database": str(override["database"] or default_db.get("NAME") or "mapgeo_db"),
+        "username": str(override["username"] or default_db.get("USER") or "mapgeo"),
+        "password": str(override["password"] or default_db.get("PASSWORD") or ""),
+        "schema": str(override["schema"] or getattr(settings, "DB_SCHEMA", "donnees_mapgeo") or "donnees_mapgeo"),
     }
 
 
 def normalize_postgis_options(data: dict[str, Any]) -> dict[str, Any]:
     """Valide les paramètres d'import PostGIS sans exposer les secrets au client."""
     defaults = _default_postgis_connection()
-    host = str(data.get("postgis_host") or defaults["host"]).strip()
-    database = str(data.get("postgis_database") or defaults["database"]).strip()
-    username = str(data.get("postgis_username") or defaults["username"]).strip()
-    password = str(data.get("postgis_password") or defaults["password"]).strip()
+
+    # En production, ne jamais laisser le navigateur écraser la connexion PostGIS.
+    # Le backend utilise DATABASE_URL / DB_SCHEMA de Render, ce qui évite qu'un
+    # ancien formulaire force 127.0.0.1, mapgeo_db ou mapgeo en production.
+    connection_data = data if getattr(settings, "POSTGIS_IMPORT_ALLOW_CONNECTION_OVERRIDE", False) else {}
+
+    host = str(connection_data.get("postgis_host") or defaults["host"]).strip()
+    database = str(connection_data.get("postgis_database") or defaults["database"]).strip()
+    username = str(connection_data.get("postgis_username") or defaults["username"]).strip()
+    password = str(connection_data.get("postgis_password") or defaults["password"]).strip()
     if not host:
         raise ValidationError({"postgis_host": "Hôte PostGIS obligatoire. Vérifiez DATABASE_URL ou DB_HOST dans .env."})
     if not database:
@@ -80,7 +96,7 @@ def normalize_postgis_options(data: dict[str, Any]) -> dict[str, Any]:
         raise ValidationError({"postgis_password": "Mot de passe PostGIS introuvable. Renseignez DATABASE_URL ou DB_PASSWORD dans .env."})
 
     try:
-        port = int(data.get("postgis_port") or defaults["port"] or 5432)
+        port = int(connection_data.get("postgis_port") or defaults["port"] or 5432)
     except Exception as exc:
         raise ValidationError({"postgis_port": "Port PostGIS invalide."}) from exc
     if port <= 0 or port > 65535:

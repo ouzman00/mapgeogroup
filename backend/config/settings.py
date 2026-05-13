@@ -251,6 +251,7 @@ if "sqlite" in str(DATABASES["default"].get("ENGINE", "")).lower():
     )
 
 DB_SCHEMA = _database_schema()
+POSTGIS_IMPORT_ALLOW_CONNECTION_OVERRIDE = env_bool("POSTGIS_IMPORT_ALLOW_CONNECTION_OVERRIDE", DEBUG)
 
 AUTH_USER_MODEL = "accounts.User"
 
