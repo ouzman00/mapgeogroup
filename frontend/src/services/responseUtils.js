@@ -37,6 +37,7 @@ function humanizeErrorField(field) {
   const labels = {
     reference: "Référence",
     owner: "Client",
+    organization: "Organisation",
     location: "Localisation",
     commune: "Commune",
     status: "Statut",

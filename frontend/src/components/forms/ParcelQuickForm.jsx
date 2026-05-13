@@ -34,6 +34,16 @@ const EMPTY_FORM = {
   geometry: null,
 };
 
+function getOwnerOrganizationId(owner = {}) {
+  return String(
+    owner.organization_id ||
+    owner.organization ||
+    owner.organizations?.find?.((organization) => organization.is_primary)?.id ||
+    owner.organizations?.[0]?.id ||
+    ""
+  ).trim();
+}
+
 function toForm(initialValues) {
   if (!initialValues) return EMPTY_FORM;
   return {
@@ -67,7 +77,25 @@ function tryParseGeometry(rawText, format, crs) {
   }
 }
 
-function buildPayload(form, format, crs) {
+function buildPayload(form, format, crs, owners = []) {
+  const reference = String(form.reference || "").trim();
+  const ownerId = String(form.owner || "").trim();
+
+  if (!reference) {
+    throw new Error("La reference est obligatoire.");
+  }
+
+  if (!ownerId) {
+    throw new Error("Le client est obligatoire.");
+  }
+
+  const selectedOwner = owners.find((owner) => String(owner.id) === ownerId);
+  const organizationId = String(form.organization || getOwnerOrganizationId(selectedOwner) || "").trim();
+
+  if (!organizationId) {
+    throw new Error("Le client selectionne n'est rattache a aucune organisation active.");
+  }
+
   let { geometry } = form;
 
   if (!geometry && form.rawText.trim()) {
@@ -75,7 +103,7 @@ function buildPayload(form, format, crs) {
     if (parsed) {
       geometry = parsed;
     } else if (error) {
-      throw new Error(`Géométrie invalide : ${error}`);
+      throw new Error(`Geometrie invalide : ${error}`);
     }
   }
 
@@ -85,8 +113,8 @@ function buildPayload(form, format, crs) {
   const area = areaM2 > 0 ? Number(areaM2.toFixed(2)) : 0;
 
   const payload = {
-    reference: form.reference.trim(),
-    location: (form.location || "").trim() || "Non précisé",
+    reference,
+    location: (form.location || "").trim() || "Non precise",
     commune: (form.commune || "").trim(),
     area,
     perimeter: perimeter ?? 0,
@@ -97,11 +125,10 @@ function buildPayload(form, format, crs) {
     longitude: center ? normalizeCoordinateValue(center[1]) : null,
     centroid_northing: center ? normalizeCoordinateValue(center[0]) : null,
     centroid_easting: center ? normalizeCoordinateValue(center[1]) : null,
+    owner: Number(ownerId),
+    organization: Number(organizationId),
   };
 
-  if (form.owner) payload.owner = Number(form.owner);
-  // Transmet explicitement l'organisation si disponible — évite la déduction silencieuse côté backend
-  if (form.organization) payload.organization = Number(form.organization);
   return payload;
 }
 
@@ -247,7 +274,7 @@ export default function ParcelQuickForm({
     setMessage("");
 
     try {
-      const payload = buildPayload(form, importFormat, importCrs);
+      const payload = buildPayload(form, importFormat, importCrs, owners);
       const savedParcel = await parcelService.createParcel(payload);
       setMessage("Parcelle créée avec succès.");
       setMessageType("success");
@@ -484,9 +511,17 @@ export default function ParcelQuickForm({
           </div>
         </div>
 
+        {!owners.length ? (
+          <div className={fullRow}>
+            <p className={dark ? "rounded-xl border border-red-500/30 bg-red-900/25 px-4 py-3 text-sm font-medium text-red-300" : "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"}>
+              Aucun client disponible pour créer une parcelle.
+            </p>
+          </div>
+        ) : null}
+
         {/* Actions */}
         <div className={`${fullRow} flex flex-wrap items-center gap-3 border-t pt-4 ${dark ? "border-white/10" : "border-mapgeo-line"}`}>
-          <button type="submit" disabled={submitting} className={btnPrimary}>
+          <button type="submit" disabled={submitting || !owners.length} className={btnPrimary}>
             <Save size={16} />
             {submitting ? "Enregistrement…" : submitLabel}
           </button>
