@@ -28,18 +28,15 @@ const documentService = {
   },
 
   async previewDocument(id) {
-    const response = await api.get(`/documents/${id}/download/`, {
-      params: { disposition: "inline" },
-      responseType: "blob",
-    });
+    // Aperçu sécurisé : on récupère le fichier en blob puis l’interface l’ouvre
+    // dans un nouvel onglet. On évite le paramètre disposition=inline côté backend,
+    // qui peut varier selon le stockage Render.
+    const response = await api.get(`/documents/${id}/download/`, { responseType: "blob" });
     return response.data;
   },
 
   async downloadDocument(id) {
-    const response = await api.get(`/documents/${id}/download/`, {
-      params: { disposition: "attachment" },
-      responseType: "blob",
-    });
+    const response = await api.get(`/documents/${id}/download/`, { responseType: "blob" });
     return response.data;
   },
 
