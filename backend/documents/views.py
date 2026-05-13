@@ -317,5 +317,8 @@ class DocumentDownloadView(DocumentQuerysetMixin, APIView):
             raise NotFound("Document introuvable.")
 
         filename = document.file.name.rsplit("/", 1)[-1]
-        response = FileResponse(document.file.open("rb"), as_attachment=True, filename=filename)
+        disposition = (request.query_params.get("disposition") or request.query_params.get("mode") or "").strip().lower()
+        inline_requested = disposition in {"inline", "preview"} or str(request.query_params.get("inline") or "").strip().lower() in {"1", "true", "yes"}
+
+        response = FileResponse(document.file.open("rb"), as_attachment=not inline_requested, filename=filename)
         return apply_private_file_response_headers(response)

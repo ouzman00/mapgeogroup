@@ -27,8 +27,19 @@ const documentService = {
     return response.data;
   },
 
+  async previewDocument(id) {
+    const response = await api.get(`/documents/${id}/download/`, {
+      params: { disposition: "inline" },
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
   async downloadDocument(id) {
-    const response = await api.get(`/documents/${id}/download/`, { responseType: "blob" });
+    const response = await api.get(`/documents/${id}/download/`, {
+      params: { disposition: "attachment" },
+      responseType: "blob",
+    });
     return response.data;
   },
 

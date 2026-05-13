@@ -1139,7 +1139,7 @@ export default function DocumentsPage() {
     setMessage("");
 
     try {
-      const blob = await documentService.downloadDocument(doc.id);
+      const blob = download ? await documentService.downloadDocument(doc.id) : await documentService.previewDocument(doc.id);
       const blobUrl = URL.createObjectURL(blob);
 
       if (download) {

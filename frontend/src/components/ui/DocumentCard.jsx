@@ -19,7 +19,7 @@ export default function DocumentCard({ document: doc, onDelete, deleting = false
     setFeedback("");
 
     try {
-      const blob = await documentService.downloadDocument(doc.id);
+      const blob = download ? await documentService.downloadDocument(doc.id) : await documentService.previewDocument(doc.id);
       const blobUrl = URL.createObjectURL(blob);
 
       if (download) {

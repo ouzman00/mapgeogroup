@@ -506,7 +506,7 @@ function DocumentsPanel({ documents }) {
     setOpeningId(doc.id);
 
     try {
-      const blob = await documentService.downloadDocument(doc.id);
+      const blob = await documentService.previewDocument(doc.id);
       const blobUrl = URL.createObjectURL(blob);
       window.open(blobUrl, "_blank", "noopener,noreferrer");
       window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
