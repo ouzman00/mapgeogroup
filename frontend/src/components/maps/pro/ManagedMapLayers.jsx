@@ -7,7 +7,6 @@ import { AuthenticatedTileLayer } from "./AuthenticatedRasterLayers";
 const MANAGED_LAYER_PANES = {
   context: "mapgeo-context-pane",
   private: "mapgeo-private-layer-pane",
-  raster: "mapgeo-managed-raster-pane",
   communes: "mapgeo-communes-pane",
   communeLabels: "mapgeo-communes-label-pane",
 };
@@ -32,9 +31,6 @@ function ensureGeoJsonPanes(map) {
 
   const privatePane = map.getPane(MANAGED_LAYER_PANES.private) || map.createPane(MANAGED_LAYER_PANES.private);
   privatePane.style.zIndex = "410";
-
-  const rasterPane = map.getPane(MANAGED_LAYER_PANES.raster) || map.createPane(MANAGED_LAYER_PANES.raster);
-  rasterPane.style.zIndex = "405";
 
   const communesPane = map.getPane(MANAGED_LAYER_PANES.communes) || map.createPane(MANAGED_LAYER_PANES.communes);
   communesPane.style.zIndex = "370";

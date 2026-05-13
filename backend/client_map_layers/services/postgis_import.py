@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import re
@@ -23,6 +23,21 @@ IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 FORBIDDEN_SQL_RE = re.compile(r"(;|--|/\*|\*/|\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|copy|execute|call|do)\b)", re.IGNORECASE)
 GEOMETRY_COLUMN_CANDIDATES = ("geom", "geometry", "the_geom", "wkb_geometry")
 ID_COLUMN_CANDIDATES = ("id", "gid", "fid", "ogc_fid")
+
+POSTGIS_DASHBOARD_EXCLUDED_TABLE_PREFIXES = (
+    "auth_",
+    "django_",
+    "sessions_",
+    "accounts_",
+    "admin_",
+    "client_map_layers_",
+    "parcels_parcelgeometry",
+)
+
+POSTGIS_DASHBOARD_EXCLUDED_TABLES = {
+    "client_map_layers_clientmaplayerfeature",
+    "parcels_parcelgeometryversion",
+}
 
 
 def _clean_identifier(value: Any, field_name: str) -> str:
@@ -280,6 +295,16 @@ def _build_query(options: dict[str, Any]):
 
 
 
+
+def _is_dashboard_postgis_table(table_name: str) -> bool:
+    normalized = str(table_name or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized in POSTGIS_DASHBOARD_EXCLUDED_TABLES:
+        return False
+    return not any(normalized.startswith(prefix) for prefix in POSTGIS_DASHBOARD_EXCLUDED_TABLE_PREFIXES)
+
+
 def list_available_postgis_tables(data: dict[str, Any] | None = None) -> dict[str, Any]:
     """Liste les vraies tables/vues PostGIS disponibles via la connexion Django active.
 
@@ -330,6 +355,8 @@ def list_available_postgis_tables(data: dict[str, Any] | None = None) -> dict[st
     tables: list[dict[str, Any]] = []
 
     for schema_name, table_name, relation_type, geometry_columns, columns in rows:
+        if not _is_dashboard_postgis_table(table_name):
+            continue
         geometry_columns = [str(item) for item in (geometry_columns or [])]
         columns = [str(item) for item in (columns or [])]
 
@@ -450,4 +477,3 @@ def import_postgis_features_to_db(layer: ClientMapLayer, options: dict[str, Any]
         "bounds_wgs84": bounds_from_positions(positions),
         "attribute_fields": summarize_geojson_attributes(features_for_metadata),
     })
-
