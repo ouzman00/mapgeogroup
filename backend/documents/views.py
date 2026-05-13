@@ -316,9 +316,43 @@ class DocumentDownloadView(DocumentQuerysetMixin, APIView):
         if not document or not document.file:
             raise NotFound("Document introuvable.")
 
-        filename = document.file.name.rsplit("/", 1)[-1]
+        file_field = document.file
+        file_name = getattr(file_field, "name", "")
+
+        if not file_name:
+            raise NotFound("Fichier introuvable pour ce document.")
+
         disposition = (request.query_params.get("disposition") or request.query_params.get("mode") or "").strip().lower()
         inline_requested = disposition in {"inline", "preview"} or str(request.query_params.get("inline") or "").strip().lower() in {"1", "true", "yes"}
+        filename = file_name.rsplit("/", 1)[-1]
 
-        response = FileResponse(document.file.open("rb"), as_attachment=not inline_requested, filename=filename)
+        try:
+            storage = file_field.storage
+
+            if hasattr(storage, "exists") and not storage.exists(file_name):
+                logger.warning("Fichier GED absent du stockage: document_id=%s file=%s", document.pk, file_name)
+                raise NotFound(
+                    "Le fichier associé à ce document est introuvable sur le stockage. "
+                    "Il a peut-être été supprimé ou perdu lors d’un redéploiement."
+                )
+
+            file_handle = file_field.open("rb")
+
+        except NotFound:
+            raise
+        except FileNotFoundError as exc:
+            logger.warning("Fichier GED absent: document_id=%s file=%s", document.pk, file_name)
+            raise NotFound(
+                "Le fichier associé à ce document est introuvable sur le stockage. "
+                "Il doit être téléversé à nouveau."
+            ) from exc
+        except OSError as exc:
+            logger.warning("Fichier GED inaccessible: document_id=%s file=%s error=%s", document.pk, file_name, exc)
+            raise NotFound("Le fichier associé à ce document est inaccessible.") from exc
+        except Exception as exc:
+            logger.exception("Impossible d’ouvrir le fichier GED: document_id=%s file=%s", document.pk, file_name)
+            raise NotFound("Impossible d’ouvrir ce fichier. Vérifiez le stockage du document.") from exc
+
+        response = FileResponse(file_handle, as_attachment=not inline_requested, filename=filename)
         return apply_private_file_response_headers(response)
+
