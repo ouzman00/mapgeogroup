@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
@@ -309,7 +309,7 @@ def list_available_postgis_tables(data: dict[str, Any] | None = None) -> dict[st
         JOIN pg_catalog.pg_type t ON t.oid = a.atttypid
         WHERE c.relkind IN ('r', 'v', 'm', 'f', 'p')
           AND n.nspname NOT IN ('pg_catalog', 'information_schema')
-          AND n.nspname NOT LIKE 'pg_toast%'
+          AND n.nspname NOT LIKE 'pg_toast%%'
         GROUP BY n.nspname, c.relname, c.relkind
         HAVING COUNT(*) FILTER (WHERE t.typname = 'geometry') > 0
         ORDER BY
@@ -450,3 +450,4 @@ def import_postgis_features_to_db(layer: ClientMapLayer, options: dict[str, Any]
         "bounds_wgs84": bounds_from_positions(positions),
         "attribute_fields": summarize_geojson_attributes(features_for_metadata),
     })
+
