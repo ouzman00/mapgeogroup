@@ -1,4 +1,4 @@
-﻿import L from "leaflet";
+import L from "leaflet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, TileLayer, WMSTileLayer, useMap } from "react-leaflet";
 import mapLayerService from "../../../services/mapLayerService";
@@ -7,6 +7,7 @@ import { AuthenticatedTileLayer } from "./AuthenticatedRasterLayers";
 const MANAGED_LAYER_PANES = {
   context: "mapgeo-context-pane",
   private: "mapgeo-private-layer-pane",
+  raster: "mapgeo-managed-raster-pane",
   communes: "mapgeo-communes-pane",
   communeLabels: "mapgeo-communes-label-pane",
 };
@@ -27,20 +28,33 @@ function ensureGeoJsonPanes(map) {
   if (!map?.createPane) return;
 
   const contextPane = map.getPane(MANAGED_LAYER_PANES.context) || map.createPane(MANAGED_LAYER_PANES.context);
-  contextPane.style.zIndex = "390";
+  contextPane.style.zIndex = "360";
 
   const privatePane = map.getPane(MANAGED_LAYER_PANES.private) || map.createPane(MANAGED_LAYER_PANES.private);
   privatePane.style.zIndex = "410";
 
+  const rasterPane = map.getPane(MANAGED_LAYER_PANES.raster) || map.createPane(MANAGED_LAYER_PANES.raster);
+  rasterPane.style.zIndex = "405";
+
   const communesPane = map.getPane(MANAGED_LAYER_PANES.communes) || map.createPane(MANAGED_LAYER_PANES.communes);
-  communesPane.style.zIndex = "385";
+  communesPane.style.zIndex = "370";
   communesPane.style.pointerEvents = "none";
 
   const communeLabelsPane = map.getPane(MANAGED_LAYER_PANES.communeLabels) || map.createPane(MANAGED_LAYER_PANES.communeLabels);
-  communeLabelsPane.style.zIndex = "445";
+  communeLabelsPane.style.zIndex = "420";
   communeLabelsPane.style.pointerEvents = "none";
 }
 
+
+function ManagedLayerPaneController() {
+  const map = useMap();
+
+  useEffect(() => {
+    ensureGeoJsonPanes(map);
+  }, [map]);
+
+  return null;
+}
 
 function layerKind(layer = {}) {
   return String(layer.service || layer.type || layer.dataFormat || layer.data_format || layer.clientLayerType || "").toLowerCase();
@@ -70,12 +84,13 @@ function isRenderableOperationalLayer(layer) {
   return isGeoJsonLikeLayer(layer) || isWmsLikeLayer(layer);
 }
 
-function renderTileLayer(layer, zIndex, setLayerRuntime) {
+function renderTileLayer(layer, zIndex, setLayerRuntime, pane = undefined) {
   if (!layer?.url) return null;
 
   return (
     <TileLayer
       key={layer.id}
+      pane={pane}
       url={layer.url}
       opacity={layer.opacity ?? 1}
       attribution={layer.attribution || ""}
@@ -97,12 +112,13 @@ function renderTileLayer(layer, zIndex, setLayerRuntime) {
   );
 }
 
-function renderWmsLayer(layer, zIndex, setLayerRuntime) {
+function renderWmsLayer(layer, zIndex, setLayerRuntime, pane = undefined) {
   if (!layer?.url || !layer?.layers) return null;
 
   return (
     <WMSTileLayer
       key={layer.id}
+      pane={pane}
       url={layer.url}
       layers={layer.layers}
       format={layer.format || "image/png"}
@@ -558,7 +574,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
   const pointToLayer = useCallback((feature, latlng) => {
     // Leaflet appelle pointToLayer uniquement pour les géométries ponctuelles.
     // On applique donc toujours le style point, même pour une couche mixte ou non typée.
-    return L.circleMarker(latlng, getPointStyle(layer, feature));
+    return L.circleMarker(latlng, { ...getPointStyle(layer, feature), pane: getGeoJsonPane(layer) });
   }, [layer]);
 
   const onEachFeature = useCallback((feature, featureLayer) => {
@@ -590,7 +606,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
     }
   }, [layer, showLabels]);
 
-  const style = useCallback((feature) => getLayerStyle(layer, feature), [layer]);
+  const style = useCallback((feature) => ({ ...getLayerStyle(layer, feature), pane: getGeoJsonPane(layer) }), [layer]);
 
   if (!data?.features?.length) return null;
 
@@ -624,6 +640,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
 export default function ManagedMapLayers({ activeBaseLayer, visibleOperationalLayers, setLayerRuntime }) {
   return (
     <>
+      <ManagedLayerPaneController />
       {activeBaseLayer?.type === "base" ? renderTileLayer(activeBaseLayer, 100, setLayerRuntime) : null}
 
       {activeBaseLayer?.type === "base-hybrid" ? (
@@ -653,17 +670,16 @@ export default function ManagedMapLayers({ activeBaseLayer, visibleOperationalLa
 
       {visibleOperationalLayers.map((layer, index) => {
         if (!isRenderableOperationalLayer(layer)) return null;
-        const zIndex = 200 + index;
+        const zIndex = 210 + index;
         if (isGeoJsonLikeLayer(layer)) {
           return <GeoJsonBboxLayer key={layer.id} layer={layer} zIndex={zIndex} setLayerRuntime={setLayerRuntime} />;
         }
-        if (layerKind(layer) === "wms") return renderWmsLayer(layer, zIndex, setLayerRuntime);
+        if (layerKind(layer) === "wms") return renderWmsLayer(layer, zIndex, setLayerRuntime, MANAGED_LAYER_PANES.raster);
         if (isWmsLikeLayer(layer)) {
-          return <AuthenticatedTileLayer key={layer.id} layer={layer} zIndex={zIndex} setLayerRuntime={setLayerRuntime} />;
+          return <AuthenticatedTileLayer key={layer.id} layer={layer} zIndex={zIndex} pane={MANAGED_LAYER_PANES.raster} setLayerRuntime={setLayerRuntime} />;
         }
         return null;
       })}
     </>
   );
 }
-

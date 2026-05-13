@@ -127,10 +127,10 @@ function MapPaneController() {
     if (!map?.createPane) return;
 
     const panes = [
-      [MAP_PANES.parcels, 430, "auto"],
-      [MAP_PANES.labels, 445, "auto"],
-      [MAP_PANES.edit, 470, "auto"],
-      [MAP_PANES.measure, 485, "none"],
+      [MAP_PANES.parcels, 650, "auto"],
+      [MAP_PANES.labels, 680, "auto"],
+      [MAP_PANES.edit, 690, "auto"],
+      [MAP_PANES.measure, 710, "none"],
     ];
 
     panes.forEach(([name, zIndex, pointerEvents]) => {
@@ -2535,5 +2535,3 @@ export default function PortfolioMapShell({
     </section>
   );
 }
-
-

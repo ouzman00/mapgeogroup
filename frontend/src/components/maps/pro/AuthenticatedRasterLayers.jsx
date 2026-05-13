@@ -27,7 +27,7 @@ function normalizeBounds(bounds) {
   return [[south, west], [north, east]];
 }
 
-export function AuthenticatedTileLayer({ layer, zIndex = 200, setLayerRuntime }) {
+export function AuthenticatedTileLayer({ layer, zIndex = 200, pane = undefined, setLayerRuntime }) {
   const map = useMap();
   const endpoint = layer?.authTileEndpoint || layer?.tileEndpoint || layer?.tile_endpoint || "";
   const layerId = layer?.id;
@@ -64,6 +64,7 @@ export function AuthenticatedTileLayer({ layer, zIndex = 200, setLayerRuntime })
       tileSize: layer?.tileSize || 256,
       opacity,
       zIndex,
+      pane,
       bounds: normalizeBounds(layer?.bounds),
     });
 
@@ -72,7 +73,7 @@ export function AuthenticatedTileLayer({ layer, zIndex = 200, setLayerRuntime })
     secureLayer.on("tileerror", () => setLayerRuntime?.(layerId, { loading: false, error: "Erreur WMS" }));
     secureLayer.addTo(map);
     return () => secureLayer.removeFrom(map);
-  }, [endpoint, layerId, layer?.available, layer?.bounds, layer?.clientLayerType, layer?.dataFormat, layer?.data_format, layer?.maxZoom, layer?.metadata?.dataFormat, layer?.minZoom, layer?.name, layer?.tileSize, layer?.visible, map, opacity, setLayerRuntime, zIndex]);
+  }, [endpoint, layerId, layer?.available, layer?.bounds, layer?.clientLayerType, layer?.dataFormat, layer?.data_format, layer?.maxZoom, layer?.metadata?.dataFormat, layer?.minZoom, layer?.name, layer?.tileSize, layer?.visible, map, opacity, setLayerRuntime, zIndex, pane]);
 
   return null;
 }
