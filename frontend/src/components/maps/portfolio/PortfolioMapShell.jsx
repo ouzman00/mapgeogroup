@@ -17,7 +17,6 @@ import {
   X,
 } from "lucide-react";
 import "@geoman-io/leaflet-geoman-free";
-import "leaflet-rotate";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import {
   DEFAULT_MAP_CENTER,
