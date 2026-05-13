@@ -1408,7 +1408,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     map.pm?.removeControls?.();
 
     const doubleClickZoomWasEnabled = map.doubleClickZoom?.enabled?.() ?? false;
-    map.doubleClickZoom?.disable?.();
+    map.doubleClickZoom?.enable?.();
 
     const handleCreate = (event) => {
       stopLeafletDomEvent(event);
@@ -1785,11 +1785,11 @@ export default function PortfolioMapShell({
 
     container?.classList?.add("mapgeo-measure-mode");
     map.dragging?.enable?.();
-    map.doubleClickZoom?.disable?.();
+    map.doubleClickZoom?.enable?.();
 
     return () => {
       container?.classList?.remove("mapgeo-measure-mode");
-      map.doubleClickZoom?.disable?.();
+      map.doubleClickZoom?.enable?.();
       clearPendingMeasurementClick();
     };
   }, [clearPendingMeasurementClick, map, showMeasurements]);
@@ -1823,9 +1823,17 @@ export default function PortfolioMapShell({
       });
     };
 
-    // Mobile: do not update the measurement line while the user touches or drags the map.
-    // The measurement changes only when the user presses Ajouter.
-    return undefined;
+    // Mobile: update the preview line only after the map movement ends.
+    // This keeps tap/drag from adding points while keeping the measurement line visible.
+    syncCenterPreview();
+
+    map.on("moveend", syncCenterPreview);
+    map.on("zoomend", syncCenterPreview);
+
+    return () => {
+      map.off("moveend", syncCenterPreview);
+      map.off("zoomend", syncCenterPreview);
+    };
   }, [map, showMeasurements, setMeasurementDraft]);
 
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
@@ -2169,7 +2177,7 @@ export default function PortfolioMapShell({
   return (
     <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
-        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={false} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
+        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
           <PortfolioViewport mode={viewMode} activeFeature={activeFeature} features={viewportFeatures} onMapReady={setMap} viewportRequest={viewportRequest} onZoomChange={setMapZoom} />
           <MapRuntimeObserver
