@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -72,7 +72,6 @@ const POSTGIS_TABLE_PRESETS = [
   ["communes", "Communes"],
   ["parcels_parcel", "Parcelles"],
   ["parcels_parcel_qgis", "Parcelles — vue QGIS"],
-  ["occupation_sol", "Occupation du sol"],
 ];
 const STYLE_MODE_OPTIONS = [
   ["single", "Style unique"],
@@ -2040,3 +2039,4 @@ export default function AdminMapLayersPanel({ clientId }) {
     </section>
   );
 }
+
