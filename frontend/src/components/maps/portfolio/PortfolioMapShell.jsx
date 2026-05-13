@@ -603,7 +603,7 @@ function UserLocationLayer({ enabled, onError, onDisable }) {
 
     if (typeof navigator === "undefined" || !navigator.geolocation || !map.locate) {
       onDisableRef.current?.();
-      onErrorRef.current?.("Localisation indisponible sur ce navigateur.");
+      onErrorRef.current?.("Localisation indisponible");
       return undefined;
     }
 
@@ -619,7 +619,7 @@ function UserLocationLayer({ enabled, onError, onDisable }) {
     const handleError = () => {
       setFix(null);
       onDisableRef.current?.();
-      onErrorRef.current?.("Localisation refusée ou indisponible. La carte n’a pas été déplacée.");
+      onErrorRef.current?.("Localisation indisponible");
     };
 
     map.on("locationfound", handleFound);
@@ -666,7 +666,7 @@ function MapControlStack({ map, locationEnabled, onToggleLocation, onLocationErr
     }
 
     if (typeof navigator === "undefined" || !navigator.geolocation || !map.locate) {
-      onLocationError?.("Localisation indisponible sur ce navigateur.");
+      onLocationError?.("Localisation indisponible");
       return;
     }
 
@@ -681,7 +681,7 @@ function MapControlStack({ map, locationEnabled, onToggleLocation, onLocationErr
 
     const handleError = () => {
       onToggleLocation?.(false);
-      onLocationError?.("Localisation refusée ou indisponible. La carte n’a pas été déplacée.");
+      onLocationError?.("Localisation indisponible");
     };
 
     map.once("locationfound", handleFound);
@@ -1713,6 +1713,17 @@ export default function PortfolioMapShell({
   const [deleteVertexMode, setDeleteVertexMode] = useState(false);
   const [userLocationEnabled, setUserLocationEnabled] = useState(false);
   const [userLocationMessage, setUserLocationMessage] = useState("");
+
+  // AUTO_CLEAR_USER_LOCATION_MESSAGE
+  useEffect(() => {
+    if (!userLocationMessage) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setUserLocationMessage("");
+    }, 3500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [userLocationMessage]);
   const [hoveredFeatureId, setHoveredFeatureId] = useState(null);
   const [vertexDisplayOptions, setVertexDisplayOptions] = useState(DEFAULT_VERTEX_DISPLAY_OPTIONS);
   const [editGeometry, setEditGeometry] = useState(null);
