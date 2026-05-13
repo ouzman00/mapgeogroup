@@ -36,6 +36,8 @@ import PasswordInput from "../components/ui/PasswordInput";
 const emptyForm = {
   name: "",
   code: "",
+  identity_number: "",
+  metadata: {},
   status: "active",
   email: "",
   phone: "",
@@ -65,6 +67,15 @@ const statusLabels = {
 };
 
 function payloadFrom(form, editing = false) {
+  const identityNumber = String(form.identity_number || "").trim();
+  const metadata = {
+    ...(form.metadata || {}),
+    type: form.type || "entreprise",
+  };
+
+  if (identityNumber) metadata.identity_number = identityNumber;
+  else delete metadata.identity_number;
+
   const basePayload = {
     name: form.name.trim(),
     code: form.code.trim().toUpperCase(),
@@ -73,7 +84,8 @@ function payloadFrom(form, editing = false) {
     phone: form.phone.trim() || null,
     address: form.address.trim() || null,
     organization_type: "client",
-    metadata: { type: form.type || "entreprise" },
+    identity_number: identityNumber || null,
+    metadata,
   };
 
   if (editing) {
@@ -453,7 +465,7 @@ function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onRese
                         onClick={() => onEdit(client)}
                         className="rounded-xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-bold text-mapgeo-primary shadow-sm transition hover:bg-mapgeo-ivory"
                       >
-                        Modifier
+                        Modifier la fiche
                       </button>
                       <button
                         type="button"
@@ -636,6 +648,7 @@ function ClientFormPanel({ form, setForm, editingClient, saving, onSubmit, onCan
           <FormSection title="1. Informations client">
             <TextInput label="Nom de l’entreprise" required value={form.name} onChange={(value) => update("name", value)} placeholder="Ex. SENAGRI" />
             <TextInput label="Code client" required value={form.code} onChange={(value) => update("code", value)} placeholder="Ex. CL-001" />
+            <TextInput label="Numéro d’identité" value={form.identity_number} onChange={(value) => update("identity_number", value)} placeholder="NINEA, CNI, RCCM..." />
 
             <label className="block">
               <span className="text-xs font-bold text-mapgeo-primary">Type de client</span>
@@ -838,7 +851,7 @@ export default function ClientsPage() {
       const locationText = clientLocationText(client);
       const matchesQuery =
         !q ||
-        [client.name, client.code, client.email, client.phone, locationText, client.contact_name, client.portal_access]
+        [client.name, client.code, client.metadata?.identity_number, client.email, client.phone, locationText, client.contact_name, client.portal_access]
           .filter(Boolean)
           .some((item) => String(item).toLowerCase().includes(q));
 
@@ -905,6 +918,8 @@ export default function ClientsPage() {
       ...emptyForm,
       name: client.name || "",
       code: client.code || "",
+      identity_number: client.metadata?.identity_number || client.identity_number || "",
+      metadata: client.metadata || {},
       status: client.status || "active",
       email: client.email || "",
       phone: client.phone || "",

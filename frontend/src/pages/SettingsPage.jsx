@@ -55,7 +55,7 @@ const BASE_SETTINGS_NAV = [
   { id: "profile", label: "Profil", icon: UserRound },
   { id: "security", label: "Sécurité", icon: ShieldCheck },
   { id: "notifications", label: "Notifications", icon: BellRing },
-  { id: "preferences", label: "Préférences", icon: SlidersHorizontal },
+  { id: "preferences", label: "Préférences locales", icon: SlidersHorizontal },
 ];
 
 const INTERNAL_SETTINGS_NAV = [
@@ -63,7 +63,7 @@ const INTERNAL_SETTINGS_NAV = [
   { id: "security", label: "Sécurité", icon: ShieldCheck },
   { id: "notifications", label: "Notifications", icon: BellRing },
   { id: "organization", label: "Organisation", icon: Building2 },
-  { id: "preferences", label: "Préférences", icon: SlidersHorizontal },
+  { id: "preferences", label: "Préférences locales", icon: SlidersHorizontal },
 ];
 
 function loadStoredPreferences() {
@@ -338,7 +338,7 @@ function ProfileSection({
   onAvatarRemove,
 }) {
   return (
-    <SectionBlock id="profile" title="1. Profil">
+    <SectionBlock id="profile" title="1. Profil utilisateur">
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_210px]">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <TextInput
@@ -444,11 +444,11 @@ function SecuritySection({
   sessionMessage,
 }) {
   return (
-    <SectionBlock id="security" title="2. Sécurité / mot de passe">
+    <SectionBlock id="security" title="2. Sécurité du compte">
       <form onSubmit={onPasswordSubmit} className="space-y-3">
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
           <PasswordInput
-            label="Mot de passe actuel"
+            label="Mot de passe actuel (obligatoire)"
             name="current_password"
             value={passwordForm.current_password}
             onChange={onPasswordChange}
@@ -487,7 +487,7 @@ function SecuritySection({
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-4 py-2.5 text-sm font-extrabold text-white shadow-soft transition hover:bg-mapgeo-primary/95 disabled:opacity-60"
             >
               <KeyRound size={17} />
-              {savingPassword ? "Mise à jour..." : "Modifier le mot de passe"}
+              {savingPassword ? "Mise à jour..." : "Changer le mot de passe"}
             </button>
           </div>
         </div>
@@ -501,7 +501,7 @@ function SecuritySection({
 
 function NotificationsSection({ preferences, setPreference, isClientPortal }) {
   return (
-    <SectionBlock id="notifications" title="3. Notifications · préférences locales">
+    <SectionBlock id="notifications" title="3. Notifications">
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-2">
           <ToggleRow
@@ -562,7 +562,7 @@ function OrganizationSection({ profileForm, user, isClientPortal }) {
   }
 
   return (
-    <SectionBlock id="organization" title="4. Organisation">
+    <SectionBlock id="organization" title="4. Organisation et rattachement">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <TextInput
           label="Nom société"
@@ -675,7 +675,7 @@ function AccountSummary({ user, profileCompletion, preferences, onNavigateSectio
           <SummaryMetric icon={Building2} label="Portail" value={getPortalLabel(user)} />
           <SummaryMetric
             icon={BellRing}
-            label="Notifications locales actives"
+            label="Notifications activées"
             value={activeNotifications}
           />
         </div>
@@ -685,7 +685,7 @@ function AccountSummary({ user, profileCompletion, preferences, onNavigateSectio
           <div className="mt-3 space-y-3">
             <SummaryMetric icon={ShieldCheck} label="Authentification standard" value="" />
             <SummaryMetric icon={Laptop} label="Sessions de connexion" value="" />
-            <SummaryMetric icon={LockKeyhole} label="Mot de passe configurable" value="" />
+            <SummaryMetric icon={LockKeyhole} label="Changement sécurisé" value="" />
           </div>
         </div>
 
@@ -694,7 +694,7 @@ function AccountSummary({ user, profileCompletion, preferences, onNavigateSectio
           <div className="mt-3 space-y-2">
             <QuickAction
               icon={KeyRound}
-              label="Modifier le mot de passe"
+              label="Changer le mot de passe"
               sectionId="security"
               onNavigateSection={onNavigateSection}
             />
@@ -959,11 +959,12 @@ export default function SettingsPage() {
 
     try {
       const updated = await authService.updateProfile(normalizedProfile);
-      setUser(updated);
-      persistStoredUser(updated);
-      setProfileForm(normalizedProfile);
-      setInitialProfileForm(normalizedProfile);
-      setProfileMessage("Profil mis à jour avec succès.");
+      const refreshedProfile = await authService.getProfile().catch(() => updated);
+      setUser(refreshedProfile);
+      persistStoredUser(refreshedProfile);
+      setProfileForm(normalizeProfilePayload(refreshedProfile));
+      setInitialProfileForm(normalizeProfilePayload(refreshedProfile));
+      setProfileMessage("Profil enregistré avec succès.");
       return true;
     } catch (error) {
       console.error(error);
@@ -1016,7 +1017,7 @@ export default function SettingsPage() {
     }
 
     if (profileSaved && preferencesSaved) {
-      setProfileMessage("Modifications enregistrées avec succès. Les préférences sont enregistrées localement sur ce navigateur.");
+      setProfileMessage("Profil enregistré. Les préférences locales sont enregistrées sur ce navigateur.");
     } else if (profileSaved && !preferencesSaved) {
       setProfileMessage("Profil mis à jour, mais impossible d’enregistrer les préférences locales du navigateur.");
     }

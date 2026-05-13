@@ -172,6 +172,8 @@ class AdminClientCreateSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     company_name = serializers.CharField(max_length=255, required=False, allow_blank=True, allow_null=True)
+    identity_number = serializers.CharField(max_length=120, required=False, allow_blank=True, allow_null=True)
+    metadata = serializers.JSONField(required=False)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True, min_length=8)
 
     portal_access = serializers.BooleanField(required=False, default=True)
@@ -251,6 +253,10 @@ class AdminClientCreateSerializer(serializers.Serializer):
             password = None
 
         generate_temporary_password = False
+        metadata = dict(validated_data.get("metadata") or {})
+        identity_number = (validated_data.get("identity_number") or "").strip()
+        if identity_number:
+            metadata["identity_number"] = identity_number
 
         bundle = create_client_account(
             name=validated_data["name"],
@@ -267,6 +273,7 @@ class AdminClientCreateSerializer(serializers.Serializer):
             is_verified=bool(portal_access and not send_invitation),
             is_active=portal_access,
             generate_temporary_password=generate_temporary_password,
+            metadata=metadata or None,
         )
 
         return {

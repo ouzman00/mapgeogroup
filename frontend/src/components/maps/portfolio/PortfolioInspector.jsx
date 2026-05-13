@@ -1,4 +1,4 @@
-﻿import { CalendarCheck2, CheckCircle2, Edit3, FileText, FolderOpen, Printer, Route, Save, ShieldCheck, X } from "lucide-react";
+import { CalendarCheck2, CheckCircle2, Edit3, FileText, FolderOpen, Printer, Route, Save, ShieldCheck, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import documentService from "../../../services/documentService";
@@ -179,6 +179,7 @@ function ProgressStepper({ progress = 0 }) {
           <InfoRow label="Client" value={parcel.owner_client_code || clientCode} />
           <InfoRow label="Propriétaire" value={parcel.owner_name || "—"} />
           <InfoRow label="Titre foncier" value={parcel.title_number || parcel.land_title} />
+          <InfoRow label="NICAD" value={parcel.nicad} />
           <InfoRow label="Section" value={parcel.section} />
           <InfoRow label="N° parcellaire" value={parcel.parcel_number || parcel.cadastral_number} />
         </div>
@@ -209,6 +210,7 @@ function AttributesPanel({ activeFeature, clientCode, ownerName }) {
   const vertexRows = buildVertexRows(activeFeature);
   const rows = [
     ["Référence", parcel.reference],
+    ["NICAD", parcel.nicad],
     ["Client", parcel.owner_client_code || clientCode],
     ["Propriétaire", parcel.owner_name || ownerName],
     ["Commune", parcel.commune],
@@ -270,6 +272,7 @@ function inputDateValue(value) {
 const INFO_EDIT_PRESERVED_FIELDS = [
   "title_number",
   "parcel_number",
+  "nicad",
   "section",
   "address",
   "village",
@@ -288,6 +291,7 @@ function buildInfoEditForm(activeFeature) {
   const officialArea = parcel.area ?? parcel.official_area ?? parcel.declared_area ?? activeFeature?.officialAreaValue ?? "";
   return {
     reference: parcel.reference || "",
+    nicad: parcel.nicad || "",
     status: normalizeParcelStatus(parcel.status || "created"),
     owner: parcel.owner ? String(parcel.owner) : "",
     organization: parcel.organization ? String(parcel.organization) : "",
@@ -310,6 +314,7 @@ function buildInfoEditPayload(parcel = {}, form = {}) {
   const parsedArea = form.area === "" ? 0 : Number(form.area);
 
   payload.reference = form.reference.trim();
+  payload.nicad = String(form.nicad || "").trim() || null;
   payload.status = form.status;
 
   if (form.owner !== "") {
@@ -410,6 +415,10 @@ function ParcelInfoEditPanel({ activeFeature, owners = [], onCancel, onSave }) {
 
       <label className="block text-[11px] font-bold text-white/60">Référence *
         <input value={form.reference} onChange={(event) => update("reference", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
+      </label>
+
+      <label className="block text-[11px] font-bold text-white/60">NICAD
+        <input value={form.nicad} onChange={(event) => update("nicad", event.target.value)} placeholder="Numéro NICAD" className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" />
       </label>
 
       <label className="block text-[11px] font-bold text-white/60">Statut
@@ -751,4 +760,3 @@ export default function PortfolioInspector({
     </aside>
   );
 }
-

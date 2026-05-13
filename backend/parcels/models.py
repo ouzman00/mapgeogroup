@@ -62,6 +62,7 @@ class Parcel(models.Model):
 
     title_number = models.CharField(max_length=120, blank=True, null=True)
     parcel_number = models.CharField(max_length=120, blank=True, null=True)
+    nicad = models.CharField(max_length=120, blank=True, null=True, db_index=True)
     section = models.CharField(max_length=120, blank=True, null=True)
     location = models.CharField(max_length=255)
     address = models.CharField(max_length=255, blank=True, null=True)

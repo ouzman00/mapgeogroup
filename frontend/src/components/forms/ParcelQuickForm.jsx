@@ -24,6 +24,7 @@ import {
 
 const EMPTY_FORM = {
   reference: "",
+  nicad: "",
   owner: "",
   organization: "",
   location: "",
@@ -137,6 +138,7 @@ function buildPayload(form, format, crs, owners = []) {
 
   const payload = {
     reference,
+    nicad: (form.nicad || "").trim() || null,
     location: (form.location || "").trim() || "Non précisé",
     commune: (form.commune || "").trim(),
     area,
@@ -424,6 +426,18 @@ export default function ParcelQuickForm({
             onChange={handleFieldChange}
             className={fieldClass}
             placeholder="PARC-001"
+          />
+        </div>
+
+        {/* NICAD */}
+        <div>
+          <label className={labelClass}>NICAD</label>
+          <input
+            name="nicad"
+            value={form.nicad}
+            onChange={handleFieldChange}
+            className={fieldClass}
+            placeholder="Numéro NICAD"
           />
         </div>
 

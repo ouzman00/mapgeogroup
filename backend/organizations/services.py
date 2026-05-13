@@ -72,6 +72,7 @@ def create_client_account(
     is_verified: bool = True,
     is_active: bool = True,
     generate_temporary_password: bool = False,
+    metadata: dict | None = None,
 ) -> ClientAccountBundle:
     """Crée le triplet métier Organization + User client + Membership actif.
 
@@ -97,6 +98,7 @@ def create_client_account(
         email=normalized_email,
         phone=(phone or "").strip() or None,
         address=(address or "").strip() or None,
+        metadata=metadata or None,
     )
 
     generated_password = None
