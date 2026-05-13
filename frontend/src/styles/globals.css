@@ -2119,3 +2119,106 @@ main > .mapgeo-carto-workspace,
   }
 }
 
+/* --------------------------------------------------------------------------
+   PROFESSIONAL PARCEL DISPLAY FINAL
+   Objectif :
+   - Parcelles lisibles au-dessus des couches WMS/WFS/PostGIS
+   - Rendu cadastral sobre : contour net, remplissage discret
+   - Badges compacts pour éviter de masquer les analyses
+-------------------------------------------------------------------------- */
+.mapgeo-parcel-path {
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter:
+    drop-shadow(0 0 1.6px rgba(247, 245, 242, 0.86))
+    drop-shadow(0 0 3px rgba(7, 17, 27, 0.34));
+}
+
+.mapgeo-parcel-path.is-active {
+  filter:
+    drop-shadow(0 0 2px rgba(247, 245, 242, 0.96))
+    drop-shadow(0 0 5px rgba(18, 59, 93, 0.42));
+}
+
+.mapgeo-parcel-path.is-editing {
+  filter:
+    drop-shadow(0 0 2px rgba(219, 234, 254, 0.98))
+    drop-shadow(0 0 6px rgba(37, 99, 235, 0.34));
+}
+
+.mapgeo-parcel-path.has-geometry-error {
+  filter:
+    drop-shadow(0 0 2px rgba(254, 226, 226, 0.95))
+    drop-shadow(0 0 6px rgba(220, 38, 38, 0.35));
+}
+
+.mapgeo-parcel-badge-shell {
+  width: auto !important;
+  height: auto !important;
+}
+
+.mapgeo-parcel-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  max-width: 118px !important;
+  padding: 0.24rem 0.48rem !important;
+  border-radius: 999px !important;
+  background: rgba(7, 17, 27, 0.58) !important;
+  border: 1px solid rgba(247, 245, 242, 0.34) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(6px) saturate(1.02) !important;
+}
+
+.mapgeo-parcel-badge strong {
+  display: block !important;
+  max-width: 96px !important;
+  overflow: hidden !important;
+  color: #ffffff !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.mapgeo-parcel-badge span {
+  display: none !important;
+}
+
+.mapgeo-parcel-badge.is-active {
+  background: rgba(18, 59, 93, 0.72) !important;
+  border-color: rgba(199, 178, 153, 0.62) !important;
+  box-shadow: 0 8px 18px rgba(18, 59, 93, 0.28) !important;
+}
+
+.mapgeo-side-label {
+  min-width: 0 !important;
+  padding: 0.18rem 0.42rem !important;
+  border-radius: 999px !important;
+  background: rgba(7, 17, 27, 0.50) !important;
+  border-color: rgba(247, 245, 242, 0.28) !important;
+  font-size: 0.64rem !important;
+  font-weight: 760 !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16) !important;
+}
+
+.mapgeo-area-label {
+  background: rgba(7, 17, 27, 0.52) !important;
+  border-color: rgba(247, 245, 242, 0.30) !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+@media (max-width: 767px) {
+  .mapgeo-parcel-badge {
+    max-width: 98px !important;
+    padding: 0.2rem 0.42rem !important;
+  }
+
+  .mapgeo-parcel-badge strong {
+    max-width: 80px !important;
+    font-size: 0.62rem !important;
+  }
+}

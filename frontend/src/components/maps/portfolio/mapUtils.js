@@ -1,8 +1,8 @@
 import L from "leaflet";
 import { escapeHtml } from "../../../config/mapConfig";
 
-export const LABEL_MIN_ZOOM = 13;
-export const DETAIL_MIN_ZOOM = 17;
+export const LABEL_MIN_ZOOM = 16;
+export const DETAIL_MIN_ZOOM = 18;
 
 export function clampOpacity(value, fallback = 1) {
   const numericValue = Number(value);
@@ -75,8 +75,8 @@ export function createParcelBadgeIcon(reference, status, active = false) {
         <span>${escapeHtml(status || "Statut")}</span>
       </div>
     `,
-    iconSize: [168, 54],
-    iconAnchor: [84, 27],
+    iconSize: [104, 30],
+    iconAnchor: [52, 15],
   });
 }
 export function createVertexGlowIcon(label, tone = "measure") {

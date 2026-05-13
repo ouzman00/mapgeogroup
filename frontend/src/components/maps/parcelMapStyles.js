@@ -64,13 +64,13 @@ export const DEFAULT_PARCEL_STYLE = {
  * Poids harmonisés des contours.
  * Avant, certains états montaient à 3.3 / 4 px, ce qui donnait des contours très inégaux.
  */
-const BASE_WEIGHT = 2.6;
-const WARNING_WEIGHT = 2.8;
-const HOVER_WEIGHT = 3;
-const ACTIVE_WEIGHT = 3.4;
-const EDITING_WEIGHT = 3.8;
-const LOCKED_WEIGHT = 2.8;
-const ERROR_WEIGHT = 3.8;
+const BASE_WEIGHT = 1.7;
+const WARNING_WEIGHT = 1.9;
+const HOVER_WEIGHT = 2.25;
+const ACTIVE_WEIGHT = 2.8;
+const EDITING_WEIGHT = 3;
+const LOCKED_WEIGHT = 1.8;
+const ERROR_WEIGHT = 2.7;
 
 
 const PROFESSIONAL_LEGEND_ITEMS = [
@@ -246,7 +246,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
   let color = style.color || "#123B5D";
   let fillColor = style.fillColor || "#C7B299";
   let weight = BASE_WEIGHT;
-  let fillOpacity = options.muted ? 0.035 : 0.105;
+  let fillOpacity = options.muted ? 0.008 : 0.018;
   let dashArray = null;
 
   /**
@@ -276,7 +276,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
   }
 
   if (hasDocuments) {
-    fillOpacity = Math.max(fillOpacity, 0.13);
+    fillOpacity = Math.max(fillOpacity, 0.032);
   }
 
   /**
@@ -286,7 +286,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     color = "#2563EB";
     fillColor = "#DBEAFE";
     weight = HOVER_WEIGHT;
-    fillOpacity = Math.max(fillOpacity, 0.18);
+    fillOpacity = Math.max(fillOpacity, 0.065);
   }
 
   /**
@@ -296,7 +296,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     color = "#123B5D";
     fillColor = "#C7B299";
     weight = ACTIVE_WEIGHT;
-    fillOpacity = 0.26;
+    fillOpacity = 0.105;
     dashArray = null;
   }
 
@@ -308,7 +308,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     fillColor = "#DBEAFE";
     weight = EDITING_WEIGHT;
     dashArray = "10 6";
-    fillOpacity = 0.22;
+    fillOpacity = 0.12;
   }
 
   if (lockedByOther && !editing && !geometryError) {
@@ -316,7 +316,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     fillColor = "#E2E8F0";
     weight = LOCKED_WEIGHT;
     dashArray = "3 6";
-    fillOpacity = 0.14;
+    fillOpacity = 0.045;
   }
 
   /**
@@ -327,7 +327,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     fillColor = "#FEE2E2";
     weight = ERROR_WEIGHT;
     dashArray = "6 4";
-    fillOpacity = active ? 0.24 : 0.16;
+    fillOpacity = active ? 0.13 : 0.075;
   }
 
   return {
@@ -360,6 +360,14 @@ export function getParcelPathOptions(parcelOrStatus, options = {}) {
     weight: symbology.weight,
     dashArray: symbology.dashArray,
     lineJoin: "round",
+    lineCap: "round",
+    className: [
+      "mapgeo-parcel-path",
+      symbology.active ? "is-active" : "",
+      symbology.hovered ? "is-hovered" : "",
+      symbology.editing ? "is-editing" : "",
+      symbology.geometryError ? "has-geometry-error" : "",
+    ].filter(Boolean).join(" "),
   };
 }
 

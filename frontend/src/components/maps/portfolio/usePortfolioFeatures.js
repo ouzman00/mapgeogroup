@@ -136,8 +136,7 @@ export default function usePortfolioFeatures({ parcels, activeParcel, searchTerm
 
   const labelsAreVisible = showLabels && activeLayerEnabled && (
     (viewMode === "selection" && Boolean(activeFeature?.id)) ||
-    mapZoom >= LABEL_MIN_ZOOM ||
-    displayedFeatures.length <= 8
+    mapZoom >= LABEL_MIN_ZOOM
   );
   return {
     features,
