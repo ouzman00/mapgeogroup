@@ -26,7 +26,7 @@ from .geojson_utils import filter_feature_collection, normalize_geojson_for_leaf
 from .validators import validate_layer_payload
 from .models import ClientMapLayer
 from .services.vector_import import build_db_geojson
-from .services.postgis_import import inspect_postgis_table_metadata, normalize_postgis_options
+from .services.postgis_import import inspect_postgis_table_metadata, list_available_postgis_tables, normalize_postgis_options
 from accounts.permissions import get_client_organization_ids
 from .permissions import HasClientScope, IsAdminRole, is_platform_admin, managed_client_ids_for_user, user_can_manage_client
 from .serializers import AdminMapLayerSerializer, ClientMapLayerListSerializer, MapLayerCreateSerializer, MapLayerUpdateSerializer, SUPPORTED_DATA_FORMATS, configured_wms_service_url, display_message_for, is_client_displayable_layer, is_database_layer, service_for, wfs_version, wms_tile_crs, wms_tile_version
@@ -632,6 +632,22 @@ class AdminServiceCapabilitiesView(APIView):
         service_url = str(request.data.get("service_url") or "").strip()
         version = str(request.data.get("version") or request.data.get("wms_version") or request.data.get("wfs_version") or "").strip()
         return Response(fetch_service_capabilities(service_type, service_url, version))
+
+
+
+class AdminPostgisTablesView(APIView):
+    permission_classes = [IsAdminRole]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+    def get(self, request, client_id):
+        client = get_object_or_404(Organization, id=client_id, organization_type="client")
+        if not user_can_manage_client(request.user, client.id):
+            raise Http404("Client introuvable dans votre périmètre.")
+
+        try:
+            return Response(list_available_postgis_tables({key: request.query_params.get(key) for key in request.query_params.keys()}))
+        except ValidationError as exc:
+            return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminPostgisLayerPreviewView(APIView):

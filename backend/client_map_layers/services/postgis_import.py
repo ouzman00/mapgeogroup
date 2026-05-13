@@ -280,6 +280,112 @@ def _build_query(options: dict[str, Any]):
 
 
 
+def list_available_postgis_tables(data: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Liste les vraies tables/vues PostGIS disponibles dans la base configurée.
+
+    Le dashboard ne dépend plus de presets codés en dur : une table importée
+    dans PostgreSQL apparaît automatiquement si elle contient une colonne geometry.
+    """
+    defaults = _default_postgis_connection()
+    raw_connection_data = data or {}
+    connection_data = raw_connection_data if getattr(settings, "POSTGIS_IMPORT_ALLOW_CONNECTION_OVERRIDE", False) else {}
+
+    host = str(connection_data.get("postgis_host") or defaults["host"]).strip()
+    database = str(connection_data.get("postgis_database") or defaults["database"]).strip()
+    username = str(connection_data.get("postgis_username") or defaults["username"]).strip()
+    password = str(connection_data.get("postgis_password") or defaults["password"]).strip()
+
+    try:
+        port = int(connection_data.get("postgis_port") or defaults["port"] or 5432)
+    except Exception as exc:
+        raise ValidationError({"postgis_port": "Port PostGIS invalide."}) from exc
+
+    options = {
+        "host": host,
+        "port": port,
+        "database": database,
+        "username": username,
+        "password": password,
+    }
+
+    if not host or not database or not username or not password:
+        raise ValidationError({"postgis": "Connexion PostGIS incomplète. Vérifiez DATABASE_URL sur le backend."})
+
+    preferred_schema = str(getattr(settings, "DB_SCHEMA", "donnees_mapgeo") or "donnees_mapgeo")
+
+    query = """
+        SELECT
+            n.nspname AS schema_name,
+            c.relname AS table_name,
+            CASE c.relkind
+                WHEN 'v' THEN 'view'
+                WHEN 'm' THEN 'materialized_view'
+                WHEN 'f' THEN 'foreign_table'
+                WHEN 'p' THEN 'partitioned_table'
+                ELSE 'table'
+            END AS relation_type,
+            ARRAY_AGG(a.attname ORDER BY a.attnum) FILTER (WHERE t.typname = 'geometry') AS geometry_columns,
+            ARRAY_AGG(a.attname ORDER BY a.attnum) AS columns
+        FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+        JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+        JOIN pg_catalog.pg_type t ON t.oid = a.atttypid
+        WHERE c.relkind IN ('r', 'v', 'm', 'f', 'p')
+          AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+          AND n.nspname NOT LIKE 'pg_toast%'
+        GROUP BY n.nspname, c.relname, c.relkind
+        HAVING COUNT(*) FILTER (WHERE t.typname = 'geometry') > 0
+        ORDER BY
+          CASE WHEN n.nspname = %s THEN 0 WHEN n.nspname = 'public' THEN 1 ELSE 2 END,
+          n.nspname,
+          c.relname
+    """
+
+    try:
+        with _connect(options) as conn:
+            conn.set_session(readonly=True, autocommit=True)
+            with conn.cursor() as cursor:
+                cursor.execute(query, [preferred_schema])
+                rows = cursor.fetchall()
+    except ValidationError:
+        raise
+    except Exception as exc:
+        raise ValidationError({"postgis": f"Impossible de lister les tables PostGIS : {exc}"}) from exc
+
+    tables: list[dict[str, Any]] = []
+
+    for schema_name, table_name, relation_type, geometry_columns, columns in rows:
+        geometry_columns = [str(item) for item in (geometry_columns or [])]
+        columns = [str(item) for item in (columns or [])]
+
+        geometry_column = next(
+            (name for name in GEOMETRY_COLUMN_CANDIDATES if name in geometry_columns),
+            geometry_columns[0] if geometry_columns else "",
+        )
+        id_column = next((name for name in ID_COLUMN_CANDIDATES if name in columns), "")
+
+        table_label = str(table_name).replace("_", " ").strip().title() or str(table_name)
+        if schema_name != preferred_schema:
+            table_label = f"{table_label} ({schema_name})"
+
+        tables.append({
+            "schema": str(schema_name),
+            "table": str(table_name),
+            "value": str(table_name),
+            "qualified_name": f"{schema_name}.{table_name}",
+            "label": table_label,
+            "relation_type": str(relation_type),
+            "geometry_column": geometry_column,
+            "id_column": id_column,
+        })
+
+    return {
+        "tables": tables,
+        "count": len(tables),
+        "preferred_schema": preferred_schema,
+    }
+
+
 def inspect_postgis_table_metadata(options: dict[str, Any], *, sample_limit: int = 2000) -> dict[str, Any]:
     """Retourne un aperçu sûr des attributs PostGIS sans créer de couche.
 

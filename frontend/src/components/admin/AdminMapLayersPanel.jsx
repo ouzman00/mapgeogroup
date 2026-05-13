@@ -73,6 +73,24 @@ const POSTGIS_TABLE_PRESETS = [
   ["parcels_parcel", "Parcelles"],
   ["parcels_parcel_qgis", "Parcelles — vue QGIS"],
 ];
+
+function normalizePostgisTableOption(table) {
+  const schema = String(table?.schema || "").trim();
+  const value = String(table?.table || table?.value || "").trim();
+  if (!value) return null;
+
+  const label = String(table?.label || value.replace(/_/g, " ")).trim();
+
+  return {
+    schema,
+    value,
+    label,
+    geometryColumn: String(table?.geometry_column || "").trim(),
+    idColumn: String(table?.id_column || "").trim(),
+    qualifiedName: String(table?.qualified_name || (schema ? `${schema}.${value}` : value)).trim(),
+  };
+}
+
 const STYLE_MODE_OPTIONS = [
   ["single", "Style unique"],
   ["categorized", "Catégorisé par attribut"],
@@ -1496,6 +1514,10 @@ export default function AdminMapLayersPanel({ clientId }) {
   const [postgisPreview, setPostgisPreview] = useState(null);
   const [postgisPreviewLoading, setPostgisPreviewLoading] = useState(false);
   const [postgisPreviewError, setPostgisPreviewError] = useState("");
+  const [postgisTables, setPostgisTables] = useState([]);
+  const [postgisTablesLoading, setPostgisTablesLoading] = useState(false);
+  const [postgisTablesLoaded, setPostgisTablesLoaded] = useState(false);
+  const [postgisTablesError, setPostgisTablesError] = useState("");
   const [serviceCapabilities, setServiceCapabilities] = useState(null);
   const [serviceCapabilitiesLoading, setServiceCapabilitiesLoading] = useState(false);
   const [serviceCapabilitiesError, setServiceCapabilitiesError] = useState("");
@@ -1507,6 +1529,7 @@ export default function AdminMapLayersPanel({ clientId }) {
   const visibleCount = useMemo(() => layers.filter(isClientVisible).length, [layers]);
   const serviceCapabilityLayers = useMemo(() => (Array.isArray(serviceCapabilities?.layers) ? serviceCapabilities.layers : []), [serviceCapabilities]);
   const selectedServiceLayers = useMemo(() => selectedServiceLayerNames(form), [form.service_layers]);
+  const postgisTableOptions = useMemo(() => postgisTables.map(normalizePostgisTableOption).filter(Boolean), [postgisTables]);
 
   const loadLayers = useCallback(async () => {
     if (!clientId) return;
@@ -1517,6 +1540,40 @@ export default function AdminMapLayersPanel({ clientId }) {
   }, [clientId]);
 
   useEffect(() => { loadLayers(); }, [loadLayers]);
+
+
+  const loadPostgisTables = useCallback(async () => {
+    if (!clientId) return;
+
+    setPostgisTablesLoading(true);
+    setPostgisTablesError("");
+
+    try {
+      const response = await mapLayerService.adminListPostgisTables(clientId);
+      setPostgisTables(Array.isArray(response?.tables) ? response.tables : []);
+      setPostgisTablesLoaded(true);
+    } catch (tablesError) {
+      setPostgisTables([]);
+      setPostgisTablesLoaded(true);
+      setPostgisTablesError(getErrorMessage(tablesError, "Impossible de charger les tables PostGIS disponibles."));
+    } finally {
+      setPostgisTablesLoading(false);
+    }
+  }, [clientId]);
+
+  useEffect(() => { loadPostgisTables(); }, [loadPostgisTables]);
+
+  useEffect(() => {
+    const handleFocus = () => loadPostgisTables();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [loadPostgisTables]);
+
+
+  function refreshDashboardSources() {
+    loadLayers();
+    loadPostgisTables();
+  }
 
   function resetServiceCapabilities() {
     serviceCapabilitiesRequestRef.current += 1;
@@ -1745,11 +1802,18 @@ export default function AdminMapLayersPanel({ clientId }) {
   }
 
   function handlePostgisTableChange(value) {
+    const selectedTable = postgisTableOptions.find((option) => option.value === value);
+
     setPostgisPreview(null);
     setPostgisPreviewError("");
+
     setForm((current) => ({
       ...current,
+      postgis_schema: selectedTable?.schema || current.postgis_schema || LOCAL_POSTGIS_DEFAULTS.schema,
       postgis_table: value,
+      postgis_geometry_column: selectedTable?.geometryColumn || "",
+      postgis_id_column: selectedTable?.idColumn || "",
+      name: !String(current.name || "").trim() && selectedTable?.label ? selectedTable.label : current.name,
       style_category_field: "",
       style_categories: current.style_mode === "categorized" ? [] : current.style_categories,
     }));
@@ -1840,8 +1904,8 @@ export default function AdminMapLayersPanel({ clientId }) {
           <h2 className="mt-1 flex items-center gap-2 text-xl font-extrabold text-mapgeo-primary"><Layers size={22} /> Couches PostGIS, WFS et WMS</h2>
           <p className="mt-1 text-sm leading-6 text-mapgeo-secondary/75">Couches privées du client : import, visibilité et symbologie.</p>
         </div>
-        <button type="button" onClick={loadLayers} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-4 py-2 text-sm font-bold text-mapgeo-primary hover:bg-mapgeo-ivory disabled:opacity-50">
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />} Actualiser
+        <button type="button" onClick={refreshDashboardSources} disabled={loading || postgisTablesLoading} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-4 py-2 text-sm font-bold text-mapgeo-primary hover:bg-mapgeo-ivory disabled:opacity-50">
+          {loading || postgisTablesLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />} Actualiser
         </button>
       </div>
 
@@ -1862,9 +1926,44 @@ export default function AdminMapLayersPanel({ clientId }) {
           {isPostgis(form) ? (
             <>
               <Field label="Table ou vue à importer">
-                <select value={form.postgis_table} onChange={(e) => handlePostgisTableChange(e.target.value)} className={inputClass()} required>
-                  {POSTGIS_TABLE_PRESETS.map(([value, label]) => <option key={value || "empty"} value={value} disabled={!value}>{label}</option>)}
-                </select>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <select
+                    value={form.postgis_table}
+                    onChange={(e) => handlePostgisTableChange(e.target.value)}
+                    className={inputClass("sm:flex-1")}
+                    required
+                    disabled={postgisTablesLoading || postgisTableOptions.length === 0}
+                  >
+                    <option value="" disabled>
+                      {postgisTablesLoading ? "Chargement des tables PostGIS…" : postgisTableOptions.length ? "Choisir une table ou une vue" : "Aucune table PostGIS disponible"}
+                    </option>
+                    {postgisTableOptions.map((option) => (
+                      <option key={option.qualifiedName || option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={loadPostgisTables}
+                    disabled={postgisTablesLoading}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-4 py-3 text-sm font-extrabold text-mapgeo-primary hover:bg-mapgeo-ivory disabled:opacity-50"
+                  >
+                    {postgisTablesLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
+                    Tables
+                  </button>
+                </div>
+
+                {postgisTablesError ? (
+                  <p className="mt-2 text-xs font-bold text-red-700">{postgisTablesError}</p>
+                ) : null}
+
+                {postgisTablesLoaded && !postgisTablesLoading && !postgisTablesError && postgisTableOptions.length === 0 ? (
+                  <p className="mt-2 text-xs font-semibold text-mapgeo-secondary/65">
+                    Aucune table PostGIS avec géométrie trouvée dans la base configurée.
+                  </p>
+                ) : null}
               </Field>
               <Field label="Filtre" className="lg:col-span-2"><input value={form.postgis_where_clause} onChange={(e) => setForm({ ...form, postgis_where_clause: e.target.value })} className={inputClass()} placeholder="Exemple : type_zone = 'protected'" /></Field>
               <details className="lg:col-span-2 rounded-3xl border border-mapgeo-line bg-white">

@@ -449,6 +449,10 @@ const mapLayerService = {
     const response = await api.get("/admin/map-layers/", { params });
     return normalizeListResponse(response.data).results.map(normalizeClientMapLayer);
   },
+  async adminListPostgisTables(clientId, params = {}) {
+    const response = await api.get(`/admin/clients/${clientId}/map-layers/postgis-tables/`, { params });
+    return response.data || { tables: [] };
+  },
   async adminGetCapabilities(clientId, payload) {
     const response = await api.post(`/admin/clients/${clientId}/map-layers/capabilities/`, payload);
     return response.data || { layers: [] };
