@@ -84,12 +84,17 @@ function looksLikeSimpleCoordinateList(value) {
 
 function tryParseGeometry(rawText, format, crs) {
   const text = String(rawText || "").trim();
-  if (!text) return { geometry: null, error: null };
+  if (!text) return { geometry: null, error: null, format, crs };
+
+  const isSimpleCoordinateList = looksLikeSimpleCoordinateList(text);
+  const effectiveFormat = isSimpleCoordinateList ? "csv" : format;
+  const effectiveCrs = isSimpleCoordinateList ? getDefaultSourceCrsForFormat("csv") : crs;
+
   try {
-    const geometry = parseGeometryByFormat(text, format, { sourceCrs: crs });
-    return { geometry, error: null };
+    const geometry = parseGeometryByFormat(text, effectiveFormat, { sourceCrs: effectiveCrs });
+    return { geometry, error: null, format: effectiveFormat, crs: effectiveCrs };
   } catch (err) {
-    return { geometry: null, error: err.message || "Impossible de lire la géométrie." };
+    return { geometry: null, error: err.message || "Impossible de lire la geometrie.", format: effectiveFormat, crs: effectiveCrs };
   }
 }
 
@@ -209,11 +214,21 @@ export default function ParcelQuickForm({
     setForm((f) => ({ ...f, rawText: raw, geometry: null }));
     setLiveParseError("");
 
+    if (looksLikeSimpleCoordinateList(raw) && importFormat !== "csv") {
+      const nextCrs = getDefaultSourceCrsForFormat("csv");
+      setImportFormat("csv");
+      setImportCrs(nextCrs);
+    }
+
     if (parseTimerRef.current) clearTimeout(parseTimerRef.current);
     if (!raw.trim()) return;
 
     parseTimerRef.current = setTimeout(() => {
-      const { geometry, error } = tryParseGeometry(raw, importFormat, importCrs);
+      const { geometry, error, format: parsedFormat, crs: parsedCrs } = tryParseGeometry(raw, importFormat, importCrs);
+
+      if (parsedFormat && parsedFormat !== importFormat) setImportFormat(parsedFormat);
+      if (parsedCrs && parsedCrs !== importCrs) setImportCrs(parsedCrs);
+
       if (geometry) {
         setForm((f) => ({ ...f, geometry }));
         setLiveParseError("");
@@ -279,9 +294,18 @@ export default function ParcelQuickForm({
 
   const handleConvert = () => {
     if (!form.rawText.trim()) return;
-    const { geometry, error } = tryParseGeometry(form.rawText, importFormat, importCrs);
-    if (geometry) { setForm((f) => ({ ...f, geometry })); setLiveParseError(""); }
-    else setLiveParseError(error || "Impossible de lire la géométrie.");
+
+    const { geometry, error, format: parsedFormat, crs: parsedCrs } = tryParseGeometry(form.rawText, importFormat, importCrs);
+
+    if (parsedFormat && parsedFormat !== importFormat) setImportFormat(parsedFormat);
+    if (parsedCrs && parsedCrs !== importCrs) setImportCrs(parsedCrs);
+
+    if (geometry) {
+      setForm((f) => ({ ...f, geometry }));
+      setLiveParseError("");
+    } else {
+      setLiveParseError(error || "Impossible de lire la geometrie.");
+    }
   };
 
   const handleSubmit = async (event) => {
