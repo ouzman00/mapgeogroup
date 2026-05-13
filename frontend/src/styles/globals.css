@@ -2275,3 +2275,41 @@ main > .mapgeo-carto-workspace,
 .mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-parcel-badge.is-active {
   opacity: 1 !important;
 }
+
+/* --------------------------------------------------------------------------
+   PROFESSIONAL CARTOGRAPHY DISPLAY MODE PERSISTENCE
+   Amélioration UX :
+   - le mode cartographique actif est visible
+   - le choix est mémorisé localement
+   - aucun impact sur les données ou les imports
+-------------------------------------------------------------------------- */
+.mapgeo-display-mode-status {
+  white-space: nowrap;
+}
+
+.mapgeo-display-mode-panel .mapgeo-action-button {
+  min-height: 96px;
+}
+
+.mapgeo-display-mode-panel .mapgeo-action-button:focus-visible {
+  outline: 2px solid rgba(199, 178, 153, 0.85);
+  outline-offset: 2px;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="cadastre"] .mapgeo-display-mode-status,
+.mapgeo-portfolio-shell[data-carto-display-mode="analyse"] .mapgeo-display-mode-status,
+.mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-display-mode-status {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 767px) {
+  .mapgeo-display-mode-status {
+    padding-inline: 0.55rem !important;
+    font-size: 0.58rem !important;
+    letter-spacing: 0.09em !important;
+  }
+
+  .mapgeo-display-mode-panel .mapgeo-action-button {
+    min-height: 76px;
+  }
+}

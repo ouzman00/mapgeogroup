@@ -57,6 +57,24 @@ const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
 const SNAP_TOLERANCE_PX = 24; // Augmenté de 18 à 24px pour plus de confort
 const EDIT_VERTEX_TOLERANCE_PX = 16;
+
+const CARTOGRAPHY_DISPLAY_MODE_STORAGE_KEY = "mapgeo:cartography-display-mode";
+const CARTOGRAPHY_DISPLAY_MODE_VALUES = new Set(["cadastre", "analyse", "edition"]);
+
+function normalizeCartographyDisplayMode(value) {
+  return CARTOGRAPHY_DISPLAY_MODE_VALUES.has(value) ? value : "cadastre";
+}
+
+function getInitialCartographyDisplayMode() {
+  if (typeof window === "undefined") return "cadastre";
+
+  try {
+    return normalizeCartographyDisplayMode(window.localStorage.getItem(CARTOGRAPHY_DISPLAY_MODE_STORAGE_KEY));
+  } catch {
+    return "cadastre";
+  }
+}
+
 const MAP_PANES = {
   parcels: "mapgeo-parcel-pane",
   labels: "mapgeo-parcel-label-pane",
@@ -1725,7 +1743,19 @@ export default function PortfolioMapShell({
   onInlineEditStateChange,
 }) {
   const [activeCommand, setActiveCommand] = useState(null);
-  const [cartographyDisplayMode, setCartographyDisplayMode] = useState("cadastre");
+  const [cartographyDisplayMode, setCartographyDisplayModeState] = useState(getInitialCartographyDisplayMode);
+
+  const setCartographyDisplayMode = useCallback((mode) => {
+    setCartographyDisplayModeState(normalizeCartographyDisplayMode(mode));
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CARTOGRAPHY_DISPLAY_MODE_STORAGE_KEY, cartographyDisplayMode);
+    } catch {
+      // Préférence locale non critique.
+    }
+  }, [cartographyDisplayMode]);
   const [measurementDraft, setMeasurementDraft] = useState({ mode: "distance", points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false });
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
   const [deleteVertexMode, setDeleteVertexMode] = useState(false);

@@ -87,13 +87,32 @@ const CARTOGRAPHY_DISPLAY_MODES = [
   },
 ];
 
+
+function DisplayModeStatus({ value = "cadastre" }) {
+  const activeMode = CARTOGRAPHY_DISPLAY_MODES.find((mode) => mode.id === value) || CARTOGRAPHY_DISPLAY_MODES[0];
+
+  return (
+    <div className="mapgeo-display-mode-status inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/70">
+      <span className="h-1.5 w-1.5 rounded-full bg-mapgeo-sand shadow-[0_0_12px_rgba(199,178,153,0.75)]" />
+      {activeMode.label}
+    </div>
+  );
+}
+
 function DisplayModePicker({ value = "cadastre", onChange }) {
   return (
     <div className="mapgeo-mobile-tool-panel mapgeo-display-mode-panel mapgeo-popover-enter mt-2 w-full max-w-[calc(100vw-1.5rem)] rounded-[16px] border border-white/10 bg-[#07111b]/96 p-2.5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:w-[420px] sm:max-w-[calc(100vw-2rem)]">
-      <div className="mb-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">Mode d’affichage</p>
-        <h3 className="text-sm font-extrabold text-white">Hiérarchie cartographique</h3>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">Mode d’affichage</p>
+          <h3 className="text-sm font-extrabold text-white">Hiérarchie cartographique</h3>
+        </div>
+        <DisplayModeStatus value={value} />
       </div>
+
+      <p className="mb-2 text-[11px] font-semibold leading-4 text-white/48">
+        Ce choix est mémorisé sur cet appareil.
+      </p>
 
       <div className="grid gap-2 sm:grid-cols-3">
         {CARTOGRAPHY_DISPLAY_MODES.map((mode) => {
