@@ -101,9 +101,11 @@ function tryParseGeometry(rawText, format, crs) {
 function buildPayload(form, format, crs, owners = []) {
   const reference = String(form.reference || "").trim();
   const ownerId = String(form.owner || "").trim();
+  const rawText = String(form.rawText || "").trim();
+  const shouldUseCoordinateText = looksLikeSimpleCoordinateList(rawText);
 
   if (!reference) {
-    throw new Error("La reference est obligatoire.");
+    throw new Error("La référence est obligatoire.");
   }
 
   if (!ownerId) {
@@ -114,17 +116,17 @@ function buildPayload(form, format, crs, owners = []) {
   const organizationId = String(form.organization || getOwnerOrganizationId(selectedOwner) || "").trim();
 
   if (!organizationId) {
-    throw new Error("Le client selectionne n'est rattache a aucune organisation active.");
+    throw new Error("Le client sélectionné n'est rattaché à aucune organisation active.");
   }
 
   let { geometry } = form;
 
-  if (!geometry && form.rawText.trim()) {
-    const { geometry: parsed, error } = tryParseGeometry(form.rawText, format, crs);
+  if (!shouldUseCoordinateText && !geometry && rawText) {
+    const { geometry: parsed, error } = tryParseGeometry(rawText, format, crs);
     if (parsed) {
       geometry = parsed;
     } else if (error) {
-      throw new Error(`Geometrie invalide : ${error}`);
+      throw new Error(`Géométrie invalide : ${error}`);
     }
   }
 
@@ -135,13 +137,12 @@ function buildPayload(form, format, crs, owners = []) {
 
   const payload = {
     reference,
-    location: (form.location || "").trim() || "Non precise",
+    location: (form.location || "").trim() || "Non précisé",
     commune: (form.commune || "").trim(),
     area,
     perimeter: perimeter ?? 0,
     status: form.status,
     notes: (form.notes || "").trim(),
-    geometry: geometry || null,
     latitude: center ? normalizeCoordinateValue(center[0]) : null,
     longitude: center ? normalizeCoordinateValue(center[1]) : null,
     centroid_northing: center ? normalizeCoordinateValue(center[0]) : null,
@@ -149,6 +150,12 @@ function buildPayload(form, format, crs, owners = []) {
     owner: Number(ownerId),
     organization: Number(organizationId),
   };
+
+  if (shouldUseCoordinateText) {
+    payload.coordinates_text = rawText;
+  } else {
+    payload.geometry = geometry || null;
+  }
 
   return payload;
 }
