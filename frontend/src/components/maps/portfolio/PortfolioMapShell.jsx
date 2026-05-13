@@ -889,46 +889,6 @@ function NorthArrow({ bearing = 0, onReset = null }) {
   );
 }
 
-function MapBearingController({ enabled, onBearingChange }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map) return undefined;
-
-    const readBearing = () => {
-      const value = map.getBearing?.();
-      const bearing = Number.isFinite(Number(value)) ? Number(value) : 0;
-      onBearingChange?.(bearing);
-    };
-
-    readBearing();
-
-    map.on?.("rotate", readBearing);
-    map.on?.("rotateend", readBearing);
-    map.on?.("moveend", readBearing);
-    map.on?.("zoomend", readBearing);
-
-    if (enabled) {
-      map.touchRotate?.enable?.();
-      map.touchZoom?.enable?.();
-      map.doubleClickZoom?.enable?.();
-    } else {
-      map.touchRotate?.disable?.();
-      map.setBearing?.(0);
-      onBearingChange?.(0);
-    }
-
-    return () => {
-      map.off?.("rotate", readBearing);
-      map.off?.("rotateend", readBearing);
-      map.off?.("moveend", readBearing);
-      map.off?.("zoomend", readBearing);
-    };
-  }, [enabled, map, onBearingChange]);
-
-  return null;
-}
-
 const DEFAULT_VERTEX_DISPLAY_OPTIONS = {
   sommets: true,
   dimensions: true,
@@ -1952,11 +1912,6 @@ export default function PortfolioMapShell({
     return findNearestMeasurementSnap(map, point, snapFeatures, measurementPoints, options);
   }, [map, displayedFeatures, activeFeature, measurementDraft.points]);
 
-  const resetMapBearing = useCallback(() => {
-    map?.setBearing?.(0);
-    setMapBearing(0);
-  }, [map]);
-
   const finishMeasurementDraft = useCallback(() => {
     if (!showMeasurements) return;
     clearPendingMeasurementClick();
@@ -2288,7 +2243,7 @@ export default function PortfolioMapShell({
   return (
     <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
-        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} rotate={true} touchRotate={true} bearing={0} rotateControl={false} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
+        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
           <MapBearingController
             enabled={!inlineEditOpen && isMobileCartographyViewport()}
@@ -2525,7 +2480,7 @@ export default function PortfolioMapShell({
             {userLocationMessage}
           </div>
         ) : null}
-        <NorthArrow bearing={mapBearing} onReset={resetMapBearing} />
+        <NorthArrow />
         <MapStatusBar cursorPosition={cursorPosition} coordinateSystem={coordinateSystem} features={displayedFeatures} />
         <ViewportSampleNotice summary={viewportSummary} />
 

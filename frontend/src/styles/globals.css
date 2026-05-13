@@ -2119,25 +2119,3 @@ main > .mapgeo-carto-workspace,
   }
 }
 
-/* --------------------------------------------------------------------------
-   MOBILE MAP ROTATION UI
-   Mobile uniquement :
-   - flèche nord visible
-   - le panneau reste fixe
-   - seule la flèche tourne via le bearing
--------------------------------------------------------------------------- */
-@media (max-width: 767px) {
-  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow {
-    top: calc(env(safe-area-inset-top, 0px) + 62px) !important;
-    right: 10px !important;
-    width: 46px !important;
-    height: 62px !important;
-    border-radius: 14px !important;
-    padding: 0.3rem !important;
-  }
-
-  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow svg {
-    width: 32px !important;
-    height: 42px !important;
-  }
-}
