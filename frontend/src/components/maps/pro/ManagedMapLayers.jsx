@@ -84,13 +84,12 @@ function isRenderableOperationalLayer(layer) {
   return isGeoJsonLikeLayer(layer) || isWmsLikeLayer(layer);
 }
 
-function renderTileLayer(layer, zIndex, setLayerRuntime, pane = undefined) {
+function renderTileLayer(layer, zIndex, setLayerRuntime) {
   if (!layer?.url) return null;
 
   return (
     <TileLayer
       key={layer.id}
-      pane={pane}
       url={layer.url}
       opacity={layer.opacity ?? 1}
       attribution={layer.attribution || ""}
@@ -112,13 +111,12 @@ function renderTileLayer(layer, zIndex, setLayerRuntime, pane = undefined) {
   );
 }
 
-function renderWmsLayer(layer, zIndex, setLayerRuntime, pane = undefined) {
+function renderWmsLayer(layer, zIndex, setLayerRuntime) {
   if (!layer?.url || !layer?.layers) return null;
 
   return (
     <WMSTileLayer
       key={layer.id}
-      pane={pane}
       url={layer.url}
       layers={layer.layers}
       format={layer.format || "image/png"}
@@ -674,9 +672,9 @@ export default function ManagedMapLayers({ activeBaseLayer, visibleOperationalLa
         if (isGeoJsonLikeLayer(layer)) {
           return <GeoJsonBboxLayer key={layer.id} layer={layer} zIndex={zIndex} setLayerRuntime={setLayerRuntime} />;
         }
-        if (layerKind(layer) === "wms") return renderWmsLayer(layer, zIndex, setLayerRuntime, MANAGED_LAYER_PANES.raster);
+        if (layerKind(layer) === "wms") return renderWmsLayer(layer, zIndex, setLayerRuntime);
         if (isWmsLikeLayer(layer)) {
-          return <AuthenticatedTileLayer key={layer.id} layer={layer} zIndex={zIndex} pane={MANAGED_LAYER_PANES.raster} setLayerRuntime={setLayerRuntime} />;
+          return <AuthenticatedTileLayer key={layer.id} layer={layer} zIndex={zIndex} setLayerRuntime={setLayerRuntime} />;
         }
         return null;
       })}
