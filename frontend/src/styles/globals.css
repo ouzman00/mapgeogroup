@@ -2071,3 +2071,17 @@ main > .mapgeo-carto-workspace,
     max-width: min(224px, calc(100vw - 84px)) !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   MOBILE VERTEX PANEL HIDE
+   Mobile uniquement :
+   - quand les sommets sont activés, on garde les infos sur la carte
+   - on cache seulement la fenêtre flottante Sommets pour libérer l'écran
+   - desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-vertices-panel {
+    display: none !important;
+    pointer-events: none !important;
+  }
+}
