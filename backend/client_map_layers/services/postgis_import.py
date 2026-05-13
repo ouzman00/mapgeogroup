@@ -281,36 +281,13 @@ def _build_query(options: dict[str, Any]):
 
 
 def list_available_postgis_tables(data: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Liste les vraies tables/vues PostGIS disponibles dans la base configurée.
+    """Liste les vraies tables/vues PostGIS disponibles via la connexion Django active.
 
-    Le dashboard ne dépend plus de presets codés en dur : une table importée
-    dans PostgreSQL apparaît automatiquement si elle contient une colonne geometry.
+    Important Render :
+    on ne recrée pas une connexion psycopg2 manuelle ici. Django est déjà connecté
+    à DATABASE_URL, donc on réutilise cette connexion pour éviter les erreurs de
+    parsing/connexion côté hébergement.
     """
-    defaults = _default_postgis_connection()
-    raw_connection_data = data or {}
-    connection_data = raw_connection_data if getattr(settings, "POSTGIS_IMPORT_ALLOW_CONNECTION_OVERRIDE", False) else {}
-
-    host = str(connection_data.get("postgis_host") or defaults["host"]).strip()
-    database = str(connection_data.get("postgis_database") or defaults["database"]).strip()
-    username = str(connection_data.get("postgis_username") or defaults["username"]).strip()
-    password = str(connection_data.get("postgis_password") or defaults["password"]).strip()
-
-    try:
-        port = int(connection_data.get("postgis_port") or defaults["port"] or 5432)
-    except Exception as exc:
-        raise ValidationError({"postgis_port": "Port PostGIS invalide."}) from exc
-
-    options = {
-        "host": host,
-        "port": port,
-        "database": database,
-        "username": username,
-        "password": password,
-    }
-
-    if not host or not database or not username or not password:
-        raise ValidationError({"postgis": "Connexion PostGIS incomplète. Vérifiez DATABASE_URL sur le backend."})
-
     preferred_schema = str(getattr(settings, "DB_SCHEMA", "donnees_mapgeo") or "donnees_mapgeo")
 
     query = """
@@ -342,13 +319,11 @@ def list_available_postgis_tables(data: dict[str, Any] | None = None) -> dict[st
     """
 
     try:
-        with _connect(options) as conn:
-            conn.set_session(readonly=True, autocommit=True)
-            with conn.cursor() as cursor:
-                cursor.execute(query, [preferred_schema])
-                rows = cursor.fetchall()
-    except ValidationError:
-        raise
+        from django.db import connection as django_connection
+
+        with django_connection.cursor() as cursor:
+            cursor.execute(query, [preferred_schema])
+            rows = cursor.fetchall()
     except Exception as exc:
         raise ValidationError({"postgis": f"Impossible de lister les tables PostGIS : {exc}"}) from exc
 
@@ -365,7 +340,7 @@ def list_available_postgis_tables(data: dict[str, Any] | None = None) -> dict[st
         id_column = next((name for name in ID_COLUMN_CANDIDATES if name in columns), "")
 
         table_label = str(table_name).replace("_", " ").strip().title() or str(table_name)
-        if schema_name != preferred_schema:
+        if str(schema_name) != preferred_schema:
             table_label = f"{table_label} ({schema_name})"
 
         tables.append({
