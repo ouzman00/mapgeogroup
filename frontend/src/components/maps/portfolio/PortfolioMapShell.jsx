@@ -1800,12 +1800,14 @@ export default function PortfolioMapShell({
 
 
   // MOBILE_MEASURE_CENTER_PREVIEW_EFFECT_FINAL
-  // Mobile: preview line follows the center reticle smoothly without adding points by touch.
+  // Mobile: preview line follows the center reticle without adding points by touch.
   useEffect(() => {
     if (!map || !showMeasurements) return undefined;
     if (!isMobileCartographyViewport()) return undefined;
 
     let frame = null;
+    let lastMovePreviewAt = 0;
+    const MOVE_PREVIEW_THROTTLE_MS = 80;
 
     const syncCenterPreview = () => {
       frame = null;
@@ -1840,21 +1842,34 @@ export default function PortfolioMapShell({
     };
 
     const scheduleSync = () => {
+      const now = Date.now();
+      if (now - lastMovePreviewAt < MOVE_PREVIEW_THROTTLE_MS) return;
+      lastMovePreviewAt = now;
+
       if (frame !== null) return;
       frame = window.requestAnimationFrame(syncCenterPreview);
     };
 
-    scheduleSync();
+    const forceSync = () => {
+      lastMovePreviewAt = 0;
+      if (frame !== null) {
+        window.cancelAnimationFrame(frame);
+        frame = null;
+      }
+      syncCenterPreview();
+    };
+
+    forceSync();
 
     map.on("move", scheduleSync);
-    map.on("moveend", syncCenterPreview);
-    map.on("zoomend", syncCenterPreview);
+    map.on("moveend", forceSync);
+    map.on("zoomend", forceSync);
 
     return () => {
       if (frame !== null) window.cancelAnimationFrame(frame);
       map.off("move", scheduleSync);
-      map.off("moveend", syncCenterPreview);
-      map.off("zoomend", syncCenterPreview);
+      map.off("moveend", forceSync);
+      map.off("zoomend", forceSync);
     };
   }, [map, showMeasurements, setMeasurementDraft]);
 
