@@ -21,6 +21,8 @@ from client_map_layers.models import ClientMapLayer, ClientMapLayerFeature
 
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 FORBIDDEN_SQL_RE = re.compile(r"(;|--|/\*|\*/|\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|copy|execute|call|do)\b)", re.IGNORECASE)
+GEOMETRY_COLUMN_CANDIDATES = ("geom", "geometry", "the_geom", "wkb_geometry")
+ID_COLUMN_CANDIDATES = ("id", "gid", "fid", "ogc_fid")
 
 
 def _clean_identifier(value: Any, field_name: str) -> str:
@@ -124,8 +126,8 @@ def normalize_postgis_options(data: dict[str, Any]) -> dict[str, Any]:
         "password": password,
         "schema": _clean_identifier(data.get("postgis_schema") or defaults["schema"], "postgis_schema"),
         "table": _clean_identifier(data.get("postgis_table"), "postgis_table"),
-        "geometry_column": _clean_identifier(data.get("postgis_geometry_column") or "geom", "postgis_geometry_column"),
-        "id_column": _optional_identifier(data.get("postgis_id_column") or "id", "postgis_id_column"),
+        "geometry_column": _optional_identifier(data.get("postgis_geometry_column"), "postgis_geometry_column") or "geom",
+        "id_column": _optional_identifier(data.get("postgis_id_column"), "postgis_id_column"),
         "source_srid": source_srid,
         "where_clause": _clean_where_clause(data.get("postgis_where_clause")),
         "limit": limit,
@@ -163,13 +165,97 @@ def _connect(options: dict[str, Any]):
     )
 
 
+def _relation_matches(cursor, table: str) -> list[tuple[str, str]]:
+    cursor.execute(
+        """
+        SELECT n.nspname, c.relname
+        FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind IN ('r', 'v', 'm', 'f', 'p')
+          AND c.relname = %s
+          AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+        ORDER BY CASE WHEN n.nspname = 'donnees_mapgeo' THEN 0 WHEN n.nspname = 'public' THEN 1 ELSE 2 END, n.nspname
+        """,
+        [table],
+    )
+    return [(str(schema), str(name)) for schema, name in cursor.fetchall()]
+
+
+def _column_metadata(cursor, schema: str, table: str) -> dict[str, dict[str, str]]:
+    cursor.execute(
+        """
+        SELECT column_name, data_type, udt_name
+        FROM information_schema.columns
+        WHERE table_schema = %s AND table_name = %s
+        ORDER BY ordinal_position
+        """,
+        [schema, table],
+    )
+    return {
+        str(name): {"data_type": str(data_type or ""), "udt_name": str(udt_name or "")}
+        for name, data_type, udt_name in cursor.fetchall()
+    }
+
+
+def _resolve_postgis_table_options(conn, options: dict[str, object]) -> dict[str, object]:
+    resolved = {**options}
+    requested_schema = str(resolved.get("schema") or "").strip()
+    table = str(resolved.get("table") or "").strip()
+
+    with conn.cursor() as cursor:
+        matches = _relation_matches(cursor, table)
+        requested_match = next((schema for schema, name in matches if schema == requested_schema), None)
+        if requested_match:
+            resolved["schema"] = requested_match
+        elif len(matches) == 1:
+            resolved["schema"] = matches[0][0]
+        elif matches:
+            schemas = ", ".join(schema for schema, _name in matches)
+            raise ValidationError({"postgis_schema": f"La table `{table}` existe dans plusieurs schémas ({schemas}). Renseignez le schéma exact."})
+        else:
+            raise ValidationError({"postgis_table": f"Table ou vue PostGIS introuvable : `{requested_schema}.{table}`."})
+
+        columns = _column_metadata(cursor, resolved["schema"], table)
+        if not columns:
+            raise ValidationError({"postgis_table": f"Impossible de lire les colonnes de `{resolved['schema']}.{table}`."})
+
+        column_names = set(columns.keys())
+        geometry_columns = [name for name, meta in columns.items() if meta.get("udt_name") == "geometry"]
+        requested_geom = str(resolved.get("geometry_column") or "").strip()
+        if requested_geom not in geometry_columns:
+            preferred_geom = next((name for name in GEOMETRY_COLUMN_CANDIDATES if name in geometry_columns), None)
+            preferred_geom = preferred_geom or (geometry_columns[0] if geometry_columns else "")
+            if not preferred_geom:
+                available = ", ".join(columns.keys())
+                raise ValidationError({"postgis_geometry_column": f"Aucune colonne géométrique PostGIS trouvée dans `{resolved['schema']}.{table}`. Colonnes disponibles : {available}"})
+            resolved["geometry_column"] = preferred_geom
+
+        requested_id = str(resolved.get("id_column") or "").strip()
+        if requested_id and requested_id in column_names:
+            resolved["id_column"] = requested_id
+        else:
+            resolved["id_column"] = next((name for name in ID_COLUMN_CANDIDATES if name in column_names), "")
+
+    return resolved
+
+
 def _build_query(options: dict[str, Any]):
-    geom_expr = sql.SQL("ST_SetSRID(t.{geom}, {srid})").format(
-        geom=sql.Identifier(options["geometry_column"]),
-        srid=sql.Literal(options["source_srid"]),
-    ) if options.get("source_srid") else sql.SQL("t.{geom}").format(geom=sql.Identifier(options["geometry_column"]))
+    fallback_srid = int(getattr(settings, "POSTGIS_IMPORT_FALLBACK_SRID", 32628))
+    geom_identifier = sql.Identifier(options["geometry_column"])
+    if options.get("source_srid"):
+        geom_expr = sql.SQL("ST_SetSRID(t.{geom}, {srid})").format(
+            geom=geom_identifier,
+            srid=sql.Literal(options["source_srid"]),
+        )
+    else:
+        geom_expr = sql.SQL(
+            "CASE WHEN ST_SRID(t.{geom}) = 0 THEN ST_SetSRID(t.{geom}, {fallback_srid}) ELSE t.{geom} END"
+        ).format(
+            geom=geom_identifier,
+            fallback_srid=sql.Literal(fallback_srid),
+        )
     id_expr = sql.SQL("t.{id_col}::text").format(id_col=sql.Identifier(options["id_column"])) if options.get("id_column") else sql.SQL("NULL::text")
-    where_parts = [sql.SQL("t.{geom} IS NOT NULL").format(geom=sql.Identifier(options["geometry_column"]))]
+    where_parts = [sql.SQL("t.{geom} IS NOT NULL").format(geom=geom_identifier)]
     if options.get("where_clause"):
         # Le filtre a déjà été limité à une clause simple sans commande destructive.
         where_parts.append(sql.SQL("({})").format(sql.SQL(options["where_clause"])))
@@ -203,11 +289,13 @@ def inspect_postgis_table_metadata(options: dict[str, Any], *, sample_limit: int
     preview_options = {**options, "limit": max(1, min(int(sample_limit or 2000), int(options.get("limit") or sample_limit or 2000), 5000))}
     features_for_metadata: list[dict[str, Any]] = []
     positions: list[list[float]] = []
+    resolved_options = preview_options
     try:
         with _connect(preview_options) as conn:
             conn.set_session(readonly=True, autocommit=True)
+            resolved_options = _resolve_postgis_table_options(conn, preview_options)
             with conn.cursor() as cursor:
-                cursor.execute(_build_query(preview_options))
+                cursor.execute(_build_query(resolved_options))
                 for index, (_source_feature_id, geometry_json, properties) in enumerate(cursor.fetchall(), start=1):
                     if not geometry_json:
                         continue
@@ -225,7 +313,7 @@ def inspect_postgis_table_metadata(options: dict[str, Any], *, sample_limit: int
         raise ValidationError({"postgis": f"Impossible d’analyser la table PostGIS : {exc}"}) from exc
 
     collection = {"type": "FeatureCollection", "features": features_for_metadata}
-    return safe_postgis_metadata(preview_options, feature_count=len(features_for_metadata), extra={
+    return safe_postgis_metadata(resolved_options, feature_count=len(features_for_metadata), extra={
         "preview": True,
         "sample_limit": preview_options["limit"],
         "geojson_type": "FeatureCollection",
@@ -238,11 +326,13 @@ def import_postgis_features_to_db(layer: ClientMapLayer, options: dict[str, Any]
     objects: list[ClientMapLayerFeature] = []
     features_for_metadata: list[dict[str, Any]] = []
     positions: list[list[float]] = []
+    resolved_options = options
     try:
         with _connect(options) as conn:
             conn.set_session(readonly=True, autocommit=True)
+            resolved_options = _resolve_postgis_table_options(conn, options)
             with conn.cursor() as cursor:
-                cursor.execute(_build_query(options))
+                cursor.execute(_build_query(resolved_options))
                 for index, (source_feature_id, geometry_json, properties) in enumerate(cursor.fetchall(), start=1):
                     if not geometry_json:
                         continue
@@ -273,7 +363,7 @@ def import_postgis_features_to_db(layer: ClientMapLayer, options: dict[str, Any]
         ClientMapLayerFeature.objects.bulk_create(objects, batch_size=1000)
 
     collection = {"type": "FeatureCollection", "features": features_for_metadata}
-    return safe_postgis_metadata(options, feature_count=len(objects), extra={
+    return safe_postgis_metadata(resolved_options, feature_count=len(objects), extra={
         "geojson_type": "FeatureCollection",
         "geometry_types": geometry_type_counts(collection),
         "bounds_wgs84": bounds_from_positions(positions),

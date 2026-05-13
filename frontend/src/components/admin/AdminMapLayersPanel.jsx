@@ -62,8 +62,8 @@ const LOCAL_POSTGIS_DEFAULTS = {
   database: "",
   username: "",
   schema: "donnees_mapgeo",
-  geometryColumn: "geom",
-  idColumn: "id",
+  geometryColumn: "",
+  idColumn: "",
   sourceSrid: "auto",
   limit: 20000,
 };
@@ -416,7 +416,6 @@ function validateForm(form) {
   if (needsServiceLayerName(form) && !form.service_layers.trim()) return `Le nom de couche ${isWms(form) ? "GeoServer WMS" : "WFS"} est obligatoire.`;
   if (isPostgis(form)) {
     if (!form.postgis_table.trim()) return "Choisissez la table ou vue PostGIS à importer dans le portefeuille.";
-    if (!form.postgis_geometry_column.trim()) return "Renseignez la colonne géométrique PostGIS.";
     const limitError = validateNumberRange(form.postgis_limit, "La limite d’import PostGIS", 1, 200000);
     if (limitError) return limitError;
   }
@@ -1873,8 +1872,8 @@ export default function AdminMapLayersPanel({ clientId }) {
                 <summary className="cursor-pointer list-none px-4 py-3 text-sm font-extrabold text-mapgeo-primary marker:hidden">Paramètres techniques avancés <span className="ml-2 text-xs font-bold text-mapgeo-secondary/60">à ouvrir seulement si la table n’utilise pas les valeurs par défaut</span></summary>
                 <div className="grid grid-cols-1 gap-4 border-t border-mapgeo-line p-4 lg:grid-cols-2">
                   <Field label="Schéma"><input value={form.postgis_schema} onChange={(e) => setForm({ ...form, postgis_schema: e.target.value })} className={inputClass()} placeholder={LOCAL_POSTGIS_DEFAULTS.schema} /></Field>
-                  <Field label="Colonne géométrique"><input value={form.postgis_geometry_column} onChange={(e) => setForm({ ...form, postgis_geometry_column: e.target.value })} className={inputClass()} placeholder="geom" /></Field>
-                  <Field label="Colonne identifiant"><input value={form.postgis_id_column} onChange={(e) => setForm({ ...form, postgis_id_column: e.target.value })} className={inputClass()} placeholder="id" /></Field>
+                  <Field label="Colonne géométrique"><input value={form.postgis_geometry_column} onChange={(e) => setForm({ ...form, postgis_geometry_column: e.target.value })} className={inputClass()} placeholder="Auto (geom, geometry, the_geom, wkb_geometry)" /></Field>
+                  <Field label="Colonne identifiant"><input value={form.postgis_id_column} onChange={(e) => setForm({ ...form, postgis_id_column: e.target.value })} className={inputClass()} placeholder="Auto (id, gid, fid, ogc_fid) ou vide" /></Field>
                   <Field label="SRID source"><select value={form.postgis_source_srid} onChange={(e) => setForm({ ...form, postgis_source_srid: e.target.value })} className={inputClass()}><option value="auto">Auto</option><option value="4326">EPSG:4326</option><option value="32628">EPSG:32628</option><option value="3857">EPSG:3857</option></select></Field>
                   <Field label="Limite d’import"><input value={form.postgis_limit} onChange={(e) => setForm({ ...form, postgis_limit: e.target.value })} className={inputClass()} inputMode="numeric" /></Field>
                   <Field label="Hôte"><input value={form.postgis_host} onChange={(e) => setForm({ ...form, postgis_host: e.target.value })} className={inputClass()} placeholder={LOCAL_POSTGIS_DEFAULTS.host} /></Field>
