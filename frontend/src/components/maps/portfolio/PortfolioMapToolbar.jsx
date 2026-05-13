@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronRight, FileDown, Info, Layers3, Map as MapIcon, Pencil, Ruler, Tags } from "lucide-react";
+import {Check, ChevronLeft, ChevronRight, FileDown, Info, Layers3, Map as MapIcon, Pencil, Ruler, Tags, Eye} from "lucide-react";
 
 function stopLeafletPropagation(event) {
   event?.stopPropagation?.();
@@ -65,6 +65,56 @@ function thumbnailClass(layer) {
   return "bg-[linear-gradient(90deg,rgba(148,163,184,.25)_1px,transparent_1px),linear-gradient(0deg,rgba(148,163,184,.25)_1px,transparent_1px),#F7F5F2] bg-[length:16px_16px]";
 }
 
+
+const CARTOGRAPHY_DISPLAY_MODES = [
+  {
+    id: "cadastre",
+    label: "Cadastre",
+    title: "Parcelles prioritaires",
+    description: "Contours parcelles très lisibles, couches d’analyse légèrement atténuées.",
+  },
+  {
+    id: "analyse",
+    label: "Analyse",
+    title: "Analyse couches",
+    description: "Couches importées prioritaires, parcelles en référence discrète.",
+  },
+  {
+    id: "edition",
+    label: "Édition",
+    title: "Édition terrain",
+    description: "Parcelle active, sommets et mesures plus visibles.",
+  },
+];
+
+function DisplayModePicker({ value = "cadastre", onChange }) {
+  return (
+    <div className="mapgeo-mobile-tool-panel mapgeo-display-mode-panel mapgeo-popover-enter mt-2 w-full max-w-[calc(100vw-1.5rem)] rounded-[16px] border border-white/10 bg-[#07111b]/96 p-2.5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:w-[420px] sm:max-w-[calc(100vw-2rem)]">
+      <div className="mb-2">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">Mode d’affichage</p>
+        <h3 className="text-sm font-extrabold text-white">Hiérarchie cartographique</h3>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        {CARTOGRAPHY_DISPLAY_MODES.map((mode) => {
+          const active = mode.id === value;
+          return (
+            <button
+              key={mode.id}
+              type="button"
+              onClick={() => onChange?.(mode.id)}
+              className={`mapgeo-action-button rounded-xl border p-3 text-left transition ${active ? "border-mapgeo-sand bg-mapgeo-sand/12 text-white" : "border-white/10 bg-white/[0.035] text-white/72 hover:border-white/25 hover:bg-white/[0.07] hover:text-white"}`}
+            >
+              <span className="block text-xs font-black uppercase tracking-[0.12em]">{mode.label}</span>
+              <span className="mt-1 block text-[11px] font-bold leading-4 text-white/55">{mode.description}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function BaseMapPicker({ layers, activeBaseLayerId, onBaseSelect }) {
   const visibleLayers = Array.isArray(layers) && layers.length ? layers : [];
 
@@ -104,6 +154,8 @@ export default function FloatingMapToolbar({
   showVertices,
   inlineEditActive,
   activeFeature,
+  cartographyDisplayMode = "cadastre",
+  setCartographyDisplayMode,
   canManageParcels = false,
   onBaseSelect,
   setActiveCommand,
@@ -127,7 +179,7 @@ export default function FloatingMapToolbar({
 
   const commonButtonClass = "h-10 min-w-10 px-2.5 md:h-auto md:min-w-0 md:px-3";
   const compactToolButtonClass = "h-10 min-w-10 px-0 md:w-auto md:px-3";
-  const toolsCommands = ["tools", "base", "export"];
+  const toolsCommands = ["tools", "base", "display", "export"];
   const toolsOpen = toolsCommands.includes(activeCommand);
   const verticesDisabled = !activeFeature?.rings?.length;
   const toggleTools = () => {
@@ -150,6 +202,12 @@ export default function FloatingMapToolbar({
             <span aria-hidden="true" className="mx-1 h-7 w-px shrink-0 bg-white/10" />
             <div className="mapgeo-inline-tools flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden pr-1 sm:max-w-[calc(100vw-10rem)] md:max-w-[calc(100vw-13rem)]" aria-label="Outils de la carte">
               <ToolbarButton active={showLabels} icon={Tags} label="Libellés" forceLabel className={compactToolButtonClass} title="Libellés" onClick={() => { setActiveCommand("tools"); setShowLabels?.((current) => !current); }} />
+              <ToolbarButton active={activeCommand === "display"} icon={Eye} label="Mode" forceLabel className={compactToolButtonClass} title="Mode d’affichage" onClick={() => {
+                    setShowLegend(false);
+                    setShowMeasurements(false);
+                    setShowVertices(false);
+                    setActiveCommand((current) => (current === "display" ? "tools" : "display"));
+                  }} />
               <ToolbarButton active={activeCommand === "base"} icon={MapIcon} label="Fond de carte" forceLabel className={compactToolButtonClass} title="Fond de carte" onClick={() => {
                     setShowLegend(false);
                     setShowMeasurements(false);
@@ -206,6 +264,10 @@ export default function FloatingMapToolbar({
       </div>
       {activeCommand === "base" ? (
         <BaseMapPicker layers={baseLayers} activeBaseLayerId={activeBaseLayerId} onBaseSelect={(layerId) => { onBaseSelect(layerId); setActiveCommand("tools"); }} />
+      ) : null}
+
+      {activeCommand === "display" ? (
+        <DisplayModePicker value={cartographyDisplayMode} onChange={(mode) => { setCartographyDisplayMode?.(mode); setActiveCommand("tools"); }} />
       ) : null}
 
       {activeCommand === "export" ? (

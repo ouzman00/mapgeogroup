@@ -2221,3 +2221,57 @@ main > .mapgeo-carto-workspace,
     font-size: 0.62rem !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   PROFESSIONAL CARTOGRAPHY DISPLAY MODES
+   Modes non destructifs :
+   - Cadastre : parcelles prioritaires
+   - Analyse : couches importées prioritaires
+   - Édition : parcelle active / outils plus lisibles
+-------------------------------------------------------------------------- */
+.mapgeo-display-mode-panel {
+  pointer-events: auto;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="cadastre"] .mapgeo-context-pane,
+.mapgeo-portfolio-shell[data-carto-display-mode="cadastre"] .mapgeo-private-layer-pane {
+  opacity: 0.58;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="cadastre"] .mapgeo-parcel-path:not(.is-active) {
+  stroke-opacity: 0.96 !important;
+  fill-opacity: 0.012 !important;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="analyse"] .mapgeo-private-layer-pane,
+.mapgeo-portfolio-shell[data-carto-display-mode="analyse"] .mapgeo-context-pane {
+  opacity: 0.98;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="analyse"] .mapgeo-parcel-path:not(.is-active) {
+  stroke-opacity: 0.72 !important;
+  fill-opacity: 0.004 !important;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="analyse"] .mapgeo-parcel-badge:not(.is-active) {
+  opacity: 0.62 !important;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-private-layer-pane,
+.mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-context-pane {
+  opacity: 0.42;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-parcel-path {
+  stroke-opacity: 0.96 !important;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-parcel-path.is-active,
+.mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-parcel-path.is-editing {
+  stroke-opacity: 1 !important;
+  fill-opacity: 0.13 !important;
+}
+
+.mapgeo-portfolio-shell[data-carto-display-mode="edition"] .mapgeo-parcel-badge.is-active {
+  opacity: 1 !important;
+}

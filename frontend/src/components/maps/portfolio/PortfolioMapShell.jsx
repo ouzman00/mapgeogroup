@@ -1725,6 +1725,7 @@ export default function PortfolioMapShell({
   onInlineEditStateChange,
 }) {
   const [activeCommand, setActiveCommand] = useState(null);
+  const [cartographyDisplayMode, setCartographyDisplayMode] = useState("cadastre");
   const [measurementDraft, setMeasurementDraft] = useState({ mode: "distance", points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false });
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
   const [deleteVertexMode, setDeleteVertexMode] = useState(false);
@@ -2240,7 +2241,7 @@ export default function PortfolioMapShell({
   };
 
   return (
-    <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
+    <section data-carto-display-mode={cartographyDisplayMode} className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
         <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
@@ -2449,6 +2450,8 @@ export default function PortfolioMapShell({
           showVertices={showVertices}
           inlineEditActive={inlineEditOpen}
           activeFeature={activeFeature}
+          cartographyDisplayMode={cartographyDisplayMode}
+          setCartographyDisplayMode={setCartographyDisplayMode}
           canManageParcels={canManageParcels}
           activeBaseLayerId={layerState.activeBaseLayerId}
           baseLayers={layerState.baseLayers}
