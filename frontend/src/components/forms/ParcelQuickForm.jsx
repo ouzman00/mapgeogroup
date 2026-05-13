@@ -66,6 +66,22 @@ function computeGeometryPerimeter(geometry) {
   return total > 0 ? Number(total.toFixed(2)) : null;
 }
 
+function looksLikeSimpleCoordinateList(value) {
+  const text = String(value || "").trim();
+  if (!text) return false;
+  if (text.startsWith("{") || text.startsWith("[") || text.startsWith("<")) return false;
+  if (/^\s*(POLYGON|MULTIPOLYGON)\s*\(/i.test(text)) return false;
+
+  const tokens = text
+    .split(/[;\n\r\t]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+  if (tokens.length < 3) return false;
+
+  return tokens.every((token) => /^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(token));
+}
+
 function tryParseGeometry(rawText, format, crs) {
   const text = String(rawText || "").trim();
   if (!text) return { geometry: null, error: null };
