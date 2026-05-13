@@ -58,8 +58,8 @@ function getMoveOptions(requestReason) {
 
   return {
     animate: true,
-    duration: 2.1,
-    easeLinearity: 0.5,
+    duration: 0.75,
+    easeLinearity: 0.35,
   };
 }
 
@@ -236,7 +236,7 @@ export function MapRuntimeObserver({
     },
     contextmenu(event) {
       event.originalEvent?.preventDefault?.();
-      onMapContextMenu?.([event.latlng.lat, event.lnglng], event);
+      onMapContextMenu?.([event.latlng.lat, event.latlng.lng], event);
     },
   });
 

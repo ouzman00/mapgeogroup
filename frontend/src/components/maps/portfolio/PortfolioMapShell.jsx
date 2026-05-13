@@ -1800,12 +1800,16 @@ export default function PortfolioMapShell({
 
 
   // MOBILE_MEASURE_CENTER_PREVIEW_EFFECT_FINAL
-  // Sur téléphone, le trait de mesure suit le réticule central pendant le déplacement de la carte.
+  // Mobile: preview line follows the center reticle smoothly without adding points by touch.
   useEffect(() => {
     if (!map || !showMeasurements) return undefined;
     if (!isMobileCartographyViewport()) return undefined;
 
+    let frame = null;
+
     const syncCenterPreview = () => {
+      frame = null;
+
       const center = map.getCenter?.();
       if (!center) return;
 
@@ -1813,6 +1817,18 @@ export default function PortfolioMapShell({
 
       setMeasurementDraft((current) => {
         if (!current || current.finished) return current;
+
+        // No preview line before the first validated point.
+        if (!Array.isArray(current.points) || current.points.length < 1) return current;
+
+        if (
+          current.cursorPoint &&
+          pointsAreSame(current.cursorPoint, point) &&
+          !current.snapPoint &&
+          !current.snapKind
+        ) {
+          return current;
+        }
 
         return {
           ...current,
@@ -1823,14 +1839,20 @@ export default function PortfolioMapShell({
       });
     };
 
-    // Mobile: update the preview line only after the map movement ends.
-    // This keeps tap/drag from adding points while keeping the measurement line visible.
-    syncCenterPreview();
+    const scheduleSync = () => {
+      if (frame !== null) return;
+      frame = window.requestAnimationFrame(syncCenterPreview);
+    };
 
+    scheduleSync();
+
+    map.on("move", scheduleSync);
     map.on("moveend", syncCenterPreview);
     map.on("zoomend", syncCenterPreview);
 
     return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      map.off("move", scheduleSync);
       map.off("moveend", syncCenterPreview);
       map.off("zoomend", syncCenterPreview);
     };
