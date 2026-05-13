@@ -58,23 +58,6 @@ const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
 const SNAP_TOLERANCE_PX = 24; // Augmenté de 18 à 24px pour plus de confort
 const EDIT_VERTEX_TOLERANCE_PX = 16;
 
-const CARTOGRAPHY_DISPLAY_MODE_STORAGE_KEY = "mapgeo:cartography-display-mode";
-const CARTOGRAPHY_DISPLAY_MODE_VALUES = new Set(["cadastre", "analyse", "edition"]);
-
-function normalizeCartographyDisplayMode(value) {
-  return CARTOGRAPHY_DISPLAY_MODE_VALUES.has(value) ? value : "cadastre";
-}
-
-function getInitialCartographyDisplayMode() {
-  if (typeof window === "undefined") return "cadastre";
-
-  try {
-    return normalizeCartographyDisplayMode(window.localStorage.getItem(CARTOGRAPHY_DISPLAY_MODE_STORAGE_KEY));
-  } catch {
-    return "cadastre";
-  }
-}
-
 const MAP_PANES = {
   parcels: "mapgeo-parcel-pane",
   labels: "mapgeo-parcel-label-pane",
@@ -1743,19 +1726,6 @@ export default function PortfolioMapShell({
   onInlineEditStateChange,
 }) {
   const [activeCommand, setActiveCommand] = useState(null);
-  const [cartographyDisplayMode, setCartographyDisplayModeState] = useState(getInitialCartographyDisplayMode);
-
-  const setCartographyDisplayMode = useCallback((mode) => {
-    setCartographyDisplayModeState(normalizeCartographyDisplayMode(mode));
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(CARTOGRAPHY_DISPLAY_MODE_STORAGE_KEY, cartographyDisplayMode);
-    } catch {
-      // Préférence locale non critique.
-    }
-  }, [cartographyDisplayMode]);
   const [measurementDraft, setMeasurementDraft] = useState({ mode: "distance", points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false });
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
   const [deleteVertexMode, setDeleteVertexMode] = useState(false);
@@ -2271,7 +2241,7 @@ export default function PortfolioMapShell({
   };
 
   return (
-    <section data-carto-display-mode={cartographyDisplayMode} className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
+    <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
         <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
@@ -2480,8 +2450,6 @@ export default function PortfolioMapShell({
           showVertices={showVertices}
           inlineEditActive={inlineEditOpen}
           activeFeature={activeFeature}
-          cartographyDisplayMode={cartographyDisplayMode}
-          setCartographyDisplayMode={setCartographyDisplayMode}
           canManageParcels={canManageParcels}
           activeBaseLayerId={layerState.activeBaseLayerId}
           baseLayers={layerState.baseLayers}
