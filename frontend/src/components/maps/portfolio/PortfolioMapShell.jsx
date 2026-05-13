@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import "@geoman-io/leaflet-geoman-free";
+import "leaflet-rotate";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 import {
   DEFAULT_MAP_CENTER,
@@ -844,31 +845,88 @@ function MapStatusBar({ cursorPosition, coordinateSystem, features }) {
   );
 }
 
-function NorthArrow() {
+function NorthArrow({ bearing = 0, onReset = null }) {
   const overlayEventProps = {
     onPointerDown: stopLeafletPropagation,
     onMouseDown: stopLeafletPropagation,
-    onClick: stopLeafletPropagation,
+    onClick: (event) => {
+      stopLeafletPropagation(event);
+      onReset?.();
+    },
     onDoubleClick: stopLeafletPropagation,
     onContextMenu: stopLeafletPropagation,
   };
 
+  const normalizedBearing = Number.isFinite(Number(bearing)) ? Number(bearing) : 0;
+
   return (
-    <div
-        {...overlayEventProps}
-        className="mapgeo-export-hidden mapgeo-overlay-panel mapgeo-north-arrow pointer-events-auto absolute right-4 top-4 z-[935] hidden h-[72px] w-[54px] flex-col items-center justify-center rounded-[16px] border border-white/10 bg-[#07111b]/70 px-1.5 py-1.5 text-white shadow-[0_14px_38px_rgba(0,0,0,0.20)] backdrop-blur-xl md:flex"
-        title="Nord"
-        aria-label="Flèche nord"
-      >
+    <button
+      type="button"
+      {...overlayEventProps}
+      className="mapgeo-export-hidden mapgeo-overlay-panel mapgeo-north-arrow pointer-events-auto absolute right-4 top-4 z-[935] flex h-[72px] w-[54px] flex-col items-center justify-center rounded-[16px] border border-white/10 bg-[#07111b]/70 px-1.5 py-1.5 text-white shadow-[0_14px_38px_rgba(0,0,0,0.20)] backdrop-blur-xl"
+      title="Revenir au nord"
+      aria-label="Revenir au nord"
+    >
       <span className="mapgeo-north-label text-[11px] font-black leading-none tracking-[0.24em] text-white/80">N</span>
-      <svg className="mt-1 h-12 w-10 text-white/80" viewBox="0 0 40 52" aria-hidden="true" focusable="false">
+      <svg
+        className="mt-1 h-12 w-10 text-white/80 transition-transform duration-150 ease-out"
+        viewBox="0 0 40 52"
+        aria-hidden="true"
+        focusable="false"
+        style={{ transform: `rotate(${-normalizedBearing}deg)` }}
+      >
         <path d="M20 3L31 46L20 38L9 46L20 3Z" fill="currentColor" opacity="0.92" />
         <path d="M20 12L25.8 35.5L20 31.6V12Z" fill="#07111b" opacity="0.34" />
         <path d="M20 12L14.2 35.5L20 31.6V12Z" fill="white" opacity="0.22" />
         <path d="M20 3L31 46L20 38L9 46L20 3Z" fill="none" stroke="white" strokeOpacity="0.34" strokeWidth="1.4" strokeLinejoin="round" />
       </svg>
-    </div>
+      {Math.abs(normalizedBearing) > 0.5 ? (
+        <span className="mt-0.5 text-[9px] font-black tabular-nums text-white/55">
+          {Math.round(normalizedBearing)}°
+        </span>
+      ) : null}
+    </button>
   );
+}
+
+function MapBearingController({ enabled, onBearingChange }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return undefined;
+
+    const readBearing = () => {
+      const value = map.getBearing?.();
+      const bearing = Number.isFinite(Number(value)) ? Number(value) : 0;
+      onBearingChange?.(bearing);
+    };
+
+    readBearing();
+
+    map.on?.("rotate", readBearing);
+    map.on?.("rotateend", readBearing);
+    map.on?.("moveend", readBearing);
+    map.on?.("zoomend", readBearing);
+
+    if (enabled) {
+      map.touchRotate?.enable?.();
+      map.touchZoom?.enable?.();
+      map.doubleClickZoom?.enable?.();
+    } else {
+      map.touchRotate?.disable?.();
+      map.setBearing?.(0);
+      onBearingChange?.(0);
+    }
+
+    return () => {
+      map.off?.("rotate", readBearing);
+      map.off?.("rotateend", readBearing);
+      map.off?.("moveend", readBearing);
+      map.off?.("zoomend", readBearing);
+    };
+  }, [enabled, map, onBearingChange]);
+
+  return null;
 }
 
 const DEFAULT_VERTEX_DISPLAY_OPTIONS = {
@@ -1894,6 +1952,11 @@ export default function PortfolioMapShell({
     return findNearestMeasurementSnap(map, point, snapFeatures, measurementPoints, options);
   }, [map, displayedFeatures, activeFeature, measurementDraft.points]);
 
+  const resetMapBearing = useCallback(() => {
+    map?.setBearing?.(0);
+    setMapBearing(0);
+  }, [map]);
+
   const finishMeasurementDraft = useCallback(() => {
     if (!showMeasurements) return;
     clearPendingMeasurementClick();
@@ -2225,8 +2288,12 @@ export default function PortfolioMapShell({
   return (
     <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
-        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
+        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} rotate={true} touchRotate={true} bearing={0} rotateControl={false} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
+          <MapBearingController
+            enabled={!inlineEditOpen && isMobileCartographyViewport()}
+            onBearingChange={setMapBearing}
+          />
           <PortfolioViewport mode={viewMode} activeFeature={activeFeature} features={viewportFeatures} onMapReady={setMap} viewportRequest={viewportRequest} onZoomChange={setMapZoom} />
           <MapRuntimeObserver
             onMouseMove={(point) => {
@@ -2364,7 +2431,7 @@ export default function PortfolioMapShell({
                       }}
                       interactive={false}
                     >
-                      <Tooltip direction="top" permanent>
+                      <Tooltip direction="top" permanent className="mapgeo-vertex-tooltip">
                         {activeFeature.rings.length > 1
                           ? `P${ringIndex + 1}-V${index + 1}`
                           : `V${index + 1}`}
@@ -2458,7 +2525,7 @@ export default function PortfolioMapShell({
             {userLocationMessage}
           </div>
         ) : null}
-        <NorthArrow />
+        <NorthArrow bearing={mapBearing} onReset={resetMapBearing} />
         <MapStatusBar cursorPosition={cursorPosition} coordinateSystem={coordinateSystem} features={displayedFeatures} />
         <ViewportSampleNotice summary={viewportSummary} />
 

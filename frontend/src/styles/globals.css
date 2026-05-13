@@ -2085,3 +2085,59 @@ main > .mapgeo-carto-workspace,
     pointer-events: none !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   MOBILE VERTEX LABELS VISIBLE
+   Mobile uniquement :
+   - la fenêtre Sommets reste cachée
+   - les labels V1, V2, etc. restent visibles sur la carte
+   - les dimensions restent visibles
+   - desktop inchangé
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-tooltip.mapgeo-vertex-tooltip {
+    display: block !important;
+    pointer-events: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: rgba(7, 17, 27, 0.88) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    padding: 0.18rem 0.36rem !important;
+    border-radius: 999px !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22) !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-side-label-shell,
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-side-label {
+    display: inline-flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE MAP ROTATION UI
+   Mobile uniquement :
+   - flèche nord visible
+   - le panneau reste fixe
+   - seule la flèche tourne via le bearing
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow {
+    top: calc(env(safe-area-inset-top, 0px) + 62px) !important;
+    right: 10px !important;
+    width: 46px !important;
+    height: 62px !important;
+    border-radius: 14px !important;
+    padding: 0.3rem !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-north-arrow svg {
+    width: 32px !important;
+    height: 42px !important;
+  }
+}
