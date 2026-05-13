@@ -22,14 +22,14 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
+    "leaflet-rotate": "^0.2.8",
     "lucide-react": "^0.408.0",
     "proj4": "^2.20.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.24.1",
-    "recharts": "^2.12.7",
-    "leaflet-rotate": "latest"
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
