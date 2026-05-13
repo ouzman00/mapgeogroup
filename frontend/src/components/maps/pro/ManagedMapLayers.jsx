@@ -1,4 +1,4 @@
-import L from "leaflet";
+﻿import L from "leaflet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, TileLayer, WMSTileLayer, useMap } from "react-leaflet";
 import mapLayerService from "../../../services/mapLayerService";
@@ -30,7 +30,7 @@ function ensureGeoJsonPanes(map) {
   contextPane.style.zIndex = "390";
 
   const privatePane = map.getPane(MANAGED_LAYER_PANES.private) || map.createPane(MANAGED_LAYER_PANES.private);
-  privatePane.style.zIndex = "435";
+  privatePane.style.zIndex = "410";
 
   const communesPane = map.getPane(MANAGED_LAYER_PANES.communes) || map.createPane(MANAGED_LAYER_PANES.communes);
   communesPane.style.zIndex = "385";
@@ -666,3 +666,4 @@ export default function ManagedMapLayers({ activeBaseLayer, visibleOperationalLa
     </>
   );
 }
+
