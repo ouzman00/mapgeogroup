@@ -2245,10 +2245,7 @@ export default function PortfolioMapShell({
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
         <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
-          <MapBearingController
-            enabled={!inlineEditOpen && isMobileCartographyViewport()}
-            onBearingChange={setMapBearing}
-          />
+
           <PortfolioViewport mode={viewMode} activeFeature={activeFeature} features={viewportFeatures} onMapReady={setMap} viewportRequest={viewportRequest} onZoomChange={setMapZoom} />
           <MapRuntimeObserver
             onMouseMove={(point) => {
