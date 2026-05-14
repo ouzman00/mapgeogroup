@@ -87,7 +87,7 @@ function mergeLayerLists(...layerLists) {
   return Array.from(merged.values());
 }
 
-function StateCard({ tone = "default", message }) {
+function StateCard({ tone = "default", message = "" }) {
   const isError = tone === "error";
 
   if (isError) {
@@ -102,7 +102,7 @@ function StateCard({ tone = "default", message }) {
 
   return (
     <div className={`flex h-full items-center justify-center ${CARTO_SURFACE} p-6`}>
-      <div className="relative grid h-20 w-20 place-items-center">
+      <div className="relative grid h-20 w-20 place-items-center" aria-label="Chargement" role="status">
         <span className="absolute h-20 w-20 animate-ping rounded-full bg-[#C7B299]/10" />
         <span className="absolute h-16 w-16 rounded-full border border-[#C7B299]/20" />
         <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#F7F5F2]/20 border-t-[#C7B299]" />
@@ -589,7 +589,7 @@ export default function ParcelleCartoPage() {
   if (loading && !activeParcel) {
     return (
       <DashboardLayout immersive>
-        <StateCard message="Ouverture de la carte" />
+        <StateCard />
       </DashboardLayout>
     );
   }
@@ -650,10 +650,12 @@ export default function ParcelleCartoPage() {
 
 
             {loadingSelection ? (
-              <div className="absolute bottom-6 left-1/2 z-[1100] -translate-x-1/2 rounded-full border border-[#C7B299]/22 bg-[#123B5D]/92 px-4 py-2 text-sm font-extrabold text-[#F7F5F2] shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur">
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#F7F5F2]/30 border-t-[#F7F5F2]" />
-                </span>
+              <div className="absolute inset-0 z-[1200] grid place-items-center bg-[#07111b]/42 backdrop-blur-[2px]" aria-label="Chargement" role="status">
+                <div className="relative grid h-16 w-16 place-items-center">
+                  <span className="absolute h-16 w-16 animate-ping rounded-full bg-[#C7B299]/10" />
+                  <span className="absolute h-12 w-12 rounded-full border border-[#C7B299]/20" />
+                  <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-[#F7F5F2]/20 border-t-[#C7B299]" />
+                </div>
               </div>
             ) : null}
 
