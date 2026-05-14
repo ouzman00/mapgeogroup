@@ -135,9 +135,11 @@ export default function FloatingMapToolbar({
     setActiveCommand((current) => (toolsCommands.includes(current) ? null : "tools"));
   };
 
+  const toolbarStateClass = toolsOpen ? "is-expanded" : "is-collapsed";
+
   return (
-    <div {...overlayEventProps} className={`mapgeo-toolbar-container ${toolsOpen ? "is-expanded" : "is-collapsed"} mapgeo-export-hidden absolute left-3 right-3 top-3 z-[970] max-w-[calc(100%-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:max-w-[calc(100%-2rem)]`}>
-      <div className="mapgeo-toolbar-shell flex w-full max-w-full items-center gap-1 overflow-hidden rounded-[18px] border border-white/10 bg-[#07111b]/70 p-1.5 text-white shadow-[0_20px_64px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:w-fit sm:min-w-0">
+    <div {...overlayEventProps} className={`mapgeo-toolbar-container ${toolbarStateClass} mapgeo-export-hidden absolute left-3 right-3 top-3 z-[970] max-w-[calc(100%-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:max-w-[calc(100%-2rem)]`}>
+      <div className={`mapgeo-toolbar-shell ${toolbarStateClass} flex w-full max-w-full items-center gap-1 overflow-hidden rounded-[18px] border border-white/10 bg-[#07111b]/70 p-1.5 text-white shadow-[0_20px_64px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:w-fit sm:min-w-0`}>
         <ToolbarButton active={showLegend} icon={Layers3} label="Légende" forceLabel className={commonButtonClass} onClick={() => {
             setActiveCommand("tools");
             setShowMeasurements(false);
@@ -149,7 +151,7 @@ export default function FloatingMapToolbar({
         {toolsOpen ? (
           <>
             <span aria-hidden="true" className="mx-1 h-7 w-px shrink-0 bg-white/10" />
-            <div className="mapgeo-inline-tools flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden pr-1 sm:max-w-[calc(100vw-10rem)] md:max-w-[calc(100vw-13rem)]" aria-label="Outils de la carte">
+            <div className={`mapgeo-inline-tools ${toolsOpen ? "is-visible" : "is-hidden"} flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden pr-1 sm:max-w-[calc(100vw-10rem)] md:max-w-[calc(100vw-13rem)]`} aria-label="Outils de la carte">
               <ToolbarButton active={showLabels} icon={Tags} label="Libellés" forceLabel className={compactToolButtonClass} title="Libellés" onClick={() => { setActiveCommand("tools"); setShowLabels?.((current) => !current); }} />
               <ToolbarButton active={activeCommand === "base"} icon={MapIcon} label="Fond de carte" forceLabel className={compactToolButtonClass} title="Fond de carte" onClick={() => {
                     setShowLegend(false);
