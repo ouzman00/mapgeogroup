@@ -88,17 +88,31 @@ function mergeLayerLists(...layerLists) {
 }
 
 function StateCard({ tone = "default", message }) {
-  const toneClass =
-    tone === "error"
-      ? "border-[#C7B299]/45 bg-[#C7B299]/15 text-[#F7F5F2]"
-      : "border-[#C7B299]/20 bg-[#123B5D]/18 text-[#F7F5F2]/80";
+  const isError = tone === "error";
+  const toneClass = isError
+    ? "border-[#C7B299]/45 bg-[#C7B299]/15 text-[#F7F5F2]"
+    : "border-[#C7B299]/20 bg-[#123B5D]/22 text-[#F7F5F2]";
 
   return (
     <div className={`flex h-full items-center justify-center ${CARTO_SURFACE} p-6`}>
       <div
-        className={`rounded-[1.35rem] border px-6 py-5 text-sm font-semibold shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur ${toneClass}`}
+        className={`w-full max-w-md rounded-[1.5rem] border px-6 py-5 shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur ${toneClass}`}
       >
-        {message}
+        {isError ? (
+          <p className="text-sm font-semibold">{message}</p>
+        ) : (
+          <div className="flex items-center gap-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-[#C7B299]/20 bg-[#F7F5F2]/10">
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#F7F5F2]/25 border-t-[#C7B299]" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold">Ouverture de la carte</p>
+              <p className="mt-1 text-xs font-semibold leading-5 text-[#F7F5F2]/65">
+                Synchronisation des parcelles, couches métier et fonds cartographiques.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -582,7 +596,7 @@ export default function ParcelleCartoPage() {
   if (loading && !activeParcel) {
     return (
       <DashboardLayout immersive>
-        <StateCard message="Préparation de la cartographie client…" />
+        <StateCard message="Ouverture de la carte" />
       </DashboardLayout>
     );
   }
