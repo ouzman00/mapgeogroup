@@ -267,6 +267,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
   const layerLabel = layerDisplayName(layer);
   const status = layerStatus(layer);
   const hasServerLegend = items.some(isLegendImageItem);
+  const showInlineSymbol = !hasServerLegend;
   const showItemDetails = visible && !unavailable && (hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend"));
 
   const handleToggle = (event) => {
@@ -328,7 +329,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
           </span>
         </span>
 
-        <LegendSymbol item={items[0]} muted={!visible || unavailable} />
+        {showInlineSymbol ? <LegendSymbol item={items[0]} muted={!visible || unavailable} /> : null}
       </div>
 
       {showItemDetails ? (
