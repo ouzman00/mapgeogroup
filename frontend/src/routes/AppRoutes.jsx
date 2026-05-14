@@ -24,7 +24,7 @@ const ClientActivationPage = lazy(() => import("../pages/ClientActivationPage.js
 function LoadingScreen() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-mapgeo-ivory px-4">
-      <div className="relative grid h-20 w-20 place-items-center">
+      <div className="relative grid h-20 w-20 place-items-center" aria-label="Chargement" role="status">
         <span className="absolute h-20 w-20 animate-ping rounded-full bg-mapgeo-primary/10" />
         <span className="absolute h-16 w-16 rounded-full border border-mapgeo-primary/15" />
         <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-mapgeo-primary/20 border-t-mapgeo-primary" />
