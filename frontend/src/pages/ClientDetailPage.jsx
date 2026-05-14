@@ -23,6 +23,7 @@ import {
 import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
 import AdminMapLayersPanel from "../components/admin/AdminMapLayersPanel";
+import LoadingState from "../components/ui/LoadingState";
 import { deactivateUser, fetchAllClients, fetchClientById, resetClientAccess, updateClient } from "../services/clientService";
 import parcelService from "../services/parcelService";
 import documentService from "../services/documentService";
@@ -402,7 +403,13 @@ export default function ClientDetailPage() {
 
         {error ? <div className="rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-4 py-3 text-sm font-medium text-mapgeo-primary">{error}</div> : null}
         {message ? <div className="rounded-2xl border border-mapgeo-line bg-mapgeo-primary/6 px-4 py-3 text-sm font-medium text-mapgeo-primary">{message}</div> : null}
-        {loading ? <div className="rounded-3xl border border-mapgeo-line bg-white p-6 text-mapgeo-secondary shadow-soft">Chargement de la fiche client…</div> : null}
+        {loading ? (
+          <LoadingState
+            title="Chargement de la fiche client"
+            message="Récupération des informations, parcelles, documents et couches associées."
+            compact
+          />
+        ) : null}
 
         {client ? (
           <>

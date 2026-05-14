@@ -29,6 +29,7 @@ import {
   progressFromStatus,
 } from "../constants/parcelConstants";
 import { formatDateLabel } from "../utils/dateUtils";
+import LoadingState from "../components/ui/LoadingState";
 
 function formatNumber(value) {
   return new Intl.NumberFormat("fr-FR").format(Number(value || 0));
@@ -292,8 +293,12 @@ function ParcelTable({ rows, loading, error, showClientColumn = true, returnTo =
       </div>
 
       {loading ? (
-        <div className="p-6 text-sm text-mapgeo-secondary">
-          Chargement des parcelles…
+        <div className="p-6">
+          <LoadingState
+            title="Chargement des parcelles"
+            message="Récupération du portefeuille foncier et des derniers statuts."
+            compact
+          />
         </div>
       ) : null}
 

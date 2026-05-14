@@ -27,6 +27,7 @@ import useAuth from "../hooks/useAuth";
 import useNotifications from "../hooks/useNotifications";
 import { getErrorMessage } from "../services/responseUtils";
 import { getRoleLabel } from "../constants/roleConstants";
+import LoadingState from "../components/ui/LoadingState";
 
 const tabOptions = ["Toutes", "Non lues", "Alertes", "Documents", "Parcelles", "Support"];
 const groupOrder = ["Aujourd’hui", "Hier", "Cette semaine", "Plus ancien"];
@@ -390,7 +391,15 @@ function NotificationsFeed({ groups, loading, error, selectedIds, onToggleSelect
         </div>
       </div>
 
-      {loading ? <div className="p-6 text-sm text-mapgeo-secondary">Chargement des notifications…</div> : null}
+      {loading ? (
+        <div className="p-6">
+          <LoadingState
+            title="Chargement des notifications"
+            message="Mise à jour des alertes et des informations récentes."
+            compact
+          />
+        </div>
+      ) : null}
 
       {error ? (
         <div className="m-6 rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 p-4 text-sm font-medium text-mapgeo-primary">{error}</div>

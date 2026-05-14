@@ -32,6 +32,7 @@ import {
 } from "../constants/clientConstants";
 import { formatDateLabel } from "../utils/dateUtils";
 import PasswordInput from "../components/ui/PasswordInput";
+import { LoadingTableRow } from "../components/ui/LoadingState";
 
 const emptyForm = {
   name: "",
@@ -404,11 +405,11 @@ function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onRese
 
           <tbody className="divide-y divide-mapgeo-line">
             {loading ? (
-              <tr>
-                <td colSpan="8" className="px-5 py-10 text-center text-mapgeo-secondary">
-                  Chargement des clients...
-                </td>
-              </tr>
+              <LoadingTableRow
+                colSpan={8}
+                title="Chargement des clients"
+                message="Synchronisation des fiches clients et des accès portail."
+              />
             ) : clients.length === 0 ? (
               <tr>
                 <td colSpan="8" className="px-5 py-10 text-center text-mapgeo-secondary">

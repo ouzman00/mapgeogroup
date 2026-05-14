@@ -1,4 +1,4 @@
-import { CheckCircle2, FileUp, Save, XCircle } from "lucide-react";
+import { CheckCircle2, FileUp, Loader2, Save, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import parcelService from "../../services/parcelService";
 import { PARCEL_STATUS_OPTIONS, normalizeParcelStatus } from "../../constants/parcelConstants";
@@ -583,8 +583,8 @@ export default function ParcelQuickForm({
         {/* Actions */}
         <div className={`${fullRow} flex flex-wrap items-center gap-3 border-t pt-4 ${dark ? "border-white/10" : "border-mapgeo-line"}`}>
           <button type="submit" disabled={submitting || !owners.length} className={btnPrimary}>
-            <Save size={16} />
-            {submitting ? "Enregistrement…" : submitLabel}
+            {submitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {submitting ? "Création en cours…" : submitLabel}
           </button>
           {onCancel ? (
             <button type="button" onClick={onCancel} className={btnCancel}>Annuler</button>

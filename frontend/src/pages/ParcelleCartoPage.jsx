@@ -582,7 +582,7 @@ export default function ParcelleCartoPage() {
   if (loading && !activeParcel) {
     return (
       <DashboardLayout immersive>
-        <StateCard message="Chargement de la cartographie client…" />
+        <StateCard message="Préparation de la cartographie client…" />
       </DashboardLayout>
     );
   }
@@ -643,8 +643,11 @@ export default function ParcelleCartoPage() {
 
 
             {loadingSelection ? (
-              <div className="absolute bottom-6 left-1/2 z-[1100] -translate-x-1/2 rounded-full border border-[#C7B299]/22 bg-[#123B5D]/92 px-4 py-2 text-sm font-medium text-[#F7F5F2] shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur">
-                Chargement de la parcelle sélectionnée…
+              <div className="absolute bottom-6 left-1/2 z-[1100] -translate-x-1/2 rounded-full border border-[#C7B299]/22 bg-[#123B5D]/92 px-4 py-2 text-sm font-extrabold text-[#F7F5F2] shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur">
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#F7F5F2]/30 border-t-[#F7F5F2]" />
+                  Ouverture de la parcelle…
+                </span>
               </div>
             ) : null}
 

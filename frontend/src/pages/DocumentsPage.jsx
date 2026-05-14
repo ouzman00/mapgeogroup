@@ -29,6 +29,7 @@ import { getErrorMessage } from "../services/responseUtils";
 import { canManageBackoffice } from "../constants/roleConstants";
 import { formatDateLabel, formatDateTimeLabel } from "../utils/dateUtils";
 import { ACCEPTED_DOCUMENT_ACCEPT, ACCEPTED_DOCUMENT_FORMATS_LABEL, DOCUMENT_STATUS_OPTIONS, DOCUMENT_TYPE_OPTIONS, MAX_DOCUMENT_SIZE_LABEL, canDocumentBePublic, getDocumentVisibilityClasses, getDocumentVisibilityLabel, isDocumentVisibleToClient, validateDocumentFile } from "../constants/documentConstants";
+import LoadingState from "../components/ui/LoadingState";
 
 
 const EMPTY_UPLOAD_FORM = {
@@ -351,7 +352,15 @@ function DocumentsTable({
         </div>
       </div>
 
-      {loading ? <div className="p-6 text-sm text-mapgeo-secondary">Chargement des documents…</div> : null}
+      {loading ? (
+        <div className="p-6">
+          <LoadingState
+            title="Chargement des documents"
+            message="Synchronisation des fichiers, versions et droits d’accès."
+            compact
+          />
+        </div>
+      ) : null}
 
       {error ? (
         <div className="m-6 rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 p-4 text-sm font-medium text-mapgeo-primary">

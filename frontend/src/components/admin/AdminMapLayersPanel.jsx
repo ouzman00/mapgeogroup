@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -1026,7 +1026,7 @@ function ManualCategorizedSymbologyPanel({ draft, onChange, geometryType = "mixe
         <div className="mt-4 space-y-4">
           {(previewLoading || previewError) ? (
             <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold text-mapgeo-secondary/70">
-              {previewLoading ? <span className="inline-flex items-center gap-2 rounded-full border border-mapgeo-line bg-white px-3 py-1.5"><Loader2 size={14} className="animate-spin" /> Analyse…</span> : null}
+              {previewLoading ? <span className="inline-flex items-center gap-2 rounded-full border border-mapgeo-line bg-white px-3 py-1.5"><Loader2 size={14} className="animate-spin" /> Analyse de la table…</span> : null}
               {!previewLoading && previewError ? <span className="inline-flex items-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-3 py-1.5 text-amber-800"><AlertTriangle size={14} /> {previewError}</span> : null}
             </div>
           ) : null}
@@ -1045,7 +1045,7 @@ function ManualCategorizedSymbologyPanel({ draft, onChange, geometryType = "mixe
               </Field>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <button type="button" onClick={regenerateDetectedCategories} disabled={disabled || previewLoading} className="rounded-2xl border border-mapgeo-line bg-white px-4 py-2.5 text-xs font-extrabold text-mapgeo-primary hover:bg-mapgeo-ivory disabled:opacity-50">
-                  {previewLoading ? "Détection…" : "Auto"}
+                  {previewLoading ? "Détection des catégories…" : "Auto"}
                 </button>
               </div>
             </div>
@@ -1055,7 +1055,7 @@ function ManualCategorizedSymbologyPanel({ draft, onChange, geometryType = "mixe
                 <input value={draft.style_category_field || ""} disabled={disabled} onChange={(event) => update({ style_category_field: event.target.value })} className={smallInputClass("disabled:opacity-50")} placeholder="ex. type_zone, classe, occupation" />
               </Field>
               <button type="button" onClick={() => onRequestPreview?.({ autoCategorize: true })} disabled={disabled || previewLoading} className="rounded-2xl border border-mapgeo-line bg-white px-4 py-2.5 text-xs font-extrabold text-mapgeo-primary hover:bg-mapgeo-ivory disabled:opacity-50">
-                {previewLoading ? "Détection…" : hasTablePreview ? "Relancer la détection" : "Détecter depuis la table"}
+                {previewLoading ? "Détection des catégories…" : hasTablePreview ? "Relancer la détection" : "Détecter depuis la table"}
               </button>
             </div>
           )}
@@ -1935,7 +1935,7 @@ export default function AdminMapLayersPanel({ clientId }) {
                     disabled={postgisTablesLoading || postgisTableOptions.length === 0}
                   >
                     <option value="" disabled>
-                      {postgisTablesLoading ? "Chargement des tables PostGIS…" : postgisTableOptions.length ? "Choisir une table ou une vue" : "Aucune table PostGIS disponible"}
+                      {postgisTablesLoading ? "Synchronisation des tables…" : postgisTableOptions.length ? "Choisir une table ou une vue" : "Aucune table PostGIS disponible"}
                     </option>
                     {postgisTableOptions.map((option) => (
                       <option key={option.qualifiedName || option.value} value={option.value}>
@@ -2000,7 +2000,7 @@ export default function AdminMapLayersPanel({ clientId }) {
                     disabled={serviceCapabilitiesLoading || (isWfs(form) && !String(form.service_url || "").trim())}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-4 py-3 text-sm font-extrabold text-mapgeo-primary hover:bg-mapgeo-ivory disabled:opacity-50"
                   >
-                    {serviceCapabilitiesLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />} GetCapabilities
+                    {serviceCapabilitiesLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />} {serviceCapabilitiesLoading ? "Analyse du service…" : "Analyser le service"}
                   </button>
                 </div>
               </Field>
@@ -2102,7 +2102,7 @@ export default function AdminMapLayersPanel({ clientId }) {
             <span className="inline-flex items-center gap-2"><input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} /> Autoriser côté client</span>
             <span className="text-xs font-semibold text-mapgeo-secondary/65">Visible seulement si la couche est prête et compatible.</span>
           </label>
-          <button type="submit" disabled={uploading} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel disabled:opacity-50">{uploading ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />} Ajouter</button>
+          <button type="submit" disabled={uploading} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel disabled:opacity-50">{uploading ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />} {uploading ? "Import en cours…" : "Ajouter"}</button>
         </div>
         </form>
       </details>
@@ -2138,4 +2138,3 @@ export default function AdminMapLayersPanel({ clientId }) {
     </section>
   );
 }
-

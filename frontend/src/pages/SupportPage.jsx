@@ -39,6 +39,7 @@ import {
 } from "../constants/supportConstants";
 import { getRoleLabel } from "../constants/roleConstants";
 import { formatDateLabel } from "../utils/dateUtils";
+import LoadingState from "../components/ui/LoadingState";
 
 const EMPTY_FILTERS = {
   q: "",
@@ -449,7 +450,15 @@ function TicketsTable({
         </div>
       </div>
 
-      {loading ? <div className="p-6 text-sm text-mapgeo-secondary">Chargement des tickets…</div> : null}
+      {loading ? (
+        <div className="p-6">
+          <LoadingState
+            title="Chargement des tickets"
+            message="Synchronisation des demandes support et de leur statut."
+            compact
+          />
+        </div>
+      ) : null}
 
       {error ? (
         <div className="m-6 rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 p-4 text-sm font-medium text-mapgeo-primary">
