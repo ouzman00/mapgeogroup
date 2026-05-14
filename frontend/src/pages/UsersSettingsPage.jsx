@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
+import LoadingState from "../components/ui/LoadingState";
 import useAuth from "../hooks/useAuth";
 import userService from "../services/userService";
 import { fetchAllClients } from "../services/clientService";
@@ -389,7 +390,13 @@ export default function UsersSettingsPage() {
                 <h2 className="text-xl font-extrabold text-mapgeo-primary">Liste des utilisateurs</h2>
               </div>
               {loading ? (
-                <p className="p-5 text-sm text-mapgeo-secondary">Chargement…</p>
+                <div className="p-5">
+                  <LoadingState
+                    title="Veuillez patienter"
+                    message="Mise à jour des utilisateurs."
+                    compact
+                  />
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-[1040px] w-full text-left text-sm">

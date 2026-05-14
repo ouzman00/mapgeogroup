@@ -72,7 +72,7 @@ function LayerToggle({ layer, onToggle, onOpacityChange, onZoomToLayer }) {
           <span className="min-w-0">
             <span className="block truncate text-sm font-extrabold text-white/90">{layer.name}</span>
             <span className="mt-0.5 block text-xs font-medium text-white/50">
-              {unavailableMessage || (layer.error ? layer.error : layer.loading ? "Chargement…" : layer.visible ? "Affichée" : "Masquée")}{visibleButOutOfZoom ? " · hors niveau de zoom" : ""}
+              {unavailableMessage || (layer.error ? layer.error : layer.loading ? "Préparation…" : layer.visible ? "Affichée" : "Masquée")}{visibleButOutOfZoom ? " · hors niveau de zoom" : ""}
             </span>
             {layer.privateLayer ? <span className="mt-1 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white/45">Couche privée</span> : null}
           </span>

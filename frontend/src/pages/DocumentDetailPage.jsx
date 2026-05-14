@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Archive,
@@ -18,6 +18,7 @@ import {
   UserRound,
 } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
+import LoadingState from "../components/ui/LoadingState";
 import useAuth from "../hooks/useAuth";
 import documentService from "../services/documentService";
 import { getErrorMessage } from "../services/responseUtils";
@@ -307,7 +308,7 @@ export default function DocumentDetailPage() {
   };
 
   const actions = [
-    { label: fileAction === "download" ? "Téléchargement…" : "Téléchargement sécurisé", icon: Download, onClick: handleDownload, disabled: !documentItem?.id || Boolean(fileAction) },
+    { label: fileAction === "download" ? "Préparation du fichier…" : "Téléchargement sécurisé", icon: Download, onClick: handleDownload, disabled: !documentItem?.id || Boolean(fileAction) },
     { label: fileAction === "preview" ? "Ouverture de l’aperçu…" : "Aperçu sécurisé", icon: Eye, onClick: handlePreview, disabled: !documentItem?.id || Boolean(fileAction) },
     ...(canManageDocuments
       ? [
@@ -339,7 +340,7 @@ export default function DocumentDetailPage() {
             </Link>
             <button type="button" onClick={handleDownload} disabled={!documentItem?.id || Boolean(fileAction)}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel disabled:cursor-not-allowed disabled:opacity-60">
-              <Download size={18} /> {fileAction === "download" ? "Téléchargement…" : "Téléchargement sécurisé"}
+              <Download size={18} /> {fileAction === "download" ? "Préparation du fichier…" : "Téléchargement sécurisé"}
             </button>
             {canManageDocuments ? (
               <button
@@ -357,7 +358,13 @@ export default function DocumentDetailPage() {
         {canManageDocuments ? <input ref={replaceInputRef} type="file" className="hidden" onChange={handleReplaceFile} accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.doc,.docx,.xls,.xlsx,.csv,.kml,.kmz,.dxf,.dwg,.zip,.txt" /> : null}
         {error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div> : null}
         {message ? <div className="rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-4 py-3 text-sm font-medium text-mapgeo-primary">{message}</div> : null}
-        {loading ? <div className="rounded-3xl border border-mapgeo-line bg-white p-6 text-mapgeo-secondary shadow-soft">Chargement du document…</div> : null}
+        {loading ? (
+          <LoadingState
+            title="Veuillez patienter"
+            message="Ouverture du document sécurisé."
+            compact
+          />
+        ) : null}
 
         {documentItem ? (
           <>
@@ -416,7 +423,7 @@ export default function DocumentDetailPage() {
                                 <td className="px-5 py-4"><span className={`rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide ${statusClasses(version.status)}`}>{version.statusLabel}</span></td>
                                 <td className="px-5 py-4 text-mapgeo-secondary">{version.dateLabel}</td>
                                 <td className="px-5 py-4 text-mapgeo-secondary">{version.author}</td>
-                                <td className="px-5 py-4"><button type="button" onClick={handleDownload} disabled={Boolean(fileAction)} className="text-sm font-bold text-mapgeo-primary disabled:cursor-not-allowed disabled:opacity-50">{fileAction === "download" ? "Téléchargement…" : "Téléchargement sécurisé"}</button></td>
+                                <td className="px-5 py-4"><button type="button" onClick={handleDownload} disabled={Boolean(fileAction)} className="text-sm font-bold text-mapgeo-primary disabled:cursor-not-allowed disabled:opacity-50">{fileAction === "download" ? "Préparation du fichier…" : "Téléchargement sécurisé"}</button></td>
                               </tr>
                             ))
                           ) : (
@@ -496,3 +503,4 @@ export default function DocumentDetailPage() {
     </DashboardLayout>
   );
 }
+

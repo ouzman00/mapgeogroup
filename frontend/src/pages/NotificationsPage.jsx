@@ -394,8 +394,8 @@ function NotificationsFeed({ groups, loading, error, selectedIds, onToggleSelect
       {loading ? (
         <div className="p-6">
           <LoadingState
-            title="Chargement des notifications"
-            message="Mise à jour des alertes et des informations récentes."
+            title="Veuillez patienter"
+            message="Mise à jour des alertes."
             compact
           />
         </div>

@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react";
 
-export function LoadingInline({ label = "Chargement en cours", tone = "light" }) {
+export function LoadingInline({ label = "Veuillez patienter", tone = "light" }) {
   const toneClass = tone === "dark"
     ? "border-white/10 bg-white/10 text-white"
     : "border-mapgeo-line bg-white text-mapgeo-primary";
@@ -14,8 +14,8 @@ export function LoadingInline({ label = "Chargement en cours", tone = "light" })
 }
 
 export default function LoadingState({
-  title = "Chargement en cours",
-  message = "Synchronisation des données, merci de patienter.",
+  title = "Veuillez patienter",
+  message = "Traitement en cours.",
   compact = false,
   dark = false,
 }) {
@@ -30,10 +30,12 @@ export default function LoadingState({
           <Loader2 size={compact ? 18 : 22} className="animate-spin" />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-extrabold">{title}</p>
-          <p className={`mt-1 text-xs leading-5 ${dark ? "text-white/70" : "text-mapgeo-secondary/70"}`}>
-            {message}
-          </p>
+          {title ? <p className="text-sm font-extrabold">{title}</p> : null}
+          {message ? (
+            <p className={`mt-1 text-xs leading-5 ${dark ? "text-white/70" : "text-mapgeo-secondary/70"}`}>
+              {message}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
@@ -42,8 +44,8 @@ export default function LoadingState({
 
 export function LoadingTableRow({
   colSpan = 1,
-  title = "Chargement en cours",
-  message = "Synchronisation des données, merci de patienter.",
+  title = "Veuillez patienter",
+  message = "Traitement en cours.",
 }) {
   return (
     <tr>

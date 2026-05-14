@@ -355,8 +355,8 @@ function DocumentsTable({
       {loading ? (
         <div className="p-6">
           <LoadingState
-            title="Chargement des documents"
-            message="Synchronisation des fichiers, versions et droits d’accès."
+            title="Veuillez patienter"
+            message="Mise à jour des documents."
             compact
           />
         </div>

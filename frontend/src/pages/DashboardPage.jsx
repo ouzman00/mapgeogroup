@@ -27,6 +27,7 @@ import { fetchAllClients } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import { PARCEL_STATUS_OPTIONS, getParcelStatusClasses, getParcelStatusLabel, normalizeParcelStatus, progressFromStatus } from "../constants/parcelConstants";
 import { premium } from "../components/ui/designSystem";
+import LoadingState from "../components/ui/LoadingState";
 import { canManageBackoffice, getRoleLabel } from "../constants/roleConstants";
 import { formatDateLabel } from "../utils/dateUtils";
 
@@ -370,7 +371,15 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
         </div>
       </div>
 
-      {loading ? <div className="p-6 text-sm text-mapgeo-secondary">Chargement du tableau de bord…</div> : null}
+      {loading ? (
+        <div className="p-6">
+          <LoadingState
+            title="Veuillez patienter"
+            message="Actualisation du tableau de bord."
+            compact
+          />
+        </div>
+      ) : null}
 
       {error ? (
         <div className="m-6 rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 p-4 text-sm font-medium text-mapgeo-primary">{error}</div>

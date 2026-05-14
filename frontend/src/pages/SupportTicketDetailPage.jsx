@@ -17,6 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
+import LoadingState from "../components/ui/LoadingState";
 import useAuth from "../hooks/useAuth";
 import supportService from "../services/supportService";
 import { getErrorMessage } from "../services/responseUtils";
@@ -382,7 +383,13 @@ export default function SupportTicketDetailPage() {
 
         {error ? <div className="rounded-2xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-4 py-3 text-sm font-medium text-mapgeo-primary">{error}</div> : null}
         {actionMessage ? <div className="rounded-2xl border border-mapgeo-line bg-mapgeo-primary/6 px-4 py-3 text-sm font-medium text-mapgeo-primary">{actionMessage}</div> : null}
-        {loading ? <div className="rounded-3xl border border-mapgeo-line bg-white p-6 text-mapgeo-secondary shadow-soft">Chargement du ticket…</div> : null}
+        {loading ? (
+          <LoadingState
+            title="Veuillez patienter"
+            message="Ouverture de la conversation support."
+            compact
+          />
+        ) : null}
 
         {ticket ? (
           <>

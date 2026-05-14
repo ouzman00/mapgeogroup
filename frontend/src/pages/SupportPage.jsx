@@ -453,8 +453,8 @@ function TicketsTable({
       {loading ? (
         <div className="p-6">
           <LoadingState
-            title="Chargement des tickets"
-            message="Synchronisation des demandes support et de leur statut."
+            title="Veuillez patienter"
+            message="Mise à jour des demandes support."
             compact
           />
         </div>

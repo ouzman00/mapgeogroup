@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import supportService from "../../services/supportService";
+import { LoadingInline } from "../ui/LoadingState";
 import useAuth from "../../hooks/useAuth";
 import useParcelSearch, { formatParcelOptionLabel } from "../../hooks/useParcelSearch";
 import { getErrorMessage } from "../../services/responseUtils";
@@ -197,7 +198,11 @@ export default function SupportForm() {
             ))}
           </select>
         </div>
-        {loading ? <p className="text-mapgeo-secondary mt-3">Chargement…</p> : null}
+        {loading ? (
+          <div className="mt-3">
+            <LoadingInline label="Veuillez patienter" />
+          </div>
+        ) : null}
         {!loading && !recentTickets.length ? <p className="text-mapgeo-secondary mt-3">Aucune demande enregistrée.</p> : null}
         <div className="space-y-3 mt-4">
           {recentTickets.map((ticket) => (

@@ -6,6 +6,7 @@ import {
   FolderKanban,
   History,
   Layers,
+  Loader2,
   MapPinned,
   Ruler,
   ShieldCheck,
@@ -92,16 +93,19 @@ function buildParcelCartoHref(parcel, returnTo) {
 }
 
 function StateCard({ tone = "default", title, message, actions = null }) {
+  const isLoading = tone === "loading";
   const toneClass =
     tone === "error"
       ? "border-mapgeo-line bg-mapgeo-sand/10 text-mapgeo-primary"
-      : "border-mapgeo-line bg-white text-mapgeo-secondary";
+      : isLoading
+        ? "border-mapgeo-line bg-white text-mapgeo-primary"
+        : "border-mapgeo-line bg-white text-mapgeo-secondary";
 
   return (
     <div className={`flex h-full min-h-[520px] items-center justify-center rounded-3xl border px-6 py-10 shadow-soft ${toneClass}`}>
       <div className="max-w-xl text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
-          <AlertCircle size={22} />
+          {isLoading ? <Loader2 size={22} className="animate-spin" /> : <AlertCircle size={22} />}
         </div>
         <h2 className="text-xl font-extrabold text-mapgeo-primary">{title}</h2>
         <p className="mt-3 text-sm leading-6 opacity-90">{message}</p>
@@ -527,7 +531,7 @@ export default function ParcelleDetailPage() {
     }
 
     if (loadingDetail && !isCurrentParcel) {
-      return <StateCard title="Chargement" message="Chargement de la parcelle en cours…" />;
+      return <StateCard tone="loading" title="Veuillez patienter" message="Ouverture du dossier parcelle." />;
     }
 
     if (notFound) {

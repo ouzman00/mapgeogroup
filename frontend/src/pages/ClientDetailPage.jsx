@@ -405,8 +405,8 @@ export default function ClientDetailPage() {
         {message ? <div className="rounded-2xl border border-mapgeo-line bg-mapgeo-primary/6 px-4 py-3 text-sm font-medium text-mapgeo-primary">{message}</div> : null}
         {loading ? (
           <LoadingState
-            title="Chargement de la fiche client"
-            message="Récupération des informations, parcelles, documents et couches associées."
+            title="Veuillez patienter"
+            message="Ouverture du dossier client."
             compact
           />
         ) : null}

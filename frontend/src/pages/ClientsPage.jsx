@@ -407,8 +407,8 @@ function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onRese
             {loading ? (
               <LoadingTableRow
                 colSpan={8}
-                title="Chargement des clients"
-                message="Synchronisation des fiches clients et des accès portail."
+                title="Veuillez patienter"
+                message="Mise à jour de la liste clients."
               />
             ) : clients.length === 0 ? (
               <tr>
@@ -745,7 +745,7 @@ function ClientFormPanel({ form, setForm, editingClient, saving, onSubmit, onCan
             disabled={saving}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel transition hover:bg-mapgeo-primary/95 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Plus size={18} /> {saving ? "Enregistrement..." : editingClient ? "Mettre à jour" : "Créer le client"}
+            <Plus size={18} /> {saving ? "Traitement en cours…" : editingClient ? "Mettre à jour" : "Créer le client"}
           </button>
         </div>
       </form>

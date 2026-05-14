@@ -295,8 +295,8 @@ function ParcelTable({ rows, loading, error, showClientColumn = true, returnTo =
       {loading ? (
         <div className="p-6">
           <LoadingState
-            title="Chargement des parcelles"
-            message="Récupération du portefeuille foncier et des derniers statuts."
+            title="Veuillez patienter"
+            message="Mise à jour du portefeuille foncier."
             compact
           />
         </div>

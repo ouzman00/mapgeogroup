@@ -487,7 +487,7 @@ function SecuritySection({
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-4 py-2.5 text-sm font-extrabold text-white shadow-soft transition hover:bg-mapgeo-primary/95 disabled:opacity-60"
             >
               <KeyRound size={17} />
-              {savingPassword ? "Mise à jour..." : "Changer le mot de passe"}
+              {savingPassword ? "Traitement en cours…" : "Changer le mot de passe"}
             </button>
           </div>
         </div>
@@ -1063,7 +1063,7 @@ export default function SettingsPage() {
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel transition hover:bg-mapgeo-primary disabled:opacity-60"
             >
               <Save size={18} />
-              {savingProfile ? "Enregistrement..." : "Enregistrer les modifications"}
+              {savingProfile ? "Traitement en cours…" : "Enregistrer les modifications"}
             </button>
 
             <button
