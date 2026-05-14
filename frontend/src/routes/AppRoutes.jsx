@@ -24,18 +24,10 @@ const ClientActivationPage = lazy(() => import("../pages/ClientActivationPage.js
 function LoadingScreen() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-mapgeo-ivory px-4">
-      <div className="w-full max-w-sm rounded-[1.6rem] border border-mapgeo-line bg-white p-6 text-mapgeo-primary shadow-soft">
-        <div className="flex items-center gap-4">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mapgeo-ivory">
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-mapgeo-primary/20 border-t-mapgeo-primary" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-extrabold">Ouverture de votre espace</p>
-            <p className="mt-1 text-xs font-semibold text-mapgeo-secondary/65">
-              Vérification de la session et préparation du tableau de bord.
-            </p>
-          </div>
-        </div>
+      <div className="relative grid h-20 w-20 place-items-center">
+        <span className="absolute h-20 w-20 animate-ping rounded-full bg-mapgeo-primary/10" />
+        <span className="absolute h-16 w-16 rounded-full border border-mapgeo-primary/15" />
+        <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-mapgeo-primary/20 border-t-mapgeo-primary" />
       </div>
     </div>
   );

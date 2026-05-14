@@ -89,30 +89,23 @@ function mergeLayerLists(...layerLists) {
 
 function StateCard({ tone = "default", message }) {
   const isError = tone === "error";
-  const toneClass = isError
-    ? "border-[#C7B299]/45 bg-[#C7B299]/15 text-[#F7F5F2]"
-    : "border-[#C7B299]/20 bg-[#123B5D]/22 text-[#F7F5F2]";
+
+  if (isError) {
+    return (
+      <div className={`flex h-full items-center justify-center ${CARTO_SURFACE} p-6`}>
+        <div className="w-full max-w-md rounded-[1.5rem] border border-[#C7B299]/45 bg-[#C7B299]/15 px-6 py-5 text-[#F7F5F2] shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur">
+          <p className="text-sm font-semibold">{message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex h-full items-center justify-center ${CARTO_SURFACE} p-6`}>
-      <div
-        className={`w-full max-w-md rounded-[1.5rem] border px-6 py-5 shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur ${toneClass}`}
-      >
-        {isError ? (
-          <p className="text-sm font-semibold">{message}</p>
-        ) : (
-          <div className="flex items-center gap-4">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-[#C7B299]/20 bg-[#F7F5F2]/10">
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#F7F5F2]/25 border-t-[#C7B299]" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-extrabold">Ouverture de la carte</p>
-              <p className="mt-1 text-xs font-semibold leading-5 text-[#F7F5F2]/65">
-                Synchronisation des parcelles, couches métier et fonds cartographiques.
-              </p>
-            </div>
-          </div>
-        )}
+      <div className="relative grid h-20 w-20 place-items-center">
+        <span className="absolute h-20 w-20 animate-ping rounded-full bg-[#C7B299]/10" />
+        <span className="absolute h-16 w-16 rounded-full border border-[#C7B299]/20" />
+        <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#F7F5F2]/20 border-t-[#C7B299]" />
       </div>
     </div>
   );
@@ -660,7 +653,6 @@ export default function ParcelleCartoPage() {
               <div className="absolute bottom-6 left-1/2 z-[1100] -translate-x-1/2 rounded-full border border-[#C7B299]/22 bg-[#123B5D]/92 px-4 py-2 text-sm font-extrabold text-[#F7F5F2] shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur">
                 <span className="inline-flex items-center gap-2">
                   <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#F7F5F2]/30 border-t-[#F7F5F2]" />
-                  Ouverture de la parcelle…
                 </span>
               </div>
             ) : null}
