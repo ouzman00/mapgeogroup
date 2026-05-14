@@ -465,9 +465,26 @@ def fetch_service_capabilities(service_type, service_url, version):
         "REQUEST": "GetCapabilities",
         "VERSION": capability_version,
     }
-    data, content_type = fetch_url(append_query_params(resolved_url, params), "text/xml")
+
+    capabilities_url = append_query_params(resolved_url, params)
+
+    try:
+        data, content_type = fetch_url(capabilities_url, "text/xml")
+    except Http404 as exc:
+        message = str(exc) or "Service cartographique externe indisponible."
+        raise ValidationError({
+            "capabilities": message,
+            "service_url": resolved_url,
+            "capabilities_url": capabilities_url,
+        }) from exc
+
     if not data.lstrip().startswith(b"<"):
-        raise ValidationError({"capabilities": "Le service ne renvoie pas un document XML GetCapabilities."})
+        raise ValidationError({
+            "capabilities": "Le service ne renvoie pas un document XML GetCapabilities.",
+            "service_url": resolved_url,
+            "capabilities_url": capabilities_url,
+        })
+
     layers = parse_wms_capabilities_layers(data) if service == "wms" else parse_wfs_capabilities_layers(data)
     return {
         "service_type": service,
@@ -476,6 +493,7 @@ def fetch_service_capabilities(service_type, service_url, version):
         "content_type": content_type,
         "layers": layers,
         "count": len(layers),
+        "capabilities_url": capabilities_url,
     }
 
 
@@ -631,7 +649,11 @@ class AdminServiceCapabilitiesView(APIView):
         service_type = str(request.data.get("service_type") or request.data.get("data_format") or "").strip().lower()
         service_url = str(request.data.get("service_url") or "").strip()
         version = str(request.data.get("version") or request.data.get("wms_version") or request.data.get("wfs_version") or "").strip()
-        return Response(fetch_service_capabilities(service_type, service_url, version))
+
+        try:
+            return Response(fetch_service_capabilities(service_type, service_url, version))
+        except ValidationError as exc:
+            return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
 
 
 
