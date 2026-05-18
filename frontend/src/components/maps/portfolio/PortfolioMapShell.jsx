@@ -221,20 +221,87 @@ function buildMeasurementDraftSummary(draft) {
   };
 }
 
+// Centroide simple d un anneau de points latlng (moyenne arithmetique).
+function ringCentroid(ring) {
+  if (!Array.isArray(ring) || !ring.length) return null;
+  let lat = 0;
+  let lng = 0;
+  let n = 0;
+  for (const point of ring) {
+    if (!Array.isArray(point) || point.length < 2) continue;
+    lat += point[0];
+    lng += point[1];
+    n += 1;
+  }
+  if (!n) return null;
+  return [lat / n, lng / n];
+}
+
+// Decalage perpendiculaire vers l exterieur du polygone.
+// Retourne un nouveau point latlng a `offsetMeters` du milieu du segment,
+// dans la direction opposee au centroide (= exterieur).
+// Pour un segment ouvert (ligne), on decale vers le haut de l ecran.
+function offsetOutside(midPt, segA, segB, centroid, offsetMeters = 8) {
+  if (!Array.isArray(midPt) || !Array.isArray(segA) || !Array.isArray(segB)) return midPt;
+
+  // Vecteur du segment (en lat/lng)
+  const dx = segB[1] - segA[1];
+  const dy = segB[0] - segA[0];
+
+  // Perpendiculaire : (-dy, dx)
+  let nx = -dy;
+  let ny = dx;
+
+  // Normalise
+  const norm = Math.hypot(nx, ny);
+  if (norm === 0) return midPt;
+  nx /= norm;
+  ny /= norm;
+
+  // Determine le bon sens : on prend celui qui s eloigne du centroide
+  if (centroid) {
+    const toCentroidLng = centroid[1] - midPt[1];
+    const toCentroidLat = centroid[0] - midPt[0];
+    const dotProduct = nx * toCentroidLng + ny * toCentroidLat;
+    // Si le produit scalaire est positif, la perpendiculaire pointe vers le centroide
+    // (= interieur). On inverse pour pointer vers l exterieur.
+    if (dotProduct > 0) {
+      nx = -nx;
+      ny = -ny;
+    }
+  }
+
+  // Conversion approximative : 1 degre lat ~ 111320 m, 1 degre lng ~ 111320 * cos(lat) m.
+  const latRad = (midPt[0] * Math.PI) / 180;
+  const metersPerDegLng = 111320 * Math.cos(latRad);
+  const metersPerDegLat = 111320;
+
+  const offsetLng = (nx * offsetMeters) / metersPerDegLng;
+  const offsetLat = (ny * offsetMeters) / metersPerDegLat;
+
+  return [midPt[0] + offsetLat, midPt[1] + offsetLng];
+}
+
 function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
   const markers = [];
   (Array.isArray(rings) ? rings : []).forEach((ring, ringIndex) => {
     const cleanRing = stripMeasurementClosingPoint(ring).filter((point) => Array.isArray(point) && point.length >= 2);
     if (cleanRing.length < 2) return;
     const segmentCount = closed && cleanRing.length >= 3 ? cleanRing.length : cleanRing.length - 1;
+    // Centroide du polygone pour determiner l exterieur (seulement si ferme)
+    const centroid = closed && cleanRing.length >= 3 ? ringCentroid(cleanRing) : null;
     for (let index = 0; index < segmentCount; index += 1) {
       const point = cleanRing[index];
       const nextPoint = cleanRing[(index + 1) % cleanRing.length];
       const distance = computeDistanceBetweenPoints(point, nextPoint);
       if (!Number.isFinite(distance) || distance <= 0) continue;
+      const mid = midpoint(point, nextPoint);
+      // Offset : 8 metres pour les petites parcelles, scale avec la taille du segment
+      const offset = Math.max(8, Math.min(distance * 0.06, 25));
+      const labelPoint = offsetOutside(mid, point, nextPoint, centroid, offset);
       markers.push({
         id: `${tone}-side-${ringIndex}-${index}`,
-        point: midpoint(point, nextPoint),
+        point: labelPoint,
         label: formatDistance(distance),
         tone,
         angle: segmentAngleCss(point, nextPoint),
