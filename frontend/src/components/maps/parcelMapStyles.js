@@ -64,13 +64,14 @@ export const DEFAULT_PARCEL_STYLE = {
  * Poids harmonisés des contours.
  * Avant, certains états montaient à 3.3 / 4 px, ce qui donnait des contours très inégaux.
  */
-const BASE_WEIGHT = 1.7;
-const WARNING_WEIGHT = 1.9;
-const HOVER_WEIGHT = 2.25;
-const ACTIVE_WEIGHT = 2.8;
-const EDITING_WEIGHT = 3;
-const LOCKED_WEIGHT = 1.8;
-const ERROR_WEIGHT = 2.7;
+// Contours epais : le style cadastre repose sur les bordures, pas sur le remplissage.
+const BASE_WEIGHT = 2.5;
+const WARNING_WEIGHT = 2.8;
+const HOVER_WEIGHT = 3.5;
+const ACTIVE_WEIGHT = 4.2;
+const EDITING_WEIGHT = 4.5;
+const LOCKED_WEIGHT = 2.4;
+const ERROR_WEIGHT = 4;
 
 
 const PROFESSIONAL_LEGEND_ITEMS = [
@@ -246,9 +247,9 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
   let color = style.color || "#123B5D";
   let fillColor = style.fillColor || "#C7B299";
   let weight = BASE_WEIGHT;
-  // Opacite de base : 0.20 normal, 0.08 muted (vs 0.018 / 0.008 avant).
-  // A ces valeurs, le code couleur statut est lisible sur satellite ET plan.
-  let fillOpacity = options.muted ? 0.08 : 0.22;
+  // Style cadastre : remplissage quasi-transparent, contour porte la couleur statut.
+  // Le fond de carte (satellite, plan) reste pleinement visible a l interieur de la parcelle.
+  let fillOpacity = options.muted ? 0.02 : 0.05;
   let dashArray = null;
 
   /**
@@ -278,27 +279,28 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
   }
 
   if (hasDocuments) {
-    fillOpacity = Math.max(fillOpacity, 0.28);
+    // Parcelle avec documents : leger fill pour marquer la presence sans masquer le fond.
+    fillOpacity = Math.max(fillOpacity, 0.12);
   }
 
   /**
-   * Hover : on conserve la couleur statut et on intensifie l opacite,
-   * le contour passe en bleu pour signaler l interactivite.
+   * Hover : on epaissit le contour, le passage en bleu signale l interactivite.
+   * Fill quasi-nul, le fond reste visible.
    */
   if (hovered && !active && !editing && !lockedByOther && !geometryError) {
     color = "#2563EB";
     weight = HOVER_WEIGHT;
-    fillOpacity = Math.max(fillOpacity, 0.38);
+    fillOpacity = Math.max(fillOpacity, 0.08);
   }
 
   /**
-   * Selection : on garde la couleur statut, contour fonce + remplissage marque.
-   * Le contour primary (bleu marine) signale clairement la parcelle active.
+   * Selection : gros contour navy bien visible, fill leger pour confirmer la parcelle.
+   * Le fond satellite/plan reste lisible a l interieur, comme sur les SIG metier.
    */
   if (active && !editing && !geometryError) {
     color = "#0B2236";
     weight = ACTIVE_WEIGHT;
-    fillOpacity = 0.55;
+    fillOpacity = 0.18;
     dashArray = null;
   }
 
@@ -306,11 +308,12 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
    * Édition : bleu, pointillé, contour contrôlé.
    */
   if (editing) {
+    // Edition : contour bleu pointille bien visible, fill leger pour reperer la parcelle.
     color = "#2563EB";
     fillColor = "#DBEAFE";
     weight = EDITING_WEIGHT;
     dashArray = "10 6";
-    fillOpacity = 0.12;
+    fillOpacity = 0.10;
   }
 
   if (lockedByOther && !editing && !geometryError) {
@@ -318,18 +321,19 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     fillColor = "#E2E8F0";
     weight = LOCKED_WEIGHT;
     dashArray = "3 6";
-    fillOpacity = 0.045;
+    fillOpacity = 0.04;
   }
 
   /**
    * Erreur géométrique : seul cas où le rouge est utilisé.
    */
   if (geometryError) {
+    // Erreur : contour rouge gras, fill leger pour ne pas masquer la geometrie.
     color = "#DC2626";
     fillColor = "#FEE2E2";
     weight = ERROR_WEIGHT;
     dashArray = "6 4";
-    fillOpacity = active ? 0.13 : 0.075;
+    fillOpacity = active ? 0.16 : 0.08;
   }
 
   return {
