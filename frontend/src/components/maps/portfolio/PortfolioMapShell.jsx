@@ -116,7 +116,27 @@ function safeDisableGeomanModes(map) {
 
 function isMobileCartographyViewport() {
   if (typeof window === "undefined") return false;
-  return window.matchMedia?.("(max-width: 767px)")?.matches || window.innerWidth < 768;
+
+  const width =
+    window.innerWidth ||
+    document.documentElement?.clientWidth ||
+    1024;
+
+  const coarsePointer = Boolean(
+    window.matchMedia?.("(pointer: coarse)")?.matches
+  );
+
+  const noHover = Boolean(
+    window.matchMedia?.("(hover: none)")?.matches
+  );
+
+  const touchPoints = Number(window.navigator?.maxTouchPoints || 0);
+
+  const mobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(
+    window.navigator?.userAgent || ""
+  );
+
+  return width < 768 && (coarsePointer || noHover || touchPoints > 0 || mobileUserAgent);
 }
 
 function stopLeafletPropagation(event) {
@@ -1357,8 +1377,8 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
 
             <p className="mapgeo-measure-help mt-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/55">
               {isMobileMeasurePanel
-                ? "Mobile : centrez la carte sur le point, puis appuyez sur Ajouter au centre."
-                : "Grand ecran : cliquez directement sur la carte pour placer les points. Double-cliquez ou utilisez Terminer pour valider."}
+                ? "Touchez la carte pour placer un point, ou utilisez Ajouter au centre si vous preferez viser avec le reticule."
+                : "Cliquez directement sur la carte pour placer les points. Double-cliquez ou utilisez Terminer pour valider."}
             </p>
 
             <div className="mt-2 grid grid-cols-2 gap-2">
@@ -1394,7 +1414,7 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
               {/* Bouton "Ajouter au centre" : MOBILE UNIQUEMENT (replication du reticule central).
                   En desktop, l utilisateur clique directement sur la carte. */}
               <button type="button" onClick={addPointFromCenter} className="mapgeo-measure-center-btn md:hidden inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/25">
-                <Plus size={14} /> Ajouter
+                <Plus size={14} /> Ajouter au centre
               </button>
               <button type="button" onClick={onFinish} disabled={!pointCount} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-35">
                 <Check size={14} /> Terminer
@@ -2221,14 +2241,6 @@ export default function PortfolioMapShell({
   const queueMeasurementPoint = useCallback((point) => {
     if (!showMeasurements || !Array.isArray(point) || point.length < 2) return;
     clearPendingMeasurementClick();
-    // En mobile, on accepte le tap direct sur la carte (sans delay)
-    // pour permettre le placement des points par doigt comme avant.
-    // Le bouton "Ajouter au centre" reste disponible en parallele.
-    if (isMobileCartographyViewport()) {
-      const snap = resolveMeasurementPoint(point);
-      appendMeasurementPoint(snap.point, snap);
-      return;
-    }
     measurementClickTimerRef.current = window.setTimeout(() => {
       const snap = resolveMeasurementPoint(point);
       appendMeasurementPoint(snap.point, snap);
@@ -2323,12 +2335,6 @@ export default function PortfolioMapShell({
 
     if (showMeasurements) {
       setIdentifyState(null);
-
-      // Mobile: points are added only with the Ajouter button.
-      if (isMobileCartographyViewport()) {
-        clearPendingMeasurementClick();
-        return;
-      }
 
       if (event?.originalEvent?.detail > 1 || shouldIgnoreMeasurementClickAfterPan()) {
         clearPendingMeasurementClick();
@@ -2546,12 +2552,6 @@ export default function PortfolioMapShell({
               if (showMeasurements) {
                 setIdentifyState(null);
 
-                // Mobile: points are added only with the Ajouter button.
-                if (isMobileCartographyViewport()) {
-                  clearPendingMeasurementClick();
-                  return;
-                }
-
                 if (event?.originalEvent?.detail > 1 || shouldIgnoreMeasurementClickAfterPan()) {
                   clearPendingMeasurementClick();
                   return;
@@ -2562,7 +2562,10 @@ export default function PortfolioMapShell({
               setIdentifyState(null);
             }}
             onMapDoubleClick={() => {
-              if (!inlineEditOpen && showMeasurements) clearPendingMeasurementClick();
+              if (!inlineEditOpen && showMeasurements) {
+                clearPendingMeasurementClick();
+                finishMeasurementDraft();
+              }
             }}
             onMapDragStart={() => {
               if (!inlineEditOpen && showMeasurements) clearPendingMeasurementClick();
