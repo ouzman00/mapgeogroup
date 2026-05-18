@@ -2514,12 +2514,14 @@ main > .mapgeo-carto-workspace,
 }
 
 /* === FINAL OVERRIDE — Halos cadastre (priorite max) ===
-   Ce bloc est en fin de fichier pour avoir la priorite sur tous les anciens
-   styles. Aucun fond, aucune bordure, aucun blur sur les labels carto.
-   Halo blanc epais autour du texte noir = lisibilite parfaite sur tous fonds.
+   - Tous les labels carto sans fond, juste halo blanc autour du texte noir.
+   - Tailles compactes pour un rendu pro (pas de "dimensions geantes").
+   - Pas de margin / decalage : c est le code JS qui positionne les labels
+     a l exterieur du polygone via offset en latlng.
+   - Halo : 3px de stroke + 4 ombres aux coins (suffisant et propre).
    ---------------------------------------------------------------------- */
 
-/* ---- Wrappers Leaflet : transparents et invisibles ---- */
+/* Wrappers Leaflet : transparents */
 html body .mapgeo-side-label-shell,
 html body .mapgeo-area-label-shell,
 html body .mapgeo-parcel-badge-shell {
@@ -2535,7 +2537,17 @@ html body .mapgeo-parcel-badge-shell {
   overflow: visible !important;
 }
 
-/* ---- DIMENSIONS DE COTE (longueur des segments) ---- */
+/* Side label : reset interne pour eviter le decalage ancien */
+html body .mapgeo-side-label-shell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+html body .mapgeo-side-label-shell .mapgeo-side-label {
+  margin: 0 !important;
+}
+
+/* DIMENSIONS DE COTE (longueur des segments) */
 html body .mapgeo-side-label {
   display: inline-block !important;
   background: transparent !important;
@@ -2545,49 +2557,42 @@ html body .mapgeo-side-label {
   border-radius: 0 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  color: #0B0F19 !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.02em !important;
+  color: #111827 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
   font-family: var(--font-sans, system-ui), -apple-system, sans-serif !important;
   white-space: nowrap !important;
   line-height: 1 !important;
-  /* Decalage perpendiculaire au segment : le label flotte au-dessus de la ligne */
-  margin-bottom: 18px !important;
-  /* HALO blanc epais : 5px de stroke + ombres aux 4 coins */
+  margin: 0 !important;
+  /* Halo propre : 3px de stroke + 4 ombres = lisible sans grossir le texte */
   paint-order: stroke fill !important;
-  -webkit-text-stroke: 5px #FFFFFF !important;
-  text-stroke: 5px #FFFFFF !important;
+  -webkit-text-stroke: 3px #FFFFFF !important;
   text-shadow:
-    -2px -2px 0 #FFFFFF,
-    2px -2px 0 #FFFFFF,
-    -2px 2px 0 #FFFFFF,
-    2px 2px 0 #FFFFFF,
-    -2px 0 0 #FFFFFF,
-    2px 0 0 #FFFFFF,
-    0 -2px 0 #FFFFFF,
-    0 2px 0 #FFFFFF,
-    0 2px 4px rgba(0, 0, 0, 0.35) !important;
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 1px 2px rgba(0, 0, 0, 0.25) !important;
 }
 
-html body .mapgeo-side-label.is-edit {
-  color: #0B0F19 !important;
-  background: transparent !important;
-  border: 0 !important;
-}
-
+/* Variantes is-edit / is-measure : MEME taille, MEME halo, MEME couleur de texte
+   pour ne PAS creer d incoherence entre sommets et mode mesure */
+html body .mapgeo-side-label.is-edit,
 html body .mapgeo-side-label.is-measure {
-  color: #0B0F19 !important;
+  color: #111827 !important;
   background: transparent !important;
   border: 0 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
 }
 
-/* ---- SURFACE AU CENTRE DE LA PARCELLE ---- */
+/* SURFACE AU CENTRE DU POLYGONE */
 html body .mapgeo-area-label {
   display: inline-flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 2px !important;
+  gap: 1px !important;
   background: transparent !important;
   border: 0 !important;
   padding: 0 !important;
@@ -2601,47 +2606,43 @@ html body .mapgeo-area-label {
 }
 
 html body .mapgeo-area-label strong {
-  font-size: 15px !important;
-  font-weight: 900 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
   line-height: 1.05 !important;
-  color: #0B0F19 !important;
+  color: #111827 !important;
   paint-order: stroke fill !important;
-  -webkit-text-stroke: 5px #FFFFFF !important;
+  -webkit-text-stroke: 3px #FFFFFF !important;
   text-shadow:
-    -2px -2px 0 #FFFFFF,
-    2px -2px 0 #FFFFFF,
-    -2px 2px 0 #FFFFFF,
-    2px 2px 0 #FFFFFF,
-    -2px 0 0 #FFFFFF,
-    2px 0 0 #FFFFFF,
-    0 -2px 0 #FFFFFF,
-    0 2px 0 #FFFFFF,
-    0 2px 4px rgba(0, 0, 0, 0.4) !important;
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
 html body .mapgeo-area-label em {
-  font-size: 10px !important;
+  font-size: 8px !important;
   font-style: normal !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.10em !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
-  color: #1F2937 !important;
+  color: #374151 !important;
   opacity: 1 !important;
   paint-order: stroke fill !important;
-  -webkit-text-stroke: 4px #FFFFFF !important;
+  -webkit-text-stroke: 2.5px #FFFFFF !important;
   text-shadow:
-    -1.5px -1.5px 0 #FFFFFF,
-    1.5px -1.5px 0 #FFFFFF,
-    -1.5px 1.5px 0 #FFFFFF,
-    1.5px 1.5px 0 #FFFFFF !important;
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF !important;
 }
 
 html body .mapgeo-area-label.is-edit strong,
 html body .mapgeo-area-label.is-measure strong {
-  color: #0B0F19 !important;
+  color: #111827 !important;
 }
 
-/* ---- REFERENCE PARCELLE (TF-XXXX, etc) ---- */
+/* REFERENCE PARCELLE (TF-XXXX) : juste texte noir + halo */
 html body .mapgeo-parcel-badge {
   display: inline-flex !important;
   align-items: center !important;
@@ -2664,26 +2665,21 @@ html body .mapgeo-parcel-badge strong {
   padding: 0 !important;
   overflow: visible !important;
   max-width: none !important;
-  color: #0B0F19 !important;
-  font-size: 13px !important;
-  font-weight: 900 !important;
+  color: #111827 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
   letter-spacing: 0.02em !important;
   line-height: 1 !important;
-  text-overflow: clip !important;
   white-space: nowrap !important;
   font-family: var(--font-sans, system-ui), -apple-system, sans-serif !important;
   paint-order: stroke fill !important;
-  -webkit-text-stroke: 5px #FFFFFF !important;
+  -webkit-text-stroke: 3px #FFFFFF !important;
   text-shadow:
-    -2px -2px 0 #FFFFFF,
-    2px -2px 0 #FFFFFF,
-    -2px 2px 0 #FFFFFF,
-    2px 2px 0 #FFFFFF,
-    -2px 0 0 #FFFFFF,
-    2px 0 0 #FFFFFF,
-    0 -2px 0 #FFFFFF,
-    0 2px 0 #FFFFFF,
-    0 2px 4px rgba(0, 0, 0, 0.4) !important;
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
 html body .mapgeo-parcel-badge span {
@@ -2691,12 +2687,11 @@ html body .mapgeo-parcel-badge span {
 }
 
 html body .mapgeo-parcel-badge.is-active strong {
-  color: #0B0F19 !important;
   font-weight: 900 !important;
-  -webkit-text-stroke: 6px #FFFFFF !important;
+  -webkit-text-stroke: 3.5px #FFFFFF !important;
 }
 
-/* ---- TOOLTIP SOMMETS (V1, V2, P1-V1, ...) ---- */
+/* TOOLTIP SOMMETS (V1, V2...) : meme look halo, meme couleur, meme taille */
 html body .leaflet-tooltip.mapgeo-vertex-tooltip {
   background: transparent !important;
   border: 0 !important;
@@ -2705,24 +2700,20 @@ html body .leaflet-tooltip.mapgeo-vertex-tooltip {
   -webkit-backdrop-filter: none !important;
   padding: 0 !important;
   border-radius: 0 !important;
-  color: #0B0F19 !important;
-  font-size: 11px !important;
+  color: #111827 !important;
+  font-size: 10px !important;
   font-weight: 800 !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.03em !important;
   white-space: nowrap !important;
   font-family: var(--font-sans, system-ui), -apple-system, sans-serif !important;
   paint-order: stroke fill !important;
-  -webkit-text-stroke: 4px #FFFFFF !important;
+  -webkit-text-stroke: 3px #FFFFFF !important;
   text-shadow:
-    -1.5px -1.5px 0 #FFFFFF,
-    1.5px -1.5px 0 #FFFFFF,
-    -1.5px 1.5px 0 #FFFFFF,
-    1.5px 1.5px 0 #FFFFFF,
-    -1.5px 0 0 #FFFFFF,
-    1.5px 0 0 #FFFFFF,
-    0 -1.5px 0 #FFFFFF,
-    0 1.5px 0 #FFFFFF,
-    0 2px 3px rgba(0, 0, 0, 0.3) !important;
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 1px 2px rgba(0, 0, 0, 0.25) !important;
 }
 
 html body .leaflet-tooltip.mapgeo-vertex-tooltip::before,
@@ -2730,15 +2721,15 @@ html body .leaflet-tooltip.mapgeo-vertex-tooltip::after {
   display: none !important;
 }
 
-/* ---- Mobile : meme rendu, pas de tampon ---- */
+/* Mobile : meme rendu */
 @media (max-width: 767px) {
   html body .mapgeo-portfolio-root[data-mobile-panel="map"] .leaflet-tooltip.mapgeo-vertex-tooltip {
     background: transparent !important;
     border: 0 !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
-    color: #0B0F19 !important;
-    font-size: 11px !important;
+    color: #111827 !important;
+    font-size: 10px !important;
     padding: 0 !important;
     border-radius: 0 !important;
   }
