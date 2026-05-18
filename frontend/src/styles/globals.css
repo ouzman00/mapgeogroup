@@ -1247,7 +1247,34 @@ main > .mapgeo-carto-workspace,
 -------------------------------------------------------------------------- */
 @media (max-width: 767px) {
   .mapgeo-mobile-carto-tabs {
-    display: none !important;
+    position: fixed !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2500 !important;
+    display: inline-flex !important;
+    gap: 4px !important;
+    padding: 4px !important;
+    border-radius: 9999px !important;
+    background: rgba(7, 17, 27, 0.92) !important;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  .mapgeo-mobile-carto-tabs button {
+    padding: 8px 14px !important;
+    border-radius: 9999px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: rgba(247, 245, 242, 0.7) !important;
+    background: transparent !important;
+    border: 0 !important;
+    transition: background 0.15s, color 0.15s !important;
+  }
+
+  .mapgeo-mobile-carto-tabs button[aria-pressed="true"] {
+    background: #C7B299 !important;
+    color: #07111b !important;
   }
 
   .mapgeo-portfolio-root {
@@ -1289,6 +1316,34 @@ main > .mapgeo-carto-workspace,
   .mapgeo-portfolio-sidebar,
   .mapgeo-portfolio-inspector {
     display: none !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="search"] .mapgeo-portfolio-sidebar {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2300 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background: #0B2236 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding-bottom: 80px !important;
+    overflow-y: auto !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="inspector"] .mapgeo-portfolio-inspector {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2300 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background: #0B2236 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding-bottom: 80px !important;
+    overflow-y: auto !important;
   }
 
   /* Barre outils compacte en haut, sans toucher la flèche nord */
@@ -1670,9 +1725,40 @@ main > .mapgeo-carto-workspace,
   }
 
   body:has(.mapgeo-carto-page) .mapgeo-portfolio-sidebar,
-  body:has(.mapgeo-carto-page) .mapgeo-portfolio-inspector,
-  body:has(.mapgeo-carto-page) .mapgeo-mobile-carto-tabs {
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-inspector {
     display: none !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-mobile-carto-tabs {
+    display: inline-flex !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-root[data-mobile-panel="search"] .mapgeo-portfolio-sidebar {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2300 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background: #0B2236 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding-bottom: 80px !important;
+    overflow-y: auto !important;
+  }
+
+  body:has(.mapgeo-carto-page) .mapgeo-portfolio-root[data-mobile-panel="inspector"] .mapgeo-portfolio-inspector {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2300 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background: #0B2236 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding-bottom: 80px !important;
+    overflow-y: auto !important;
   }
 
   /*
