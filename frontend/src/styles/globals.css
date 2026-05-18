@@ -2791,11 +2791,11 @@ html body .mapgeo-side-label {
   }
 }
 
-/* === CARTO FINAL - placement propre des mesures === */
+/* === CARTO FINAL - dimensions avec ecart constant === */
 html body .leaflet-marker-icon.mapgeo-side-label-shell,
 html body .mapgeo-side-label-shell {
-  width: 96px !important;
-  height: 28px !important;
+  width: 0 !important;
+  height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: visible !important;
@@ -2803,17 +2803,15 @@ html body .mapgeo-side-label-shell {
   border: 0 !important;
   box-shadow: none !important;
   pointer-events: none !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 html body .mapgeo-side-label-rotor {
-  width: 96px !important;
-  height: 28px !important;
-  display: flex !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: max-content !important;
+  height: auto !important;
+  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   transform-origin: 50% 50% !important;
@@ -2821,11 +2819,15 @@ html body .mapgeo-side-label-rotor {
   border: 0 !important;
   box-shadow: none !important;
   pointer-events: none !important;
+  white-space: nowrap !important;
 }
 
 html body .mapgeo-side-label {
   display: inline-block !important;
-  max-width: 92px !important;
+  transform: none !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
   overflow: visible !important;
   white-space: nowrap !important;
   background: transparent !important;
@@ -2840,7 +2842,7 @@ html body .mapgeo-side-label {
   line-height: 1 !important;
   letter-spacing: 0 !important;
   paint-order: stroke fill !important;
-  -webkit-text-stroke: 2.4px #ffffff !important;
+  -webkit-text-stroke: 2.3px #ffffff !important;
   text-shadow:
     -1px -1px 0 #ffffff,
     1px -1px 0 #ffffff,
@@ -2857,17 +2859,9 @@ html body .mapgeo-side-label.is-measure {
 }
 
 @media (max-width: 767px) {
-  html body .leaflet-marker-icon.mapgeo-side-label-shell,
-  html body .mapgeo-side-label-shell,
-  html body .mapgeo-side-label-rotor {
-    width: 100px !important;
-    height: 30px !important;
-  }
-
   html body .mapgeo-side-label {
-    max-width: 96px !important;
     font-size: 9.5px !important;
-    -webkit-text-stroke: 2.2px #ffffff !important;
+    -webkit-text-stroke: 2.1px #ffffff !important;
   }
 }
 

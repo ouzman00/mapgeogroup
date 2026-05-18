@@ -63,9 +63,9 @@ export function createSideLabelIcon(label, tone = "default", angle = 0) {
 
   return L.divIcon({
     className: "mapgeo-side-label-shell",
-    html: `<span class="mapgeo-side-label-rotor" style="transform: rotate(${safeAngle.toFixed(1)}deg);"><span class="mapgeo-side-label ${toneClass}" title="Longueur du côté">${escapeHtml(label)}</span></span>`,
-    iconSize: [96, 28],
-    iconAnchor: [48, 14],
+    html: `<span class="mapgeo-side-label-rotor" style="transform: translate(-50%, -50%) rotate(${safeAngle.toFixed(1)}deg);"><span class="mapgeo-side-label ${toneClass}" title="Longueur du côté">${escapeHtml(label)}</span></span>`,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
   });
 }
 

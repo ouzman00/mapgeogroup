@@ -352,7 +352,7 @@ function getSideMarkerPixelOptions(map) {
 
   return {
     zoom,
-    offsetPixels: mobile ? 28 : 24,
+    offsetPixels: mobile ? 22 : 20,
     minSegmentPixels: mobile ? 44 : 34,
     minZoom: mobile ? 17 : 15,
   };
