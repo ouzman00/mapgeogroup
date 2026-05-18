@@ -96,6 +96,24 @@ const MEASURE_STYLE = {
   vertexFill: "#FFF7E6",
 };
 
+function safeDisableGeomanModes(map) {
+  if (!map?.pm) return;
+  // disableGlobalDragMode itere sur toutes les couches et plante si
+  // une couche n a pas de .pm (tile layers internes). On enveloppe en try.
+  try {
+    if (map.pm.globalDragModeEnabled?.()) {
+      map.pm.disableGlobalDragMode();
+    }
+  } catch (err) {
+    // Ignorer : etat instable, sans consequence pour l app
+  }
+  try { map.pm.disableDraw?.(); } catch {}
+  try { map.pm.disableGlobalEditMode?.(); } catch {}
+  try { map.pm.disableGlobalRemovalMode?.(); } catch {}
+  try { map.pm.disableGlobalCutMode?.(); } catch {}
+  try { map.pm.removeControls?.(); } catch {}
+}
+
 function isMobileCartographyViewport() {
   if (typeof window === "undefined") return false;
   return window.matchMedia?.("(max-width: 767px)")?.matches || window.innerWidth < 768;
@@ -235,48 +253,78 @@ function ringCentroid(ring) {
 }
 
 // Decalage perpendiculaire vers l exterieur du polygone.
-// Retourne un nouveau point latlng a `offsetMeters` du milieu du segment,
-// dans la direction opposee au centroide (= exterieur).
-// Pour un segment ouvert (ligne), on decale vers le haut de l ecran.
-function offsetOutside(midPt, segA, segB, centroid, offsetMeters = 8) {
+// Pour avoir un decalage CONSTANT en pixels ecran quel que soit le zoom,
+// on convertit les latlng en pixels via map.project, decale en pixels,
+// puis reconvertit en latlng via map.unproject.
+//
+// Si map n est pas fourni (fallback), on utilise un offset metres tres faible.
+function offsetOutside(midPt, segA, segB, centroid, offsetPixels = 14, map = null) {
   if (!Array.isArray(midPt) || !Array.isArray(segA) || !Array.isArray(segB)) return midPt;
 
-  // Vecteur du segment (en lat/lng)
+  // Si on a une instance map, calcul precis en pixels
+  if (map?.project && map?.unproject && map?.getZoom) {
+    try {
+      const zoom = map.getZoom();
+      const midPx = map.project(L.latLng(midPt[0], midPt[1]), zoom);
+      const aPx = map.project(L.latLng(segA[0], segA[1]), zoom);
+      const bPx = map.project(L.latLng(segB[0], segB[1]), zoom);
+
+      // Vecteur segment en pixels
+      const dx = bPx.x - aPx.x;
+      const dy = bPx.y - aPx.y;
+
+      // Perpendiculaire
+      let nx = -dy;
+      let ny = dx;
+      const norm = Math.hypot(nx, ny);
+      if (norm === 0) return midPt;
+      nx /= norm;
+      ny /= norm;
+
+      // Determiner exterieur via centroide en pixels
+      if (centroid) {
+        const cPx = map.project(L.latLng(centroid[0], centroid[1]), zoom);
+        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
+        if (dot > 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+      }
+
+      const offsetPx = L.point(midPx.x + nx * offsetPixels, midPx.y + ny * offsetPixels);
+      const offsetLatLng = map.unproject(offsetPx, zoom);
+      return [offsetLatLng.lat, offsetLatLng.lng];
+    } catch (err) {
+      // En cas d echec, fallback metres
+    }
+  }
+
+  // Fallback : offset en metres (utilise quand map n est pas dispo)
   const dx = segB[1] - segA[1];
   const dy = segB[0] - segA[0];
-
-  // Perpendiculaire : (-dy, dx)
   let nx = -dy;
   let ny = dx;
-
-  // Normalise
   const norm = Math.hypot(nx, ny);
   if (norm === 0) return midPt;
   nx /= norm;
   ny /= norm;
 
-  // Determine le bon sens : on prend celui qui s eloigne du centroide
   if (centroid) {
-    const toCentroidLng = centroid[1] - midPt[1];
-    const toCentroidLat = centroid[0] - midPt[0];
-    const dotProduct = nx * toCentroidLng + ny * toCentroidLat;
-    // Si le produit scalaire est positif, la perpendiculaire pointe vers le centroide
-    // (= interieur). On inverse pour pointer vers l exterieur.
-    if (dotProduct > 0) {
+    const dot = nx * (centroid[1] - midPt[1]) + ny * (centroid[0] - midPt[0]);
+    if (dot > 0) {
       nx = -nx;
       ny = -ny;
     }
   }
 
-  // Conversion approximative : 1 degre lat ~ 111320 m, 1 degre lng ~ 111320 * cos(lat) m.
+  const fallbackMeters = 1.5;
   const latRad = (midPt[0] * Math.PI) / 180;
   const metersPerDegLng = 111320 * Math.cos(latRad);
   const metersPerDegLat = 111320;
-
-  const offsetLng = (nx * offsetMeters) / metersPerDegLng;
-  const offsetLat = (ny * offsetMeters) / metersPerDegLat;
-
-  return [midPt[0] + offsetLat, midPt[1] + offsetLng];
+  return [
+    midPt[0] + (ny * fallbackMeters) / metersPerDegLat,
+    midPt[1] + (nx * fallbackMeters) / metersPerDegLng,
+  ];
 }
 
 function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
@@ -311,9 +359,9 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
   return markers;
 }
 
-function buildGeometryMeasurementOverlay(geometry, tone = "default") {
+function buildGeometryMeasurementOverlay(geometry, tone = "default", map = null) {
   const rings = geometryToRings(geometry);
-  const sideMarkers = buildSideMarkersFromRings(rings, tone, true);
+  const sideMarkers = buildSideMarkersFromRings(rings, tone, true, map);
   const area = geometryAreaM2Projected(geometry);
   const perimeter = rings.reduce((total, ring) => total + distanceAlongPoints(stripMeasurementClosingPoint(ring), true), 0);
   const center = geometryCentroid(geometry) || rings[0]?.[0] || null;
@@ -332,13 +380,13 @@ function buildGeometryMeasurementOverlay(geometry, tone = "default") {
   };
 }
 
-function buildMeasurementDraftOverlay(draft) {
+function buildMeasurementDraftOverlay(draft, map = null) {
   const previewPoints = getMeasurementPreviewPoints(draft);
   const cleanPoints = draft?.mode === "surface" ? stripMeasurementClosingPoint(previewPoints) : previewPoints;
   const isSurface = draft?.mode === "surface" && cleanPoints.length >= 3;
   const geometry = isSurface ? polygonGeometryFromLatLngRing(cleanPoints) : null;
-  const sideMarkers = buildSideMarkersFromRings([cleanPoints], "measure", isSurface);
-  const overlay = geometry ? buildGeometryMeasurementOverlay(geometry, "measure") : { sideMarkers: [], areaMarker: null };
+  const sideMarkers = buildSideMarkersFromRings([cleanPoints], "measure", isSurface, map);
+  const overlay = geometry ? buildGeometryMeasurementOverlay(geometry, "measure", map) : { sideMarkers: [], areaMarker: null };
 
   return {
     sideMarkers,
@@ -1364,12 +1412,9 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     onGeometryGetterChangeRef.current?.(() => collectGeometryFromLayerGroup(group));
     const editOptions = layerEditOptionsRef.current;
 
-    map.pm?.disableDraw?.();
-    map.pm?.disableGlobalEditMode?.();
-    map.pm?.disableGlobalRemovalMode?.();
-    map.pm?.disableGlobalDragMode?.();
-    map.pm?.disableGlobalCutMode?.();
-    map.pm?.removeControls?.();
+    // Protection defensive : Geoman plante parfois en appelant disableLayerDrag()
+    // sur des couches Leaflet internes sans .pm. On verifie + try/catch.
+    safeDisableGeomanModes(map);
 
     const syncNow = () => {
       if (animationFrameRef.current) {
@@ -1574,12 +1619,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       window.removeEventListener("keydown", handleKeyDown);
       onGeometryGetterChangeRef.current?.(null);
       group.eachLayer(cleanupEditableLayer);
-      map.pm?.disableDraw?.();
-      map.pm?.disableGlobalEditMode?.();
-      map.pm?.disableGlobalRemovalMode?.();
-      map.pm?.disableGlobalDragMode?.();
-      map.pm?.disableGlobalCutMode?.();
-      map.pm?.removeControls?.();
+      safeDisableGeomanModes(map);
       if (doubleClickZoomWasEnabled) map.doubleClickZoom?.enable?.();
       group.remove();
       groupRef.current = null;
@@ -1845,8 +1885,8 @@ export default function PortfolioMapShell({
   useEffect(() => {
     editGeometryRef.current = editGeometry;
   }, [editGeometry]);
-  const selectedMeasurementOverlay = useMemo(() => buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure"), [activeFeature]);
-  const measurementDraftOverlay = useMemo(() => buildMeasurementDraftOverlay(measurementDraft), [measurementDraft]);
+  const selectedMeasurementOverlay = useMemo(() => buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure", map), [activeFeature, map, mapZoom]);
+  const measurementDraftOverlay = useMemo(() => buildMeasurementDraftOverlay(measurementDraft, map), [measurementDraft, map, mapZoom]);
   const labelFeatures = useMemo(() => {
     const withGeometry = displayedFeatures.filter(
       (feature) =>
@@ -2457,25 +2497,23 @@ export default function PortfolioMapShell({
           }) : null}
 
           {labelsAreVisible
-            ? labelFeatures
-                .filter((feature) => String(feature.id) !== String(activeFeature?.id))
-                .map((feature) => (
-                  <Marker
-                    key={getFeatureRenderKey(feature, "label")}
-                    position={feature.center}
-                    pane={MAP_PANES.labels}
-                    icon={createParcelBadgeIcon(
-                      feature.parcel.reference,
-                      feature.statusLabel,
-                      false,
-                    )}
-                    interactive={!showMeasurements}
-                    eventHandlers={showMeasurements ? undefined : {
-                      click: (event) => handleParcelLayerClick(feature, event, feature.center),
-                      dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
-                    }}
-                  />
-                ))
+            ? labelFeatures.map((feature) => (
+                <Marker
+                  key={getFeatureRenderKey(feature, "label")}
+                  position={feature.center}
+                  pane={MAP_PANES.labels}
+                  icon={createParcelBadgeIcon(
+                    feature.parcel.reference,
+                    feature.statusLabel,
+                    String(feature.id) === String(activeFeature?.id),
+                  )}
+                  interactive={!showMeasurements}
+                  eventHandlers={showMeasurements ? undefined : {
+                    click: (event) => handleParcelLayerClick(feature, event, feature.center),
+                    dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
+                  }}
+                />
+              ))
             : null}
 
             {showMeasurements ? <MeasurementOverlay draft={measurementDraft} /> : null}
