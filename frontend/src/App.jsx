@@ -3,6 +3,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { ParcelProvider } from "./context/ParcelContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import AppRoutes from "./routes/AppRoutes";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function AppProviders({ children }) {
   return (
@@ -18,8 +19,10 @@ function AppProviders({ children }) {
 
 export default function App() {
   return (
-    <AppProviders>
-      <AppRoutes />
-    </AppProviders>
+    <ErrorBoundary>
+      <AppProviders>
+        <AppRoutes />
+      </AppProviders>
+    </ErrorBoundary>
   );
 }
