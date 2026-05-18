@@ -455,7 +455,9 @@ export default function ClientPortfolioMap({
         return;
       }
 
-      setMobilePanel("inspector");
+      // En mobile, on NE bascule PAS automatiquement vers l onglet "Fiche".
+      // L utilisateur garde la carte visible et peut consulter la fiche
+      // via la barre d onglets en bas s il le souhaite.
       onSelectParcel?.(feature.parcel);
       setIdentifyState({ feature, point: feature.center });
       setViewMode("selection");

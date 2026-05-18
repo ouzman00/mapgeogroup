@@ -50,9 +50,6 @@ import SearchNoResultNotice from "./SearchNoResultNotice";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
 import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
-import useCartoKeyboardShortcuts from "./useCartoKeyboardShortcuts";
-
-
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragend pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
 const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
@@ -300,7 +297,7 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       // Offset proche du segment : 1.5 a 4 metres = ~10-15 pixels a zoom 18-19
       // (echelle d affichage typique des parcelles individuelles).
       // Le rendu reste lisible mais le label reste COLLE au segment.
-      const offset = Math.max(1.5, Math.min(distance * 0.012, 4));
+      const offset = Math.max(0.6, Math.min(distance * 0.008, 1.8));
       const labelPoint = offsetOutside(mid, point, nextPoint, centroid, offset);
       markers.push({
         id: `${tone}-side-${ringIndex}-${index}`,
@@ -2460,23 +2457,25 @@ export default function PortfolioMapShell({
           }) : null}
 
           {labelsAreVisible
-            ? labelFeatures.map((feature) => (
-                <Marker
-                  key={getFeatureRenderKey(feature, "label")}
-                  position={feature.center}
-                  pane={MAP_PANES.labels}
-                  icon={createParcelBadgeIcon(
-                    feature.parcel.reference,
-                    feature.statusLabel,
-                    String(feature.id) === String(activeFeature?.id),
-                  )}
-                  interactive={!showMeasurements}
-                  eventHandlers={showMeasurements ? undefined : {
-                    click: (event) => handleParcelLayerClick(feature, event, feature.center),
-                    dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
-                  }}
-                />
-              ))
+            ? labelFeatures
+                .filter((feature) => String(feature.id) !== String(activeFeature?.id))
+                .map((feature) => (
+                  <Marker
+                    key={getFeatureRenderKey(feature, "label")}
+                    position={feature.center}
+                    pane={MAP_PANES.labels}
+                    icon={createParcelBadgeIcon(
+                      feature.parcel.reference,
+                      feature.statusLabel,
+                      false,
+                    )}
+                    interactive={!showMeasurements}
+                    eventHandlers={showMeasurements ? undefined : {
+                      click: (event) => handleParcelLayerClick(feature, event, feature.center),
+                      dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
+                    }}
+                  />
+                ))
             : null}
 
             {showMeasurements ? <MeasurementOverlay draft={measurementDraft} /> : null}
