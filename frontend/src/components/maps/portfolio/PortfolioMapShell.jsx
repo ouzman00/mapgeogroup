@@ -1267,8 +1267,15 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
               </div>
             </div>
 
+            {/* Instruction visible UNIQUEMENT en desktop : guidance simple */}
+            <p className="mapgeo-measure-desktop-hint mt-2 hidden md:block rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] text-white/55">
+              Cliquez sur la carte pour placer un point. Double-clic ou bouton « Terminer » pour valider.
+            </p>
+
             <div className="mapgeo-measure-actions mt-2 flex flex-wrap gap-2">
-              <button type="button" onClick={addPointFromCenter} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/25">
+              {/* Bouton "Ajouter au centre" : MOBILE UNIQUEMENT (replication du reticule central).
+                  En desktop, l utilisateur clique directement sur la carte. */}
+              <button type="button" onClick={addPointFromCenter} className="mapgeo-measure-center-btn md:hidden inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/25">
                 <Plus size={14} /> Ajouter
               </button>
               <button type="button" onClick={onFinish} disabled={!pointCount} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-35">
