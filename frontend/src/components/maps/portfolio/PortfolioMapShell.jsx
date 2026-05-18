@@ -50,6 +50,7 @@ import SearchNoResultNotice from "./SearchNoResultNotice";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
 import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint } from "./mapUtils";
+import useIsMobileViewport from "../../../hooks/useIsMobileViewport";
 
 
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragend pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
