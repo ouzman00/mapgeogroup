@@ -39,7 +39,7 @@ import {
 } from "../../../utils/geometryIo";
 import { validateParcelGeometry } from "../../../utils/geometryTopology";
 import { parcelToGeoJsonFeature } from "../../../utils/parcelGeoJson";
-import { getParcelPathOptions } from "../parcelMapStyles";
+import { getParcelPathOptions, getParcelSymbology } from "../parcelMapStyles";
 import ManagedMapLayers from "../pro/ManagedMapLayers";
 import { exportGeometryAsGeoJson, exportMapAsJpeg, exportMapAsPng } from "../pro/mapExport";
 import LegendPanel from "../pro/LegendPanel";
@@ -58,6 +58,12 @@ const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
 const SNAP_TOLERANCE_PX = 24; // Augmenté de 18 à 24px pour plus de confort
 const EDIT_VERTEX_TOLERANCE_PX = 16;
+
+// Seuil de zoom pour basculer en mode "cluster de centroides".
+// En dessous, on remplace les polygones par des cercles colores par statut.
+// Au-dessus, on retombe en rendu polygone classique.
+const POLYGON_MIN_ZOOM = 14;
+const CENTROID_RADIUS_BASE = 6;
 
 const MAP_PANES = {
   parcels: "mapgeo-parcel-pane",
@@ -2319,18 +2325,55 @@ export default function PortfolioMapShell({
           {parcelLayerVisible ? displayedFeatures.map((feature) => {
             const isActive = String(feature.id) === String(activeFeature?.id);
             if (inlineEditOpen && isActive) return null;
-            return feature.rings.length ? (
+            if (!feature.rings.length) return null;
+
+            const renderOptions = {
+              active: isActive,
+              hovered: String(feature.id) === String(hoveredFeatureId),
+              hasDocuments: feature.documents.length > 0,
+              editing: inlineEditOpen && isActive,
+              geometryError: Boolean(feature.geometryWarning),
+            };
+
+            // Bas zoom (vue regionale/departementale) : cercle colore par statut au centroide.
+            // Cela elimine le chevauchement visuel et donne une lecture rapide du portefeuille.
+            // La parcelle selectionnee reste en polygone pour rester reperable.
+            if (mapZoom < POLYGON_MIN_ZOOM && !isActive && feature.center) {
+              const symbology = getParcelSymbology(feature.parcel, renderOptions);
+              const radius = renderOptions.hovered ? CENTROID_RADIUS_BASE + 3 : CENTROID_RADIUS_BASE;
+              return (
+                <CircleMarker
+                  key={getFeatureRenderKey(feature, "centroid")}
+                  center={feature.center}
+                  pane={MAP_PANES.parcels}
+                  radius={radius}
+                  pathOptions={{
+                    color: symbology.color,
+                    fillColor: symbology.fillColor,
+                    fillOpacity: 0.85,
+                    opacity: 1,
+                    weight: 2,
+                  }}
+                  eventHandlers={{
+                    click: (event) => handleParcelLayerClick(feature, event, feature.center),
+                    dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
+                    mouseover: () => setHoveredFeatureId(feature.id),
+                    mouseout: () => setHoveredFeatureId(null),
+                  }}
+                >
+                  <Tooltip sticky>
+                    {feature.parcel.reference} · {feature.statusLabel}
+                  </Tooltip>
+                </CircleMarker>
+              );
+            }
+
+            return (
               <Polygon
                 key={getFeatureRenderKey(feature, "polygon")}
                 positions={feature.positions}
                 pane={MAP_PANES.parcels}
-                pathOptions={getParcelPathOptions(feature.parcel, {
-                  active: isActive,
-                  hovered: String(feature.id) === String(hoveredFeatureId),
-                  hasDocuments: feature.documents.length > 0,
-                  editing: inlineEditOpen && isActive,
-                  geometryError: Boolean(feature.geometryWarning),
-                })}
+                pathOptions={getParcelPathOptions(feature.parcel, renderOptions)}
                 eventHandlers={{
                   click: (event) => handleParcelLayerClick(feature, event),
                   dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
@@ -2342,7 +2385,7 @@ export default function PortfolioMapShell({
                   {feature.parcel.reference} · {feature.statusLabel}
                 </Tooltip>
               </Polygon>
-            ) : null;
+            );
           }) : null}
 
           {labelsAreVisible
