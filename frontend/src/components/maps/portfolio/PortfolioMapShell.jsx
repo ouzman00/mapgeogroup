@@ -49,7 +49,7 @@ import FloatingMapToolbar from "./PortfolioMapToolbar";
 import SearchNoResultNotice from "./SearchNoResultNotice";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
-import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint } from "./mapUtils";
+import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
 import useIsMobileViewport from "../../../hooks/useIsMobileViewport";
 
 
@@ -237,6 +237,7 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
         point: midpoint(point, nextPoint),
         label: formatDistance(distance),
         tone,
+        angle: segmentAngleCss(point, nextPoint),
       });
     }
   });
@@ -2444,7 +2445,7 @@ export default function PortfolioMapShell({
                     key={`selected-${item.id}`}
                     position={item.point}
                     pane={MAP_PANES.measure}
-                    icon={createSideLabelIcon(item.label, item.tone)}
+                    icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
                     interactive={false}
                   />
                 ))
@@ -2456,7 +2457,7 @@ export default function PortfolioMapShell({
                     key={item.id}
                     position={item.point}
                     pane={MAP_PANES.measure}
-                    icon={createSideLabelIcon(item.label, item.tone)}
+                    icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
                     interactive={false}
                   />
                 ))
@@ -2479,7 +2480,7 @@ export default function PortfolioMapShell({
                 key={item.id}
                 position={item.point}
                 pane={MAP_PANES.measure}
-                icon={createSideLabelIcon(item.label, item.tone)}
+                icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
                 interactive={false}
               />
             ))

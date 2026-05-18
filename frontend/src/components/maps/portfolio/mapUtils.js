@@ -41,13 +41,32 @@ export function midpoint(a, b) {
   return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
 }
 
-export function createSideLabelIcon(label, tone = "default") {
+// Calcule l angle CSS d un segment pour placer un label parallele.
+// On retourne toujours un angle entre -90 et +90 pour garder le texte lisible
+// (jamais tete en bas).
+export function segmentAngleCss(pointA, pointB) {
+  if (!Array.isArray(pointA) || !Array.isArray(pointB)) return 0;
+  // Leaflet [lat, lng] : Y = -lat (l ecran a Y inverse), X = lng
+  const dx = (pointB[1] || 0) - (pointA[1] || 0);
+  const dy = -((pointB[0] || 0) - (pointA[0] || 0));
+  if (dx === 0 && dy === 0) return 0;
+  let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  // Garder le texte toujours lisible : si angle > 90 ou < -90, on flippe
+  if (angle > 90) angle -= 180;
+  else if (angle < -90) angle += 180;
+  return angle;
+}
+
+export function createSideLabelIcon(label, tone = "default", angle = 0) {
+  // Label parallele au segment, place au-dessus (translateY = -8px).
+  // Le span est invisible (pas de fond), seul le texte avec halo apparait.
+  const toneClass = tone === "edit" ? "is-edit" : tone === "measure" ? "is-measure" : "";
   return L.divIcon({
     className: "mapgeo-side-label-shell",
-    html: `<span class="mapgeo-side-label ${tone === "edit" ? "is-edit" : tone === "measure" ? "is-measure" : ""}" title="Longueur du côté">${escapeHtml(label)}</span>`,
-    iconSize: [112, 24],
-    // Ancre basse : le libellé reste horizontal et légèrement au-dessus du segment.
-    iconAnchor: [56, 22],
+    html: `<span class="mapgeo-side-label ${toneClass}" style="transform: rotate(${angle.toFixed(1)}deg);" title="Longueur du côté">${escapeHtml(label)}</span>`,
+    iconSize: [120, 22],
+    // Ancre au centre exact du milieu du segment ; le CSS gere le decalage perpendiculaire.
+    iconAnchor: [60, 11],
   });
 }
 
