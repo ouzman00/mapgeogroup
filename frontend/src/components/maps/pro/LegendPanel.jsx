@@ -282,7 +282,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
 
   return (
     <div
-      className={`rounded-2xl border px-2 py-2.5 transition ${
+      className={`rounded-xl border px-2 py-2 transition ${
         visible ? "border-white/10 bg-white/[0.055]" : "border-white/10 bg-white/[0.025]"
       } ${unavailable ? "opacity-65" : ""}`}
     >
@@ -292,7 +292,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
             type="button"
             onClick={handleToggle}
             disabled={unavailable}
-            className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
+            className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
               visible && !unavailable
                 ? "border-mapgeo-sand/40 bg-mapgeo-primary/70 text-white shadow-soft"
                 : "border-white/20 bg-white/[0.035] text-transparent hover:border-white/30 hover:bg-white/[0.065]"
@@ -305,7 +305,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
           </button>
 
           <span className="min-w-0">
-            <span className={`block truncate text-[15px] font-extrabold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
+            <span className={`block truncate text-[13px] font-extrabold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
               {layerLabel}
             </span>
 
@@ -401,7 +401,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
   return (
     <div
-      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] max-h-[58%] overflow-y-auto rounded-[20px] border border-white/10 bg-[#07111b]/78 p-3 text-white shadow-[0_20px_55px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[300px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
+      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] max-h-[46%] overflow-y-auto rounded-2xl border border-white/10 bg-[#07111b]/88 p-2.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[252px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
@@ -409,9 +409,9 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       onContextMenu={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-extrabold tracking-tight text-white">Couches & légende</h3>
+        <h3 className="text-sm font-extrabold tracking-tight text-white">Couches & légende</h3>
 
-        <span className="rounded-xl border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs font-extrabold text-white/80">
+        <span className="rounded-lg border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[10px] font-extrabold text-white/70">
           {visibleCount}/{totalCount} active{visibleCount > 1 ? "s" : ""}
         </span>
       </div>
@@ -420,13 +420,13 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
         <button
           type="button"
           onClick={showHiddenLayers}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-mapgeo-sand/25 bg-mapgeo-sand/10 px-3 py-2 text-xs font-extrabold text-mapgeo-sand transition hover:bg-mapgeo-sand/15"
+          className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-mapgeo-sand/25 bg-mapgeo-sand/10 px-2.5 py-1.5 text-[11px] font-extrabold text-mapgeo-sand transition hover:bg-mapgeo-sand/15"
         >
           <RotateCcw size={14} /> Réafficher {hiddenCount} couche{hiddenCount > 1 ? "s" : ""} masquée{hiddenCount > 1 ? "s" : ""}
         </button>
       ) : null}
 
-      <div className="mt-3 space-y-1.5">
+      <div className="mt-2 space-y-1">
         {legendLayers.length ? (
           legendLayers.map((layer) => (
             <LegendToggleRow
@@ -444,7 +444,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       </div>
 
       {totalCount ? (
-        <p className="mt-3 border-t border-white/10 pt-2 text-[11px] font-medium leading-4 text-white/50">
+        <p className="mt-2 border-t border-white/10 pt-1.5 text-[10px] font-medium leading-4 text-white/40">
           Couches visibles.
         </p>
       ) : null}
