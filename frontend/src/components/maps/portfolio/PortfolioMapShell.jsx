@@ -347,14 +347,18 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       // C est le standard cartographique pro (QGIS, ArcGIS). offsetOutside
       // utilise map.project/unproject pour convertir 14 pixels en latlng.
       // Offset adaptatif en metres : 1.5 m pour petits segments, 4 m pour grands
-      const offset = Math.max(1.5, Math.min(distance * 0.025, 4));
-      const labelPoint = offsetOutside(mid, point, nextPoint, centroid, offset);
+      // Le point retourne est le midpoint brut, le reposition pixel
+      // se fait ensuite via repositionSideMarkersOutsideInPixels.
       markers.push({
         id: `${tone}-side-${ringIndex}-${index}`,
-        point: labelPoint,
+        point: mid,
+        midPoint: mid,
+        segA,
+        segB,
+        ringCentroid: centroid,
         label: formatDistance(distance),
         tone,
-        angle: segmentAngleCss(point, nextPoint),
+        angle: segmentAngleCss(segA, segB),
       });
     }
   });
@@ -1884,7 +1888,12 @@ export default function PortfolioMapShell({
   const measurementClickTimerRef = useRef(null);
   const lastMeasurementPanAtRef = useRef(0);
   const measurementSummary = useMemo(() => buildMeasurementSummary(activeFeature), [activeFeature]);
-  const editMeasurementOverlay = useMemo(() => buildGeometryMeasurementOverlay(editGeometry, "edit"), [editGeometry]);
+  const editMeasurementOverlay = useMemo(() => {
+    const overlay = buildGeometryMeasurementOverlay(editGeometry, "edit");
+    return Object.assign({}, overlay, {
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, 16),
+    });
+  }, [editGeometry, map, mapZoom]);
   const editValidation = useMemo(() => (inlineEditOpen ? validateParcelGeometry(editGeometry, activeFeature?.parcel || {}) : null), [activeFeature, editGeometry, inlineEditOpen]);
 
   useEffect(() => {
@@ -1894,8 +1903,18 @@ export default function PortfolioMapShell({
   useEffect(() => {
     editGeometryRef.current = editGeometry;
   }, [editGeometry]);
-  const selectedMeasurementOverlay = useMemo(() => buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure"), [activeFeature]);
-  const measurementDraftOverlay = useMemo(() => buildMeasurementDraftOverlay(measurementDraft), [measurementDraft]);
+  const selectedMeasurementOverlay = useMemo(() => {
+    const overlay = buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure");
+    return Object.assign({}, overlay, {
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, 16),
+    });
+  }, [activeFeature, map, mapZoom]);
+  const measurementDraftOverlay = useMemo(() => {
+    const overlay = buildMeasurementDraftOverlay(measurementDraft);
+    return Object.assign({}, overlay, {
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, 16),
+    });
+  }, [measurementDraft, map, mapZoom]);
   const labelFeatures = useMemo(() => {
     const isValidFeature = (feature) =>
       feature?.rings?.length > 0 &&
