@@ -1006,7 +1006,7 @@ function MeasurementOverlay({ draft }) {
 
   if (!previewPoints.length) return null;
 
-  const isMobileMeasureOverlay = isMobileCartographyViewport();
+  const isMobileMeasureOverlay = isMobileReactive;
   const isSurface = draft.mode === "surface";
   const polygonPoints = isSurface
     ? stripMeasurementClosingPoint(previewPoints)
@@ -1908,7 +1908,7 @@ export default function PortfolioMapShell({
   // Mobile: preview line follows the center reticle without adding points by touch.
   useEffect(() => {
     if (!map || !showMeasurements) return undefined;
-    if (!isMobileCartographyViewport()) return undefined;
+    if (!isMobileReactive) return undefined;
 
     let frame = null;
     let lastMovePreviewAt = 0;
@@ -2026,7 +2026,7 @@ export default function PortfolioMapShell({
   }, []);
 
   const queueMeasurementPoint = useCallback((point) => {
-    if (isMobileCartographyViewport()) {
+    if (isMobileReactive) {
       clearPendingMeasurementClick();
       return;
     }
@@ -2129,7 +2129,7 @@ export default function PortfolioMapShell({
       setIdentifyState(null);
 
       // Mobile: points are added only with the Ajouter button.
-      if (isMobileCartographyViewport()) {
+      if (isMobileReactive) {
         clearPendingMeasurementClick();
         return;
       }
@@ -2319,7 +2319,7 @@ export default function PortfolioMapShell({
   return (
     <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
-        <MapContainer center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
+        <MapContainer preferCanvas center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
 
           <PortfolioViewport mode={viewMode} activeFeature={activeFeature} features={viewportFeatures} onMapReady={setMap} viewportRequest={viewportRequest} onZoomChange={setMapZoom} />
@@ -2329,7 +2329,7 @@ export default function PortfolioMapShell({
 
               if (showMeasurements) {
                 // Mobile : le toucher écran ne doit ni créer, ni déplacer, ni prévisualiser un point.
-                if (isMobileCartographyViewport()) return;
+                if (isMobileReactive) return;
 
                 if (!point) {
                   setMeasurementDraft((current) => (current?.finished ? current : { ...current, cursorPoint: null, snapPoint: null, snapKind: null }));
@@ -2351,7 +2351,7 @@ export default function PortfolioMapShell({
                 setIdentifyState(null);
 
                 // Mobile: points are added only with the Ajouter button.
-                if (isMobileCartographyViewport()) {
+                if (isMobileReactive) {
                   clearPendingMeasurementClick();
                   return;
                 }
