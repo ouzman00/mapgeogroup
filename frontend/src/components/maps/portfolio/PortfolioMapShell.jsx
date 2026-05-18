@@ -414,6 +414,8 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       const mid = midpoint(point, nextPoint);
       const segA = point;
       const segB = nextPoint;
+ const segA = point;
+      const segB = nextPoint;
       // Offset CONSTANT en pixels ecran (~14px), peu importe le zoom.
       // C est le standard cartographique pro (QGIS, ArcGIS). offsetOutside
       // utilise map.project/unproject pour convertir 14 pixels en latlng.
@@ -1246,6 +1248,7 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
   if (!open) return null;
 
   const draftSummary = buildMeasurementDraftSummary(measurementDraft);
+  const isMobileMeasurePanel = isMobileCartographyViewportSafe();
 
   const setMode = (mode) => setMeasurementDraft((current) => ({
     mode,
@@ -1292,9 +1295,11 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
 
   return (
     <>
-      <div className="mapgeo-measure-center-reticle" aria-hidden="true">
-        <span />
-      </div>
+      {isMobileMeasurePanel ? (
+        <div className="mapgeo-measure-center-reticle" aria-hidden="true">
+          <span />
+        </div>
+      ) : null}
 
       <DraggableMapPanel
         className="mapgeo-mobile-tool-panel mapgeo-measure-panel mapgeo-export-hidden mapgeo-panel-enter absolute bottom-3 left-3 right-3 top-auto z-[950] max-h-[45%] overflow-y-auto rounded-[18px] border border-white/10 bg-[#07111b]/96 p-3 text-white shadow-[0_22px_68px_rgba(0,0,0,0.36)] backdrop-blur-xl sm:left-auto sm:right-4 sm:top-24 sm:bottom-auto sm:w-[300px] sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-160px)]"
@@ -1315,7 +1320,9 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
             </div>
 
             <p className="mapgeo-measure-help mt-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-[11px] font-semibold leading-5 text-white/55">
-              Centrez la carte sur le point, puis ajoutez-le.
+              {isMobileMeasurePanel
+                ? "Mobile : centrez la carte sur le point, puis appuyez sur Ajouter au centre."
+                : "Grand ecran : cliquez directement sur la carte pour placer les points. Double-cliquez ou utilisez Terminer pour valider."}
             </p>
 
             <div className="mt-2 grid grid-cols-2 gap-2">
@@ -1962,7 +1969,7 @@ export default function PortfolioMapShell({
   const editMeasurementOverlay = useMemo(() => {
     const overlay = buildGeometryMeasurementOverlay(editGeometry, "edit");
     return Object.assign({}, overlay, {
-      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, 16),
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map),
     });
   }, [editGeometry, map, mapZoom]);
   const editValidation = useMemo(() => (inlineEditOpen ? validateParcelGeometry(editGeometry, activeFeature?.parcel || {}) : null), [activeFeature, editGeometry, inlineEditOpen]);
@@ -1977,13 +1984,13 @@ export default function PortfolioMapShell({
   const selectedMeasurementOverlay = useMemo(() => {
     const overlay = buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure");
     return Object.assign({}, overlay, {
-      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, 16),
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map),
     });
   }, [activeFeature, map, mapZoom]);
   const measurementDraftOverlay = useMemo(() => {
     const overlay = buildMeasurementDraftOverlay(measurementDraft);
     return Object.assign({}, overlay, {
-      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, 16),
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map),
     });
   }, [measurementDraft, map, mapZoom]);
   const labelFeatures = useMemo(() => {
@@ -2694,7 +2701,7 @@ export default function PortfolioMapShell({
               : null}
 
             {showVertices && vertexDisplayOptions.dimensions !== false
-              ? selectedMeasurementOverlay.sideMarkers.map((item) => (
+              ? selectedMeasurementOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
                   <Marker
                     key={`selected-${item.id}`}
                     position={item.point}
@@ -2706,7 +2713,7 @@ export default function PortfolioMapShell({
               : null}
 
             {showMeasurements
-              ? measurementDraftOverlay.sideMarkers.map((item) => (
+              ? measurementDraftOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
                   <Marker
                     key={item.id}
                     position={item.point}
@@ -2729,7 +2736,7 @@ export default function PortfolioMapShell({
           />
 
           {inlineEditOpen
-          ? editMeasurementOverlay.sideMarkers.map((item) => (
+          ? editMeasurementOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
               <Marker
                 key={item.id}
                 position={item.point}

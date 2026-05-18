@@ -2761,3 +2761,34 @@ html body .leaflet-tooltip.mapgeo-parcel-tooltip span {
 html body .leaflet-tooltip.mapgeo-parcel-tooltip::before {
   border-top-color: #FFFFFF !important;
 }
+
+/* === CARTO FIX - labels de mesures lisibles === */
+html body .mapgeo-side-label-shell {
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+html body .mapgeo-side-label {
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.005em !important;
+  -webkit-text-stroke: 2.4px #ffffff !important;
+  text-shadow:
+    -1px -1px 0 #ffffff,
+    1px -1px 0 #ffffff,
+    -1px 1px 0 #ffffff,
+    1px 1px 0 #ffffff,
+    0 1px 2px rgba(0, 0, 0, 0.32) !important;
+}
+
+@media (max-width: 767px) {
+  html body .mapgeo-side-label {
+    font-size: 10px !important;
+    -webkit-text-stroke: 2.2px #ffffff !important;
+  }
+
+  .mapgeo-measure-panel {
+    max-height: min(48vh, 360px) !important;
+  }
+}
+
