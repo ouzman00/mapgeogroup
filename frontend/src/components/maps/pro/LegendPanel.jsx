@@ -409,10 +409,10 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       onContextMenu={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-extrabold tracking-tight text-white">Couches & légende</h3>
+        <h3 className="text-sm font-extrabold tracking-tight text-white">Légende</h3>
 
         <span className="rounded-lg border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[10px] font-extrabold text-white/70">
-          {visibleCount}/{totalCount} active{visibleCount > 1 ? "s" : ""}
+          {visibleCount}/{totalCount}
         </span>
       </div>
 
