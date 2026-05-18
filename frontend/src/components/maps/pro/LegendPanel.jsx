@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react";
+﻿import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getAvailableLegendItems } from "../parcelMapStyles";
 import mapLayerService from "../../../services/mapLayerService";
@@ -13,13 +13,16 @@ function colorWithOpacity(color, opacity = 1) {
   const raw = String(color || "").trim();
   if (!raw) return raw;
   if (/^rgba?\(/i.test(raw) || /^hsla?\(/i.test(raw)) return raw;
+
   const match = raw.match(/^#?([0-9a-f]{6})$/i);
   if (!match) return raw;
+
   const alpha = clampNumber(opacity, 1, 0, 1);
   const value = match[1];
   const r = parseInt(value.slice(0, 2), 16);
   const g = parseInt(value.slice(2, 4), 16);
   const b = parseInt(value.slice(4, 6), 16);
+
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
@@ -46,22 +49,37 @@ function LegendImage({ item, muted = false, compact = true }) {
       setSrc(directUrl);
       return undefined;
     }
+
     let active = true;
     let objectUrl = "";
+
     setSrc("");
-    mapLayerService.getAuthenticatedBlob(endpoint)
+
+    mapLayerService
+      .getAuthenticatedBlob(endpoint)
       .then((blob) => {
         objectUrl = URL.createObjectURL(blob);
-        if (active) setSrc(objectUrl);
-        else URL.revokeObjectURL(objectUrl);
+
+        if (active) {
+          setSrc(objectUrl);
+        } else {
+          URL.revokeObjectURL(objectUrl);
+        }
       })
       .catch((error) => {
         console.warn("Impossible de charger la légende WMS publiée par le serveur.", error);
-        if (active) setSrc("");
+
+        if (active) {
+          setSrc("");
+        }
       });
+
     return () => {
       active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
   }, [directUrl, endpoint]);
 
@@ -114,6 +132,7 @@ function LegendSymbol({ item, muted = false, compact = true }) {
   if (item?.symbol === "point") {
     const radius = clampNumber(item?.radius, 7, 2, 30);
     const size = Math.min(28, Math.max(10, radius * 2));
+
     return (
       <span
         className={`shrink-0 rounded-full shadow-[0_0_0_2px_rgba(255,255,255,0.14)] ${opacityClass}`}
@@ -141,10 +160,7 @@ function LegendSymbol({ item, muted = false, compact = true }) {
 
   if (item?.symbol === "image" || item?.symbol === "tile") {
     return (
-      <span
-        className={`h-4 w-10 shrink-0 overflow-hidden rounded-sm border ${opacityClass}`}
-        style={{ borderColor: colorWithOpacity(strokeColor, strokeOpacity) }}
-      >
+      <span className={`h-4 w-10 shrink-0 overflow-hidden rounded-sm border ${opacityClass}`} style={{ borderColor: colorWithOpacity(strokeColor, strokeOpacity) }}>
         <span className="block h-full w-full bg-gradient-to-br from-white/60 via-white/20 to-white/5" />
       </span>
     );
@@ -182,19 +198,31 @@ function isParcelsLegendLayer(layer = {}) {
 }
 
 function layerDisplayName(layer = {}) {
-  return layer?.id === "parcels-portfolio" || layer?.group === "parcelles" ? "Parcelles" : layer?.name || "Couche";
+  return isParcelsLegendLayer(layer) ? "Parcelles" : layer?.name || "Couche";
 }
 
 function layerStatus(layer = {}) {
   const visible = layer?.visible !== false;
+
   if (layer?.available === false || !isReady(layer)) {
-    return { tone: "disabled", label: layer.displayMessage || layer.display_message || "Couche non prête ou non compatible" };
+    return {
+      tone: "disabled",
+      label: layer.displayMessage || layer.display_message || "Couche non prête ou non compatible",
+    };
   }
+
   if (!visible) return { tone: "muted", label: "Masquée sur cette carte — cliquez pour réactiver" };
   if (layer?.error) return { tone: "error", label: layer.error };
   if (layer?.loading) return { tone: "loading", label: "Préparation…" };
   if (layer?.zoomVisible === false) return { tone: "warning", label: "Active, mais hors niveau de zoom" };
-  if (Number.isFinite(Number(layer?.featureCount))) return { tone: "ok", label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargé${Number(layer.featureCount) > 1 ? "s" : ""}` };
+
+  if (Number.isFinite(Number(layer?.featureCount))) {
+    return {
+      tone: "ok",
+      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargé${Number(layer.featureCount) > 1 ? "s" : ""}`,
+    };
+  }
+
   return { tone: "ok", label: "Active" };
 }
 
@@ -219,12 +247,19 @@ function legendItems(layer, features = []) {
   const isWmsLayer = ["wms", "secure-tile"].includes(sourceKind) || sourceFormat === "wms";
 
   if (isWmsLayer) {
-    const publishedLegend = (Array.isArray(layer?.legend) && layer.legend.length ? layer.legend : Array.isArray(layer?.metadata?.legend) ? layer.metadata.legend : [])
-      .filter((item) => item?.imageEndpoint || item?.image_endpoint || item?.legendEndpoint || item?.legend_endpoint || item?.imageUrl || item?.image_url || item?.url);
+    const publishedLegend = (Array.isArray(layer?.legend) && layer.legend.length ? layer.legend : Array.isArray(layer?.metadata?.legend) ? layer.metadata.legend : []).filter(
+      (item) => item?.imageEndpoint || item?.image_endpoint || item?.legendEndpoint || item?.legend_endpoint || item?.imageUrl || item?.image_url || item?.url,
+    );
 
     return publishedLegend.length
       ? publishedLegend
-      : [{ label: layer?.name || "Légende WMS", symbol: "wms-legend", imageEndpoint: layer?.sourceLayerId ? `/map-layers/${layer.sourceLayerId}/legend/` : "" }];
+      : [
+          {
+            label: layer?.name || "Légende WMS",
+            symbol: "wms-legend",
+            imageEndpoint: layer?.sourceLayerId ? `/map-layers/${layer.sourceLayerId}/legend/` : "",
+          },
+        ];
   }
 
   if (Array.isArray(layer?.legend) && layer.legend.length) {
@@ -264,11 +299,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
   const isParcelsLayer = isParcelsLegendLayer(layer);
   const hasServerLegend = items.some(isLegendImageItem);
   const showInlineSymbol = !isParcelsLayer && !hasServerLegend && items.length > 0;
-  const showItemDetails = visible && !unavailable && (
-    isParcelsLayer
-      ? items.length > 0
-      : hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend")
-  );
+  const showItemDetails = visible && !unavailable && (isParcelsLayer ? items.length > 0 : hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend"));
 
   const handleToggle = (event) => {
     event.stopPropagation();
@@ -350,330 +381,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
             }
 
             return (
-              <div
-                key={itemKey}
-                className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/65"
-              >
-                <span className="truncate">{item.label}</span>
-                <LegendSymbol item={item} />
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}) {
-  const items = legendItems(layer, features);
-  const visible = layer?.visible !== false;
-  const unavailable = !canToggleLayer(layer);
-  const layerLabel = layerDisplayName(layer);
-  const status = layerStatus(layer);
-  const isParcelsLayer = isParcelsLegendLayer(layer);
-  const hasServerLegend = items.some(isLegendImageItem);
-  const showInlineSymbol = !isParcelsLayer && !hasServerLegend && items.length > 0;
-  const showItemDetails = visible && !unavailable && (
-    isParcelsLayer
-      ? items.length > 0
-      : hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend")
-  );
-
-  const handleToggle = (event) => {
-    event.stopPropagation();
-
-    if (unavailable) {
-      return;
-    }
-
-    onToggleLayer?.(layer.id);
-  };
-
-  return (
-    <div
-      className={`rounded-xl border px-2 py-2 transition ${
-        visible ? "border-white/10 bg-white/[0.055]" : "border-white/10 bg-white/[0.025]"
-      } ${unavailable ? "opacity-65" : ""}`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex min-w-0 items-center gap-3">
-          <button
-            type="button"
-            onClick={handleToggle}
-            disabled={unavailable}
-            className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
-              visible && !unavailable
-                ? "border-mapgeo-sand/40 bg-mapgeo-primary/70 text-white shadow-soft"
-                : "border-white/20 bg-white/[0.035] text-transparent hover:border-white/30 hover:bg-white/[0.065]"
-            }`}
-            aria-pressed={visible && !unavailable}
-            aria-label={visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
-            title={unavailable ? `${layerLabel} indisponible` : visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
-          >
-            {visible && !unavailable ? <Check size={20} strokeWidth={3} /> : null}
-          </button>
-
-          <span className="min-w-0">
-            <span className={`block truncate text-[13px] font-extrabold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
-              {layerLabel}
-            </span>
-
-            <span
-              className={`mt-0.5 flex items-center gap-1.5 text-[11px] font-bold ${
-                status.tone === "error"
-                  ? "text-red-200"
-                  : status.tone === "warning"
-                    ? "text-mapgeo-sand/80"
-                    : status.tone === "loading"
-                      ? "text-white/70"
-                      : status.tone === "ok"
-                        ? "text-white/55"
-                        : "text-white/42"
-              }`}
-            >
-              {status.tone === "error" ? <AlertTriangle size={12} /> : null}
-              {status.tone === "loading" ? <Loader2 size={12} className="animate-spin" /> : null}
-              <span className="truncate">{status.label}</span>
-            </span>
-          </span>
-        </span>
-
-        {showInlineSymbol ? <LegendSymbol item={items[0]} muted={!visible || unavailable} /> : null}
-      </div>
-
-      {showItemDetails ? (
-        <div className={`mt-2 space-y-2 border-t border-white/10 pt-2 ${isParcelsLayer ? "mapgeo-parcel-sublegend" : ""}`}>
-          {items.map((item) => {
-            const isImageLegend = isLegendImageItem(item);
-            const itemKey = `${layer.id}-${item.id || item.label || item.url || item.imageUrl || item.imageEndpoint || "legend"}`;
-
-            if (isImageLegend) {
-              return (
-                <div key={itemKey} className="rounded-xl border border-white/10 bg-black/10 p-2">
-                  <div className="mb-1.5 truncate text-[12px] font-extrabold text-white/75">
-                    {item.label || "Légende publiée par le serveur WMS"}
-                  </div>
-                  <LegendSymbol item={item} compact={false} />
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={itemKey}
-                className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/65"
-              >
-                <span className="truncate">{item.label}</span>
-                <LegendSymbol item={item} />
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}) {
-  const items = legendItems(layer, features);
-  const visible = layer?.visible !== false;
-  const unavailable = !canToggleLayer(layer);
-  const layerLabel = layerDisplayName(layer);
-  const status = layerStatus(layer);
-  const isParcelsLayer = isParcelsLegendLayer(layer);
-  const hasServerLegend = items.some(isLegendImageItem);
-  const showInlineSymbol = !isParcelsLayer && !hasServerLegend && items.length > 0;
-  const showItemDetails = visible && !unavailable && (
-    isParcelsLayer
-      ? items.length > 0
-      : hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend")
-  );
-
-  const handleToggle = (event) => {
-    event.stopPropagation();
-
-    if (unavailable) {
-      return;
-    }
-
-    onToggleLayer?.(layer.id);
-  };
-
-  return (
-    <div
-      className={`rounded-xl border px-2 py-2 transition ${
-        visible ? "border-white/10 bg-white/[0.055]" : "border-white/10 bg-white/[0.025]"
-      } ${unavailable ? "opacity-65" : ""}`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex min-w-0 items-center gap-3">
-          <button
-            type="button"
-            onClick={handleToggle}
-            disabled={unavailable}
-            className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
-              visible && !unavailable
-                ? "border-mapgeo-sand/40 bg-mapgeo-primary/70 text-white shadow-soft"
-                : "border-white/20 bg-white/[0.035] text-transparent hover:border-white/30 hover:bg-white/[0.065]"
-            }`}
-            aria-pressed={visible && !unavailable}
-            aria-label={visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
-            title={unavailable ? `${layerLabel} indisponible` : visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
-          >
-            {visible && !unavailable ? <Check size={20} strokeWidth={3} /> : null}
-          </button>
-
-          <span className="min-w-0">
-            <span className={`block truncate text-[13px] font-extrabold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
-              {layerLabel}
-            </span>
-
-            <span
-              className={`mt-0.5 flex items-center gap-1.5 text-[11px] font-bold ${
-                status.tone === "error"
-                  ? "text-red-200"
-                  : status.tone === "warning"
-                    ? "text-mapgeo-sand/80"
-                    : status.tone === "loading"
-                      ? "text-white/70"
-                      : status.tone === "ok"
-                        ? "text-white/55"
-                        : "text-white/42"
-              }`}
-            >
-              {status.tone === "error" ? <AlertTriangle size={12} /> : null}
-              {status.tone === "loading" ? <Loader2 size={12} className="animate-spin" /> : null}
-              <span className="truncate">{status.label}</span>
-            </span>
-          </span>
-        </span>
-
-        {showInlineSymbol ? <LegendSymbol item={items[0]} muted={!visible || unavailable} /> : null}
-      </div>
-
-      {showItemDetails ? (
-        <div className={`mt-2 space-y-2 border-t border-white/10 pt-2 ${isParcelsLayer ? "mapgeo-parcel-sublegend" : ""}`}>
-          {items.map((item) => {
-            const isImageLegend = isLegendImageItem(item);
-            const itemKey = `${layer.id}-${item.id || item.label || item.url || item.imageUrl || item.imageEndpoint || "legend"}`;
-
-            if (isImageLegend) {
-              return (
-                <div key={itemKey} className="rounded-xl border border-white/10 bg-black/10 p-2">
-                  <div className="mb-1.5 truncate text-[12px] font-extrabold text-white/75">
-                    {item.label || "Légende publiée par le serveur WMS"}
-                  </div>
-                  <LegendSymbol item={item} compact={false} />
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={itemKey}
-                className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/65"
-              >
-                <span className="truncate">{item.label}</span>
-                <LegendSymbol item={item} />
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
-}) {
-  const items = legendItems(layer, features);
-  const visible = layer?.visible !== false;
-  const unavailable = !canToggleLayer(layer);
-  const layerLabel = layerDisplayName(layer);
-  const status = layerStatus(layer);
-  const hasServerLegend = items.some(isLegendImageItem);
-  const showInlineSymbol = !hasServerLegend;
-  const showItemDetails = visible && !unavailable && (hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend"));
-  
-
-  const handleToggle = (event) => {
-    event.stopPropagation();
-
-    if (unavailable) {
-      return;
-    }
-
-    onToggleLayer?.(layer.id);
-  };
-
-  return (
-    <div
-      className={`rounded-xl border px-2 py-2 transition ${
-        visible ? "border-white/10 bg-white/[0.055]" : "border-white/10 bg-white/[0.025]"
-      } ${unavailable ? "opacity-65" : ""}`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex min-w-0 items-center gap-3">
-          <button
-            type="button"
-            onClick={handleToggle}
-            disabled={unavailable}
-            className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
-              visible && !unavailable
-                ? "border-mapgeo-sand/40 bg-mapgeo-primary/70 text-white shadow-soft"
-                : "border-white/20 bg-white/[0.035] text-transparent hover:border-white/30 hover:bg-white/[0.065]"
-            }`}
-            aria-pressed={visible && !unavailable}
-            aria-label={visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
-            title={unavailable ? `${layerLabel} indisponible` : visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
-          >
-            {visible && !unavailable ? <Check size={20} strokeWidth={3} /> : null}
-          </button>
-
-          <span className="min-w-0">
-            <span className={`block truncate text-[13px] font-extrabold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
-              {layerLabel}
-            </span>
-
-            <span
-              className={`mt-0.5 flex items-center gap-1.5 text-[11px] font-bold ${
-                status.tone === "error"
-                  ? "text-red-200"
-                  : status.tone === "warning"
-                    ? "text-mapgeo-sand/80"
-                    : status.tone === "loading"
-                      ? "text-white/70"
-                      : status.tone === "ok"
-                        ? "text-white/55"
-                        : "text-white/42"
-              }`}
-            >
-              {status.tone === "error" ? <AlertTriangle size={12} /> : null}
-              {status.tone === "loading" ? <Loader2 size={12} className="animate-spin" /> : null}
-              <span className="truncate">{status.label}</span>
-            </span>
-          </span>
-        </span>
-
-        {showInlineSymbol ? <LegendSymbol item={items[0]} muted={!visible || unavailable} /> : null}
-      </div>
-
-      {showItemDetails ? (
-        <div className="mt-2 space-y-2 border-t border-white/10 pt-2">
-          {items.map((item) => {
-            const isImageLegend = isLegendImageItem(item);
-            const itemKey = `${layer.id}-${item.label || item.url || item.imageUrl || item.imageEndpoint || "legend"}`;
-
-            if (isImageLegend) {
-              return (
-                <div key={itemKey} className="rounded-xl border border-white/10 bg-black/10 p-2">
-                  <div className="mb-1.5 truncate text-[12px] font-extrabold text-white/75">
-                    {item.label || "Légende publiée par le serveur WMS"}
-                  </div>
-                  <LegendSymbol item={item} compact={false} />
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={itemKey}
-                className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/65"
-              >
+              <div key={itemKey} className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/65">
                 <span className="truncate">{item.label}</span>
                 <LegendSymbol item={item} />
               </div>
@@ -691,15 +399,15 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       (Array.isArray(activeLayers) ? activeLayers : [])
         .filter((layer) => {
           if (!layer?.id) return false;
-          const isCoreLayer = layer.id === "parcels-portfolio" || layer.group === "parcelles";
+
+          const isCoreLayer = isParcelsLegendLayer(layer);
           const isOptionalContextLayer = layer.id === "communes";
           const sourceKind = String(layer.service || layer.type || "").toLowerCase();
           const sourceFormat = String(layer.dataFormat || layer.data_format || layer.metadata?.dataFormat || layer.clientLayerType || "").toLowerCase();
           const isSupportedOperationalLayer = ["geojson", "wfs", "wms"].includes(sourceKind) || ["geojson", "wfs", "wms"].includes(sourceFormat);
 
-          // Une couche désactivée par l'utilisateur reste listée pour pouvoir être réactivée.
-          // Une couche non raccordée/non disponible ne doit pas créer d'entrée fantôme dans la légende.
           if (layer.available === false && !isCoreLayer) return false;
+
           return isCoreLayer || isOptionalContextLayer || isSupportedOperationalLayer;
         })
         .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)),
@@ -748,14 +456,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
       <div className="mapgeo-legend-scroll mt-2 space-y-1 pr-1">
         {legendLayers.length ? (
-          legendLayers.map((layer) => (
-            <LegendToggleRow
-              key={layer.id}
-              layer={layer}
-              features={features}
-              onToggleLayer={onToggleLayer}
-            />
-          ))
+          legendLayers.map((layer) => <LegendToggleRow key={layer.id} layer={layer} features={features} onToggleLayer={onToggleLayer} />)
         ) : (
           <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3 text-sm font-semibold leading-6 text-white/60">
             Aucune couche n’est disponible pour cette carte.
