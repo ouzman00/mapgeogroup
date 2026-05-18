@@ -298,7 +298,10 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       if (!Number.isFinite(distance) || distance <= 0) continue;
       const mid = midpoint(point, nextPoint);
       // Offset : 8 metres pour les petites parcelles, scale avec la taille du segment
-      const offset = Math.max(8, Math.min(distance * 0.06, 25));
+      // Offset proche du segment : 1.5 a 4 metres = ~10-15 pixels a zoom 18-19
+      // (echelle d affichage typique des parcelles individuelles).
+      // Le rendu reste lisible mais le label reste COLLE au segment.
+      const offset = Math.max(1.5, Math.min(distance * 0.012, 4));
       const labelPoint = offsetOutside(mid, point, nextPoint, centroid, offset);
       markers.push({
         id: `${tone}-side-${ringIndex}-${index}`,
@@ -1802,6 +1805,7 @@ export default function PortfolioMapShell({
   viewportSummary = null,
   onInlineEditStateChange,
 }) {
+  const isMobileReactive = useIsMobileViewport();
   const [activeCommand, setActiveCommand] = useState(null);
   const [measurementDraft, setMeasurementDraft] = useState({ mode: "distance", points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false });
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
