@@ -116,6 +116,20 @@ textarea:focus {
   border: none;
 }
 
+/* Side label : decale visuellement le texte au-dessus du segment */
+.mapgeo-side-label-shell {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  /* Le shell est centre sur le milieu du segment, le texte remonte de 10px */
+}
+.mapgeo-side-label-shell .mapgeo-side-label {
+  transform-origin: center center;
+  /* Le rotate est applique inline dans le HTML, on ajoute un decalage perpendiculaire ici */
+  /* margin-top negatif pour eloigner du segment */
+  margin-bottom: 14px;
+}
+
 .mapgeo-vertex-icon {
   display: inline-flex;
   align-items: center;
@@ -131,37 +145,44 @@ textarea:focus {
   box-shadow: 0 8px 18px rgba(15, 33, 49, 0.18);
 }
 
-/* === BADGE PARCELLE : tampon cadastre blanc, texte noir === */
+/* === BADGE PARCELLE : halo blanc autour du texte, pas de fond, pas de couleur statut === */
 .mapgeo-parcel-badge {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
   min-width: auto;
-  padding: 5px 10px;
-  border-radius: 4px;
-  background: #FFFFFF;
-  border: 1px solid #1F2937;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mapgeo-parcel-badge strong {
-  color: #0F172A;
+  color: #111827;
   font-size: 12px;
   font-weight: 800;
   line-height: 1.1;
-  letter-spacing: 0.01em;
-  text-shadow: none;
+  letter-spacing: 0.02em;
+  font-family: var(--font-sans, system-ui), sans-serif;
+  /* Halo blanc : double effet stroke + shadow pour une lisibilite parfaite sur tout fond */
+  paint-order: stroke fill;
+  -webkit-text-stroke: 3px #FFFFFF;
+  text-shadow:
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 2px 3px rgba(0, 0, 0, 0.45);
 }
 
 .mapgeo-parcel-badge span {
   display: none;
 }
 
-.mapgeo-parcel-badge.is-active {
-  background: #FFFFFF;
-  border: 2px solid #0F172A;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
-}
-
 .mapgeo-parcel-badge.is-active strong {
-  color: #0F172A;
+  color: #111827;
+  -webkit-text-stroke: 4px #FFFFFF;
 }
 
 .mapgeo-printable-map .leaflet-control-scale {
@@ -190,23 +211,31 @@ textarea:focus {
   backdrop-filter: blur(8px);
 }
 
-/* === Tooltip des sommets (V1, V2...) : tampon blanc rond === */
+/* === Tooltip des sommets (V1, V2...) : halo blanc, pas de tampon === */
 .leaflet-tooltip.mapgeo-vertex-tooltip {
-  background: #FFFFFF !important;
-  border: 2px solid #0F172A !important;
-  color: #0F172A !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: #111827 !important;
   font-size: 10px !important;
   font-weight: 800 !important;
-  padding: 2px 6px !important;
-  border-radius: 12px !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22) !important;
-  text-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   backdrop-filter: none !important;
   white-space: nowrap;
+  letter-spacing: 0.04em;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 2.5px #FFFFFF;
+  text-shadow:
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 1.5px 2px rgba(0, 0, 0, 0.35);
 }
 
 .leaflet-tooltip.mapgeo-vertex-tooltip::before {
-  border-top-color: #0F172A !important;
+  display: none !important;
 }
 
 
@@ -216,18 +245,38 @@ textarea:focus {
   transform: translateZ(0);
 }
 
-/* === DISTANCE ENTRE SOMMETS : tampon blanc texte noir, sans texte-shadow === */
+/* === DIMENSIONS DE COTE : texte noir avec halo blanc, aucun fond === */
+.mapgeo-side-label-shell {
+  background: transparent !important;
+  border: 0 !important;
+  pointer-events: none;
+}
+
 .mapgeo-side-label {
-  background: #FFFFFF;
-  border: 1px solid #1F2937;
-  color: #0F172A;
+  display: inline-block;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #111827;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.01em;
-  padding: 3px 7px;
-  border-radius: 3px;
-  text-shadow: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+  letter-spacing: 0.02em;
+  font-family: var(--font-sans, system-ui), sans-serif;
+  white-space: nowrap;
+  line-height: 1;
+  /* Decalage perpendiculaire : texte place au-dessus du segment */
+  transform-origin: center center;
+  /* Halo blanc multi-couches pour lisibilite max sur tous fonds */
+  paint-order: stroke fill;
+  -webkit-text-stroke: 3px #FFFFFF;
+  text-shadow:
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 1.5px 2px rgba(0, 0, 0, 0.35);
 }
 
 .mapgeo-area-label-shell {
@@ -236,58 +285,77 @@ textarea:focus {
 }
 
 .mapgeo-side-label.is-edit {
-  background: #EFF6FF;
-  border: 1px solid #2563EB;
-  color: #0F172A;
+  color: #1E40AF;
+  background: transparent !important;
+  border: 0 !important;
 }
 
 .mapgeo-side-label.is-measure {
-  background: #FFFBEB;
-  border: 1px solid #D97706;
-  color: #0F172A;
+  color: #92400E;
+  background: transparent !important;
+  border: 0 !important;
 }
 
-/* === LABEL DE SURFACE : tampon blanc cadastre === */
+/* === LABEL SURFACE AU CENTROIDE : halo blanc, pas de fond === */
+.mapgeo-area-label-shell {
+  background: transparent !important;
+  border: 0 !important;
+  pointer-events: none;
+}
+
 .mapgeo-area-label {
   display: inline-flex;
-  min-width: 100px;
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  border-radius: 4px;
-  border: 1px solid #1F2937;
-  background: #FFFFFF;
-  padding: 5px 10px;
-  color: #0F172A;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-  backdrop-filter: none;
+  font-family: var(--font-sans, system-ui), sans-serif;
 }
 
 .mapgeo-area-label strong {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1.1;
-  color: #0F172A;
+  color: #111827;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 3px #FFFFFF;
+  text-shadow:
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF,
+    0 2px 3px rgba(0, 0, 0, 0.4);
 }
 
 .mapgeo-area-label em {
-  color: #475569;
+  color: #374151;
   font-size: 9px;
   font-style: normal;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  margin-top: 1px;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 2.5px #FFFFFF;
+  text-shadow:
+    -1px -1px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    1px 1px 0 #FFFFFF;
 }
 
-.mapgeo-area-label.is-edit {
-  background: #EFF6FF;
-  border-color: #2563EB;
+.mapgeo-area-label.is-edit strong {
+  color: #1E40AF;
 }
 
-.mapgeo-area-label.is-measure {
-  background: #FFFBEB;
-  border-color: #D97706;
+.mapgeo-area-label.is-measure strong {
+  color: #92400E;
 }
 
 /* Outils d'édition cartographique : lisibles et séparés du panneau d'édition compact. */
@@ -516,38 +584,32 @@ textarea:focus {
   backdrop-filter: blur(8px);
 }
 
-/* === Vertex icon (cercle V1, V2...) : tampon blanc rond === */
+/* === Vertex icon cercle : sommet visuel reste blanc avec bord noir === */
 .mapgeo-vertex-icon {
   background: #FFFFFF !important;
-  border: 2px solid #0F172A !important;
-  color: #0F172A !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22) !important;
+  border: 2px solid #111827 !important;
+  color: transparent !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.28) !important;
   text-shadow: none !important;
   backdrop-filter: none !important;
 }
 
-/* Ces declarations protegent les couleurs tampon contre les overrides ulterieurs */
+/* Protection contre les overrides : tout texte de label carto reste en mode halo */
 .mapgeo-parcel-badge,
 .mapgeo-side-label,
 .mapgeo-area-label {
-  text-shadow: none !important;
   backdrop-filter: none !important;
-}
-
-.mapgeo-area-label em {
-  color: #475569 !important;
-  opacity: 1 !important;
 }
 
 .mapgeo-parcel-badge.is-active,
 .mapgeo-side-label.is-edit,
 .mapgeo-area-label.is-edit {
-  /* Variantes coloriees : conservent leurs styles definis plus haut */
+  /* Variantes : voir styles individuels plus haut (halo conserve) */
 }
 
 .mapgeo-side-label.is-measure,
 .mapgeo-area-label.is-measure {
-  /* Variantes coloriees : conservent leurs styles definis plus haut */
+  /* Variantes : voir styles individuels plus haut (halo conserve) */
 }
 
 /* Flèche nord harmonisée avec les autres fenêtres de la carte. */
