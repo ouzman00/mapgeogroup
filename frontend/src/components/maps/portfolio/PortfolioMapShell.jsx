@@ -51,6 +51,7 @@ import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
 import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
 import useIsMobileViewport from "../../../hooks/useIsMobileViewport";
+import useCartoKeyboardShortcuts from "./useCartoKeyboardShortcuts";
 
 
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragend pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
