@@ -126,7 +126,7 @@ function isMobileCartographyViewport() {
     window.matchMedia?.("(pointer: coarse)")?.matches
   );
 
-  const noHover = Boolean(
+  const hoverNone = Boolean(
     window.matchMedia?.("(hover: none)")?.matches
   );
 
@@ -136,7 +136,7 @@ function isMobileCartographyViewport() {
     window.navigator?.userAgent || ""
   );
 
-  return width < 768 && (coarsePointer || noHover || touchPoints > 0 || mobileUserAgent);
+  return width < 768 && (coarsePointer || hoverNone || touchPoints > 0 || mobileUserAgent);
 }
 
 function stopLeafletPropagation(event) {
@@ -1414,7 +1414,7 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
               {/* Bouton "Ajouter au centre" : MOBILE UNIQUEMENT (replication du reticule central).
                   En desktop, l utilisateur clique directement sur la carte. */}
               <button type="button" onClick={addPointFromCenter} className="mapgeo-measure-center-btn md:hidden inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/25">
-                <Plus size={14} /> Ajouter au centre
+                <Plus size={14} /> Ajouter au centre au centre
               </button>
               <button type="button" onClick={onFinish} disabled={!pointCount} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-35">
                 <Check size={14} /> Terminer
@@ -2240,12 +2240,11 @@ export default function PortfolioMapShell({
 
   const queueMeasurementPoint = useCallback((point) => {
     if (!showMeasurements || !Array.isArray(point) || point.length < 2) return;
+
     clearPendingMeasurementClick();
-    measurementClickTimerRef.current = window.setTimeout(() => {
-      const snap = resolveMeasurementPoint(point);
-      appendMeasurementPoint(snap.point, snap);
-      measurementClickTimerRef.current = null;
-    }, MEASUREMENT_CLICK_DELAY_MS);
+
+    const snap = resolveMeasurementPoint(point);
+    appendMeasurementPoint(snap.point, snap);
   }, [appendMeasurementPoint, clearPendingMeasurementClick, resolveMeasurementPoint, showMeasurements]);
 
   const shouldIgnoreMeasurementClickAfterPan = useCallback(() => (
