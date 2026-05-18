@@ -2791,47 +2791,11 @@ html body .mapgeo-side-label {
   }
 }
 
-/* === CARTO FIX - labels de mesures lisibles === */
-html body .mapgeo-side-label-shell {
-  overflow: visible !important;
-  pointer-events: none !important;
-}
-
-html body .mapgeo-side-label {
-  font-size: 10px !important;
-  font-weight: 900 !important;
-  letter-spacing: 0 !important;
-  line-height: 1 !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  -webkit-text-stroke: 2.8px #ffffff !important;
-  paint-order: stroke fill !important;
-  text-shadow:
-    -1px -1px 0 #ffffff,
-    1px -1px 0 #ffffff,
-    -1px 1px 0 #ffffff,
-    1px 1px 0 #ffffff,
-    0 2px 3px rgba(0, 0, 0, 0.38) !important;
-}
-
-@media (max-width: 767px) {
-  html body .mapgeo-side-label {
-    font-size: 9.5px !important;
-    -webkit-text-stroke: 2.5px #ffffff !important;
-  }
-
-  .mapgeo-measure-panel {
-    max-height: min(48vh, 360px) !important;
-  }
-}
-
 /* === CARTO FINAL - placement propre des mesures === */
 html body .leaflet-marker-icon.mapgeo-side-label-shell,
 html body .mapgeo-side-label-shell {
-  width: 150px !important;
-  height: 44px !important;
+  width: 96px !important;
+  height: 28px !important;
   margin: 0 !important;
   padding: 0 !important;
   overflow: visible !important;
@@ -2847,8 +2811,8 @@ html body .mapgeo-side-label-shell {
 }
 
 html body .mapgeo-side-label-rotor {
-  width: 150px !important;
-  height: 44px !important;
+  width: 96px !important;
+  height: 28px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2861,8 +2825,7 @@ html body .mapgeo-side-label-rotor {
 
 html body .mapgeo-side-label {
   display: inline-block !important;
-  transform: none !important;
-  max-width: 138px !important;
+  max-width: 92px !important;
   overflow: visible !important;
   white-space: nowrap !important;
   background: transparent !important;
@@ -2876,17 +2839,14 @@ html body .mapgeo-side-label {
   font-weight: 900 !important;
   line-height: 1 !important;
   letter-spacing: 0 !important;
-  font-family: var(--font-sans, system-ui), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   paint-order: stroke fill !important;
-  -webkit-text-stroke: 2.8px #ffffff !important;
+  -webkit-text-stroke: 2.4px #ffffff !important;
   text-shadow:
     -1px -1px 0 #ffffff,
     1px -1px 0 #ffffff,
     -1px 1px 0 #ffffff,
     1px 1px 0 #ffffff,
-    0 2px 3px rgba(0, 0, 0, 0.38) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+    0 1px 2px rgba(0, 0, 0, 0.35) !important;
 }
 
 html body .mapgeo-side-label.is-edit,
@@ -2900,14 +2860,14 @@ html body .mapgeo-side-label.is-measure {
   html body .leaflet-marker-icon.mapgeo-side-label-shell,
   html body .mapgeo-side-label-shell,
   html body .mapgeo-side-label-rotor {
-    width: 154px !important;
-    height: 46px !important;
+    width: 100px !important;
+    height: 30px !important;
   }
 
   html body .mapgeo-side-label {
+    max-width: 96px !important;
     font-size: 9.5px !important;
-    max-width: 142px !important;
-    -webkit-text-stroke: 2.6px #ffffff !important;
+    -webkit-text-stroke: 2.2px #ffffff !important;
   }
 }
 

@@ -352,9 +352,9 @@ function getSideMarkerPixelOptions(map) {
 
   return {
     zoom,
-    offsetPixels: mobile ? 72 : 58,
-    minSegmentPixels: mobile ? 118 : 92,
-    minZoom: mobile ? 18 : 16,
+    offsetPixels: mobile ? 28 : 24,
+    minSegmentPixels: mobile ? 44 : 34,
+    minZoom: mobile ? 17 : 15,
   };
 }
 
@@ -363,26 +363,25 @@ function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
 
   if (
     !map ||
-    typeof map.project !== "function" ||
-    typeof map.unproject !== "function" ||
+    typeof map.latLngToLayerPoint !== "function" ||
+    typeof map.layerPointToLatLng !== "function" ||
     typeof map.getZoom !== "function"
   ) {
     return markers.map((marker) => ({ ...marker, visible: true }));
   }
 
   const options = getSideMarkerPixelOptions(map);
-  const zoom = options.zoom;
   const offsetPixels = Number.isFinite(pixels) ? pixels : options.offsetPixels;
 
-  const projected = markers.map((marker) => {
+  return markers.map((marker) => {
     if (!marker?.midPoint || !marker?.segA || !marker?.segB) {
       return { ...marker, visible: false };
     }
 
     try {
-      const midPx = map.project(L.latLng(marker.midPoint[0], marker.midPoint[1]), zoom);
-      const aPx = map.project(L.latLng(marker.segA[0], marker.segA[1]), zoom);
-      const bPx = map.project(L.latLng(marker.segB[0], marker.segB[1]), zoom);
+      const midPx = map.latLngToLayerPoint(L.latLng(marker.midPoint[0], marker.midPoint[1]));
+      const aPx = map.latLngToLayerPoint(L.latLng(marker.segA[0], marker.segA[1]));
+      const bPx = map.latLngToLayerPoint(L.latLng(marker.segB[0], marker.segB[1]));
 
       const dx = bPx.x - aPx.x;
       const dy = bPx.y - aPx.y;
@@ -398,7 +397,10 @@ function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
       ny /= norm;
 
       if (marker.ringCentroid) {
-        const cPx = map.project(L.latLng(marker.ringCentroid[0], marker.ringCentroid[1]), zoom);
+        const cPx = map.latLngToLayerPoint(
+          L.latLng(marker.ringCentroid[0], marker.ringCentroid[1])
+        );
+
         const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
 
         if (dot > 0) {
@@ -407,41 +409,31 @@ function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
         }
       }
 
-      const adaptiveOffset = Math.max(offsetPixels, Math.min(92, segmentPixels * 0.42));
-      const labelPx = L.point(midPx.x + nx * adaptiveOffset, midPx.y + ny * adaptiveOffset);
-      const labelLatLng = map.unproject(labelPx, zoom);
+      const labelPx = L.point(
+        midPx.x + nx * offsetPixels,
+        midPx.y + ny * offsetPixels
+      );
+
+      const labelLatLng = map.layerPointToLatLng(labelPx);
 
       return {
         ...marker,
         point: [labelLatLng.lat, labelLatLng.lng],
-        labelPx,
         segmentPixels,
-        visible: zoom >= options.minZoom && segmentPixels >= options.minSegmentPixels,
+        visible: options.zoom >= options.minZoom && segmentPixels >= options.minSegmentPixels,
       };
     } catch {
       return { ...marker, visible: false };
     }
   });
-
-  const kept = [];
-
-  return projected.map((marker) => {
-    if (!marker.visible || !marker.labelPx) return { ...marker, visible: false };
-
-    const collides = kept.some((other) => {
-      const dx = other.labelPx.x - marker.labelPx.x;
-      const dy = other.labelPx.y - marker.labelPx.y;
-      return Math.hypot(dx, dy) < 46;
-    });
-
-    if (collides) {
-      return { ...marker, visible: false };
-    }
-
-    kept.push(marker);
-    return marker;
-  });
 }
+
+
+
+
+
+
+
 
 
 function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
