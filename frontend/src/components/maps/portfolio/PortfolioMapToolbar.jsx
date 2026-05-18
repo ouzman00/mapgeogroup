@@ -143,6 +143,7 @@ export default function FloatingMapToolbar({
       <div className={`mapgeo-toolbar-shell ${toolbarStateClass} flex w-full max-w-full items-center gap-1 overflow-hidden rounded-[18px] border border-white/10 bg-[#07111b]/70 p-1.5 text-white shadow-[0_20px_64px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:w-fit sm:min-w-0`}>
         <ToolbarButton active={showLegend} icon={Layers3} label="Légende" forceLabel className={commonButtonClass} onClick={() => {
             setActiveCommand("tools");
+            onStopEdit?.();
             setShowMeasurements(false);
             setShowVertices(false);
             setShowLegend((current) => !current);
@@ -208,6 +209,7 @@ export default function FloatingMapToolbar({
                 }}
               />
               <ToolbarButton active={activeCommand === "export"} icon={FileDown} label="Exporter" forceLabel className={compactToolButtonClass} title="Exporter" onClick={() => {
+                  onStopEdit?.();
                   setShowLegend(false);
                   setShowMeasurements(false);
                   setShowVertices(false);
@@ -218,7 +220,7 @@ export default function FloatingMapToolbar({
         ) : null}
       </div>
       {activeCommand === "base" ? (
-        <BaseMapPicker layers={baseLayers} activeBaseLayerId={activeBaseLayerId} onBaseSelect={(layerId) => { onBaseSelect(layerId); setActiveCommand("tools"); }} />
+        <BaseMapPicker layers={baseLayers} activeBaseLayerId={activeBaseLayerId} onBaseSelect={(layerId) => { onStopEdit?.(); setShowMeasurements(false); setShowVertices(false); onBaseSelect(layerId); setActiveCommand("tools"); }} />
       ) : null}
 
       {activeCommand === "export" ? (

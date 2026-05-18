@@ -208,6 +208,7 @@ export function PortfolioViewport({
 }
 
 export function MapRuntimeObserver({
+  measurementActive = false,
   onMouseMove,
   onMapClick,
   onMapDoubleClick,
@@ -215,6 +216,20 @@ export function MapRuntimeObserver({
   onMapDragStart,
   onMapDragEnd,
 }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const doubleClickZoom = map?.doubleClickZoom;
+    if (!doubleClickZoom || !measurementActive) return undefined;
+
+    const wasEnabled = doubleClickZoom.enabled();
+    doubleClickZoom.disable();
+
+    return () => {
+      if (wasEnabled) doubleClickZoom.enable();
+    };
+  }, [map, measurementActive]);
+
   useMapEvents({
     mousemove(event) {
       onMouseMove?.([event.latlng.lat, event.latlng.lng]);

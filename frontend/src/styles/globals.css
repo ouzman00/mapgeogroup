@@ -2791,7 +2791,7 @@ html body .mapgeo-side-label {
   }
 }
 
-/* === CARTO FINAL - dimensions avec ecart constant === */
+/* === CARTO FINAL - mesures et dimensions coherentes === */
 html body .leaflet-marker-icon.mapgeo-side-label-shell,
 html body .mapgeo-side-label-shell {
   width: 0 !important;
@@ -2824,7 +2824,6 @@ html body .mapgeo-side-label-rotor {
 
 html body .mapgeo-side-label {
   display: inline-block !important;
-  transform: none !important;
   width: auto !important;
   height: auto !important;
   max-width: none !important;
@@ -2858,10 +2857,19 @@ html body .mapgeo-side-label.is-measure {
   border: 0 !important;
 }
 
+.mapgeo-measure-mode,
+.mapgeo-measure-mode .leaflet-interactive {
+  cursor: crosshair;
+}
+
 @media (max-width: 767px) {
   html body .mapgeo-side-label {
     font-size: 9.5px !important;
     -webkit-text-stroke: 2.1px #ffffff !important;
+  }
+
+  .mapgeo-measure-panel {
+    max-height: min(48vh, 360px) !important;
   }
 }
 

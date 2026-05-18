@@ -117,24 +117,11 @@ function safeDisableGeomanModes(map) {
 function isMobileCartographyViewport() {
   if (typeof window === "undefined") return false;
 
-  const width =
-    window.innerWidth ||
-    document.documentElement?.clientWidth ||
-    1024;
-
-  const coarsePointer = Boolean(
-    window.matchMedia?.("(pointer: coarse)")?.matches
-  );
-
-  const hoverNone = Boolean(
-    window.matchMedia?.("(hover: none)")?.matches
-  );
-
+  const width = window.innerWidth || document.documentElement?.clientWidth || 1024;
+  const coarsePointer = Boolean(window.matchMedia?.("(pointer: coarse)")?.matches);
+  const hoverNone = Boolean(window.matchMedia?.("(hover: none)")?.matches);
   const touchPoints = Number(window.navigator?.maxTouchPoints || 0);
-
-  const mobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(
-    window.navigator?.userAgent || ""
-  );
+  const mobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(window.navigator?.userAgent || "");
 
   return width < 768 && (coarsePointer || hoverNone || touchPoints > 0 || mobileUserAgent);
 }
@@ -358,9 +345,7 @@ function offsetOutside(midPt, segA, segB, centroid, offsetPixels = 14, map = nul
 
 function isMobileCartographyViewportSafe() {
   try {
-    return typeof isMobileCartographyViewport === "function"
-      ? isMobileCartographyViewport()
-      : false;
+    return typeof isMobileCartographyViewport === "function" ? isMobileCartographyViewport() : false;
   } catch {
     return false;
   }
@@ -417,23 +402,15 @@ function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
       ny /= norm;
 
       if (marker.ringCentroid) {
-        const cPx = map.latLngToLayerPoint(
-          L.latLng(marker.ringCentroid[0], marker.ringCentroid[1])
-        );
-
+        const cPx = map.latLngToLayerPoint(L.latLng(marker.ringCentroid[0], marker.ringCentroid[1]));
         const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
-
         if (dot > 0) {
           nx = -nx;
           ny = -ny;
         }
       }
 
-      const labelPx = L.point(
-        midPx.x + nx * offsetPixels,
-        midPx.y + ny * offsetPixels
-      );
-
+      const labelPx = L.point(midPx.x + nx * offsetPixels, midPx.y + ny * offsetPixels);
       const labelLatLng = map.layerPointToLatLng(labelPx);
 
       return {
@@ -447,6 +424,13 @@ function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
     }
   });
 }
+
+
+
+
+
+
+
 
 
 
@@ -472,12 +456,6 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       const mid = midpoint(point, nextPoint);
       const segA = point;
       const segB = nextPoint;
-// Offset CONSTANT en pixels ecran (~14px), peu importe le zoom.
-      // C est le standard cartographique pro (QGIS, ArcGIS). offsetOutside
-      // utilise map.project/unproject pour convertir 14 pixels en latlng.
-      // Offset adaptatif en metres : 1.5 m pour petits segments, 4 m pour grands
-      // Le point retourne est le midpoint brut, le reposition pixel
-      // se fait ensuite via repositionSideMarkersOutsideInPixels.
       markers.push({
         id: `${tone}-side-${ringIndex}-${index}`,
         point: mid,
@@ -1414,7 +1392,7 @@ function MeasurementToolPanel({ open, map, measurementDraft, setMeasurementDraft
               {/* Bouton "Ajouter au centre" : MOBILE UNIQUEMENT (replication du reticule central).
                   En desktop, l utilisateur clique directement sur la carte. */}
               <button type="button" onClick={addPointFromCenter} className="mapgeo-measure-center-btn md:hidden inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/25">
-                <Plus size={14} /> Ajouter au centre au centre
+                <Plus size={14} /> Ajouter au centre
               </button>
               <button type="button" onClick={onFinish} disabled={!pointCount} className="inline-flex items-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/10 px-3 py-2 text-xs font-bold text-mapgeo-ivory hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-35">
                 <Check size={14} /> Terminer
@@ -2328,11 +2306,10 @@ export default function PortfolioMapShell({
 
   const handleParcelLayerClick = useCallback((feature, event, fallbackPoint = null) => {
     stopLeafletPropagation(event);
-    if (!feature || inlineEditOpen) return;
-
-    setActiveCommand(null);
+    if (!feature || (inlineEditOpen && !showMeasurements)) return;
 
     if (showMeasurements) {
+      setActiveCommand(null);
       setIdentifyState(null);
 
       if (event?.originalEvent?.detail > 1 || shouldIgnoreMeasurementClickAfterPan()) {
@@ -2531,6 +2508,7 @@ export default function PortfolioMapShell({
 
           <PortfolioViewport mode={viewMode} activeFeature={activeFeature} features={viewportFeatures} onMapReady={setMap} viewportRequest={viewportRequest} onZoomChange={setMapZoom} />
           <MapRuntimeObserver
+            measurementActive={showMeasurements}
             onMouseMove={(point) => {
               setCursorPosition(point);
 
@@ -2552,9 +2530,9 @@ export default function PortfolioMapShell({
               }
             }}
             onMapClick={(point, event) => {
-              if (inlineEditOpen) return;
-              setActiveCommand(null);
               if (showMeasurements) {
+                if (inlineEditOpen) closeInlineEdit();
+                setActiveCommand(null);
                 setIdentifyState(null);
 
                 if (event?.originalEvent?.detail > 1 || shouldIgnoreMeasurementClickAfterPan()) {
@@ -2564,22 +2542,25 @@ export default function PortfolioMapShell({
                 queueMeasurementPoint(point);
                 return;
               }
+
+              if (inlineEditOpen) return;
+              setActiveCommand(null);
               setIdentifyState(null);
             }}
             onMapDoubleClick={() => {
-              if (!inlineEditOpen && showMeasurements) {
+              if (showMeasurements) {
                 clearPendingMeasurementClick();
                 finishMeasurementDraft();
               }
             }}
             onMapDragStart={() => {
-              if (!inlineEditOpen && showMeasurements) clearPendingMeasurementClick();
+              if (showMeasurements) clearPendingMeasurementClick();
             }}
             onMapDragEnd={() => {
-              if (!inlineEditOpen && showMeasurements) lastMeasurementPanAtRef.current = Date.now();
+              if (showMeasurements) lastMeasurementPanAtRef.current = Date.now();
             }}
             onMapContextMenu={() => {
-              if (!inlineEditOpen && showMeasurements) finishMeasurementDraft();
+              if (showMeasurements) finishMeasurementDraft();
             }}
           />
           <ScaleControl position="bottomleft" metric imperial={false} />
