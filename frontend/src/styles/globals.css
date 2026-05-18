@@ -131,19 +131,23 @@ textarea:focus {
   box-shadow: 0 8px 18px rgba(15, 33, 49, 0.18);
 }
 
+/* === BADGE PARCELLE : tampon cadastre blanc, texte noir === */
 .mapgeo-parcel-badge {
   min-width: auto;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: rgba(18, 59, 93, 0.95);
-  border: 1px solid rgba(199, 178, 153, 0.85);
-  box-shadow: 0 14px 34px rgba(18, 59, 93, 0.24);
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: #FFFFFF;
+  border: 1px solid #1F2937;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .mapgeo-parcel-badge strong {
-  color: #ffffff;
-  font-size: 13px;
-  line-height: 1;
+  color: #0F172A;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  text-shadow: none;
 }
 
 .mapgeo-parcel-badge span {
@@ -151,12 +155,13 @@ textarea:focus {
 }
 
 .mapgeo-parcel-badge.is-active {
-  border-color: rgba(199, 178, 153, 0.98);
-  box-shadow: 0 16px 36px rgba(18, 59, 93, 0.34);
+  background: #FFFFFF;
+  border: 2px solid #0F172A;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
 }
 
 .mapgeo-parcel-badge.is-active strong {
-  color: #ffffff;
+  color: #0F172A;
 }
 
 .mapgeo-printable-map .leaflet-control-scale {
@@ -185,19 +190,44 @@ textarea:focus {
   backdrop-filter: blur(8px);
 }
 
+/* === Tooltip des sommets (V1, V2...) : tampon blanc rond === */
+.leaflet-tooltip.mapgeo-vertex-tooltip {
+  background: #FFFFFF !important;
+  border: 2px solid #0F172A !important;
+  color: #0F172A !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  padding: 2px 6px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22) !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  white-space: nowrap;
+}
+
+.leaflet-tooltip.mapgeo-vertex-tooltip::before {
+  border-top-color: #0F172A !important;
+}
+
+
 .mapgeo-label-tile {
   image-rendering: auto;
   filter: contrast(1.08) saturate(1.03);
   transform: translateZ(0);
 }
 
+/* === DISTANCE ENTRE SOMMETS : tampon blanc texte noir, sans texte-shadow === */
 .mapgeo-side-label {
-  background: rgba(7, 17, 27, 0.94);
-  border: 1px solid rgba(199, 178, 153, 0.42);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 800;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  background: #FFFFFF;
+  border: 1px solid #1F2937;
+  color: #0F172A;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 3px 7px;
+  border-radius: 3px;
+  text-shadow: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
 }
 
 .mapgeo-area-label-shell {
@@ -205,55 +235,59 @@ textarea:focus {
   border: none;
 }
 
-.mapgeo-side-label.is-edit,
-.mapgeo-side-label.is-measure {
-  background: rgba(18, 59, 93, 0.94);
-  border: 1px solid rgba(199, 178, 153, 0.42);
+.mapgeo-side-label.is-edit {
+  background: #EFF6FF;
+  border: 1px solid #2563EB;
+  color: #0F172A;
 }
 
 .mapgeo-side-label.is-measure {
-  background: rgba(18, 59, 93, 0.94);
+  background: #FFFBEB;
+  border: 1px solid #D97706;
+  color: #0F172A;
 }
 
+/* === LABEL DE SURFACE : tampon blanc cadastre === */
 .mapgeo-area-label {
   display: inline-flex;
-  min-width: 132px;
+  min-width: 100px;
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: rgba(15, 33, 49, 0.9);
-  padding: 8px 12px;
-  color: white;
+  border-radius: 4px;
+  border: 1px solid #1F2937;
+  background: #FFFFFF;
+  padding: 5px 10px;
+  color: #0F172A;
   text-align: center;
-  box-shadow: 0 14px 34px rgba(15, 33, 49, 0.28);
-  backdrop-filter: blur(7px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  backdrop-filter: none;
 }
 
 .mapgeo-area-label strong {
-  font-size: 13px;
-  font-weight: 900;
-  line-height: 1.15;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #0F172A;
 }
 
 .mapgeo-area-label em {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 10px;
+  color: #475569;
+  font-size: 9px;
   font-style: normal;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .mapgeo-area-label.is-edit {
-  background: rgba(18, 59, 93, 0.94);
-  border-color: rgba(199, 178, 153, 0.55);
+  background: #EFF6FF;
+  border-color: #2563EB;
 }
 
 .mapgeo-area-label.is-measure {
-  background: rgba(18, 59, 93, 0.94);
-  border-color: rgba(199, 178, 153, 0.55);
+  background: #FFFBEB;
+  border-color: #D97706;
 }
 
 /* Outils d'édition cartographique : lisibles et séparés du panneau d'édition compact. */
@@ -482,41 +516,38 @@ textarea:focus {
   backdrop-filter: blur(8px);
 }
 
+/* === Vertex icon (cercle V1, V2...) : tampon blanc rond === */
+.mapgeo-vertex-icon {
+  background: #FFFFFF !important;
+  border: 2px solid #0F172A !important;
+  color: #0F172A !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22) !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Ces declarations protegent les couleurs tampon contre les overrides ulterieurs */
 .mapgeo-parcel-badge,
 .mapgeo-side-label,
-.mapgeo-area-label,
-.mapgeo-vertex-icon {
-  background: rgba(7, 17, 27, 0.42) !important;
-  border: 1px solid rgba(199, 178, 153, 0.42) !important;
-  color: #ffffff !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16) !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
-  backdrop-filter: blur(7px);
+.mapgeo-area-label {
+  text-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
-.mapgeo-parcel-badge strong,
-.mapgeo-parcel-badge span,
-.mapgeo-area-label strong,
 .mapgeo-area-label em {
-  color: #ffffff !important;
-}
-
-.mapgeo-parcel-badge span,
-.mapgeo-area-label em {
-  opacity: 0.72;
+  color: #475569 !important;
+  opacity: 1 !important;
 }
 
 .mapgeo-parcel-badge.is-active,
 .mapgeo-side-label.is-edit,
 .mapgeo-area-label.is-edit {
-  background: rgba(18, 59, 93, 0.56) !important;
-  border-color: rgba(199, 178, 153, 0.58) !important;
+  /* Variantes coloriees : conservent leurs styles definis plus haut */
 }
 
 .mapgeo-side-label.is-measure,
 .mapgeo-area-label.is-measure {
-  background: rgba(199, 178, 153, 0.44) !important;
-  border-color: rgba(247, 245, 242, 0.38) !important;
+  /* Variantes coloriees : conservent leurs styles definis plus haut */
 }
 
 /* Flèche nord harmonisée avec les autres fenêtres de la carte. */
