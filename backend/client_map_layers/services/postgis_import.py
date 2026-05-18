@@ -54,12 +54,75 @@ def _optional_identifier(value: Any, field_name: str) -> str:
     return _clean_identifier(raw, field_name)
 
 
+_ALLOWED_WHERE_TOKEN_RE = re.compile(
+    r"""
+    (?:
+        '(?:[^'\\]|\\.)*'      # chaine SQL standard
+        | "(?:[^"\\]|\\.)*"        # identifiant entre guillemets
+        | [A-Za-z_][A-Za-z0-9_\.]*    # identifiant ou mot cle (table.colonne)
+        | -?\d+(?:\.\d+)?           # nombre signe ou decimal
+        | <=|>=|<>|!=|=|<|>             # operateurs de comparaison
+        | \(|\)|,                     # parentheses et virgule
+        | \s+                         # espaces
+    )
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+_ALLOWED_WHERE_KEYWORDS = {
+    "and", "or", "not", "in", "between", "is", "null",
+    "true", "false", "like", "ilike",
+}
+
+_FORBIDDEN_WHERE_KEYWORDS = {
+    "select", "from", "where", "join", "union", "having",
+    "insert", "update", "delete", "drop", "alter", "create",
+    "truncate", "grant", "revoke", "copy", "execute", "call",
+    "do", "with", "returning", "fetch", "lateral", "case",
+}
+
+
 def _clean_where_clause(value: Any) -> str:
+    """Whitelist stricte pour la clause WHERE PostGIS.
+
+    On refuse :
+      - tout token hors identifiants, nombres, chaines, operateurs simples ;
+      - tout appel de fonction (parenthese precedee d un identifiant) ;
+      - tout point-virgule et commentaire SQL ;
+      - tout mot-cle SQL dangereux meme s il passe la tokenisation.
+    """
     raw = str(value or "").strip()
     if not raw:
         return ""
-    if len(raw) > 1000 or FORBIDDEN_SQL_RE.search(raw):
-        raise ValidationError({"postgis_where_clause": "Filtre SQL refusé. Utilisez une condition WHERE simple, sans point-virgule ni commande SQL."})
+    if len(raw) > 1000:
+        raise ValidationError({"postgis_where_clause": "Filtre WHERE trop long. Limitez-vous a 1000 caracteres."})
+
+    forbidden_chars = (";", "--", "/*", "*/", "::", "@@", "->", "->>", "#>", "#>>")
+    for marker in forbidden_chars:
+        if marker in raw:
+            raise ValidationError({"postgis_where_clause": "Filtre WHERE refuse : caracteres SQL avances interdits."})
+
+    # Tokenisation par whitelist : tout caractere non couvert est rejete.
+    reconstructed = []
+    position = 0
+    for match in _ALLOWED_WHERE_TOKEN_RE.finditer(raw):
+        if match.start() != position:
+            raise ValidationError({"postgis_where_clause": f"Filtre WHERE refuse : caractere invalide a la position {position}."})
+        reconstructed.append(match.group(0))
+        position = match.end()
+    if position != len(raw):
+        raise ValidationError({"postgis_where_clause": f"Filtre WHERE refuse : caractere invalide a la position {position}."})
+
+    # Pas d appel de fonction : identifiant immediatement suivi de "(".
+    if re.search(r"[A-Za-z_][A-Za-z0-9_\.]*\s*\(", raw):
+        raise ValidationError({"postgis_where_clause": "Filtre WHERE refuse : aucun appel de fonction autorise."})
+
+    # Mots-cles interdits, meme isoles.
+    for token in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", raw):
+        lowered = token.lower()
+        if lowered in _FORBIDDEN_WHERE_KEYWORDS:
+            raise ValidationError({"postgis_where_clause": f"Filtre WHERE refuse : mot-cle SQL interdit ({token})."})
+
     return raw
 
 
