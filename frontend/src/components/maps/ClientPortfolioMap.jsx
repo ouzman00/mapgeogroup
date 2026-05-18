@@ -83,7 +83,31 @@ export default function ClientPortfolioMap({
   const [showVertices, setShowVertices] = useState(false);
   const [showMeasurements, setShowMeasurements] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
-  const [showLegend, setShowLegend] = useState(false);
+  const [showLegend, setShowLegend] = useState(() => {
+    // Premier affichage : legende ouverte automatiquement pour aider l utilisateur
+    // a comprendre le code couleur des statuts. Le choix utilisateur est memorise
+    // pour la session courante (sessionStorage) afin de ne pas redevenir intrusif.
+    try {
+      const stored = window.sessionStorage.getItem("mapgeo:legend:userPref");
+      if (stored === "0") return false;
+      if (stored === "1") return true;
+    } catch {
+      // sessionStorage indisponible : on continue avec la valeur par defaut
+    }
+    return true;
+  });
+
+  const persistShowLegend = useCallback((next) => {
+    setShowLegend((current) => {
+      const value = typeof next === "function" ? next(current) : next;
+      try {
+        window.sessionStorage.setItem("mapgeo:legend:userPref", value ? "1" : "0");
+      } catch {
+        // sessionStorage non critique : on ignore
+      }
+      return value;
+    });
+  }, []);
 
   const [viewMode, setViewMode] = useState(defaultViewMode);
   const [searchTerm, setSearchTerm] = useState("");
@@ -652,7 +676,7 @@ export default function ClientPortfolioMap({
           coordinateSystem={coordinateSystem}
           onFeatureSelection={handleFeatureSelection}
           onFocusSelection={handleFocusSelection}
-          setShowLegend={setShowLegend}
+          setShowLegend={persistShowLegend}
           setShowVertices={setShowVertices}
           setShowMeasurements={setShowMeasurements}
           setShowPrintDialog={setShowPrintDialog}
