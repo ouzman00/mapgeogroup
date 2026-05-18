@@ -81,10 +81,22 @@ class ImportJobExecuteView(ImportJobQuerysetMixin, GenericAPIView):
             return Response({"detail": "Import introuvable."}, status=status.HTTP_404_NOT_FOUND)
         if getattr(request.user, "role", None) not in MANAGER_ROLES:
             raise PermissionDenied("Seuls les utilisateurs internes peuvent exécuter un import métier.")
+        # Important : on ne traite plus l import en HTTP synchrone (timeout Render ~30s).
+        # On le marque en attente, le worker process_import_jobs --loop le traitera.
+        # Le frontend doit poller /api/imports/<id>/ pour suivre la progression.
+        if job.status not in ("pending", "validating", "ready"):
+            return Response(
+                {"detail": f"Cet import est deja en statut {job.status} et ne peut pas etre relance."},
+                status=status.HTTP_409_CONFLICT,
+            )
         job.execute_on_process = True
-        job.save(update_fields=["execute_on_process", "updated_at"])
-        job = process_import_job(job)
-        return Response(ImportJobSerializer(job, context={"request": request}).data)
+        if job.status == "ready":
+            job.status = "pending"
+        job.save(update_fields=["execute_on_process", "status", "updated_at"])
+        return Response(
+            ImportJobSerializer(job, context={"request": request}).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class ImportJobValidateView(ImportJobQuerysetMixin, GenericAPIView):
