@@ -2430,9 +2430,7 @@ export default function PortfolioMapShell({
                     mouseout: () => setHoveredFeatureId(null),
                   }}
                 >
-                  <Tooltip sticky>
-                    {feature.parcel.reference} · {feature.statusLabel}
-                  </Tooltip>
+                  <Tooltip direction="top" offset={[0, -4]} opacity={0.96} className="mapgeo-parcel-tooltip"><strong>{feature.parcel.reference}</strong><span>{feature.statusLabel}</span></Tooltip>
                 </CircleMarker>
               );
             }
@@ -2450,8 +2448,9 @@ export default function PortfolioMapShell({
                   mouseout: () => setHoveredFeatureId(null),
                 }}
               >
-                <Tooltip sticky>
-                  {feature.parcel.reference} · {feature.statusLabel}
+                <Tooltip direction="top" offset={[0, -4]} opacity={0.96} className="mapgeo-parcel-tooltip">
+                  <strong>{feature.parcel.reference}</strong>
+                  <span>{feature.statusLabel}</span>
                 </Tooltip>
               </Polygon>
             );
