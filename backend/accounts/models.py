@@ -33,6 +33,13 @@ class User(AbstractUser):
     phone = models.CharField(max_length=50, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
 
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        blank=True,
+        null=True,
+        help_text="Photo de profil utilisateur, max 2 Mo.",
+    )
+
     def __str__(self) -> str:
         identity = self.client_code or self.username
         return f"{identity} ({self.role})"

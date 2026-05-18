@@ -12,6 +12,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
@@ -895,3 +896,40 @@ class UserInviteView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class CurrentUserAvatarView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request):
+        avatar_file = request.FILES.get("avatar")
+        if not avatar_file:
+            if str(request.data.get("clear", "")).lower() in {"1", "true", "yes"}:
+                if request.user.avatar:
+                    request.user.avatar.delete(save=False)
+                request.user.avatar = None
+                request.user.save(update_fields=["avatar"])
+                return Response({"avatar_url": ""})
+            return Response({"detail": "Aucune image fournie."}, status=400)
+
+        if avatar_file.size > 2 * 1024 * 1024:
+            return Response({"detail": "La photo doit peser moins de 2 Mo."}, status=400)
+        if not str(avatar_file.content_type or "").startswith("image/"):
+            return Response({"detail": "Fichier non reconnu comme une image."}, status=400)
+
+        if request.user.avatar:
+            request.user.avatar.delete(save=False)
+        request.user.avatar = avatar_file
+        request.user.save(update_fields=["avatar"])
+        return Response({
+            "avatar_url": request.user.avatar.url if request.user.avatar else "",
+        })
+
+    def delete(self, request):
+        if request.user.avatar:
+            request.user.avatar.delete(save=False)
+        request.user.avatar = None
+        request.user.save(update_fields=["avatar"])
+        return Response(status=204)
+

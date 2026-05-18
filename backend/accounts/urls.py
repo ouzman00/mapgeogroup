@@ -16,10 +16,12 @@ from .views import (
     UserAccessActionView,
     UserDetailView,
     UserInviteView,
-    UserListView,
+    UserListView,,
+    CurrentUserAvatarView,
 )
 
 urlpatterns = [
+    path("me/avatar/", CurrentUserAvatarView.as_view(), name="me-avatar"),
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("register/", RegisterView.as_view(), name="register"),
