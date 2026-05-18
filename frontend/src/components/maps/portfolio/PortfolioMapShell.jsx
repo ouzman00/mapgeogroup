@@ -252,6 +252,75 @@ function ringCentroid(ring) {
   return [lat / n, lng / n];
 }
 
+/**
+ * Decale les side markers de facon constante en pixels
+ * quel que soit le zoom.
+ */
+function repositionSideMarkersOutsideInPixels(markers, map, pixels = 16) {
+  if (!Array.isArray(markers) || !map) return markers;
+
+  if (
+    typeof map.project !== "function" ||
+    typeof map.unproject !== "function" ||
+    typeof map.getZoom !== "function"
+  ) {
+    return markers;
+  }
+
+  const zoom = map.getZoom();
+
+  return markers.map((m) => {
+    if (!m?.midPoint || !m?.segA || !m?.segB) return m;
+
+    try {
+      const midPx = map.project(L.latLng(m.midPoint[0], m.midPoint[1]), zoom);
+      const aPx = map.project(L.latLng(m.segA[0], m.segA[1]), zoom);
+      const bPx = map.project(L.latLng(m.segB[0], m.segB[1]), zoom);
+
+      const dx = bPx.x - aPx.x;
+      const dy = bPx.y - aPx.y;
+
+      let nx = -dy;
+      let ny = dx;
+
+      const norm = Math.hypot(nx, ny);
+      if (!norm) return m;
+
+      nx /= norm;
+      ny /= norm;
+
+      if (m.ringCentroid) {
+        const cPx = map.project(
+          L.latLng(m.ringCentroid[0], m.ringCentroid[1]),
+          zoom
+        );
+
+        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
+
+        if (dot > 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+      }
+
+      const offsetPx = L.point(
+        midPx.x + nx * pixels,
+        midPx.y + ny * pixels
+      );
+
+      const ll = map.unproject(offsetPx, zoom);
+
+      return {
+        ...m,
+        point: [ll.lat, ll.lng],
+      };
+    } catch {
+      return m;
+    }
+  });
+}
+
+
 // Decalage perpendiculaire vers l exterieur du polygone.
 // Pour avoir un decalage CONSTANT en pixels ecran quel que soit le zoom,
 // on convertit les latlng en pixels via map.project, decale en pixels,
@@ -343,6 +412,8 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       const distance = computeDistanceBetweenPoints(point, nextPoint);
       if (!Number.isFinite(distance) || distance <= 0) continue;
       const mid = midpoint(point, nextPoint);
+      const segA = point;
+      const segB = nextPoint;
       // Offset CONSTANT en pixels ecran (~14px), peu importe le zoom.
       // C est le standard cartographique pro (QGIS, ArcGIS). offsetOutside
       // utilise map.project/unproject pour convertir 14 pixels en latlng.
