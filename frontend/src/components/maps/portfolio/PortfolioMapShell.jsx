@@ -2419,13 +2419,13 @@ export default function PortfolioMapShell({
                       key={`vertex-${ringIndex}-${index}`}
                       center={point}
                       pane={MAP_PANES.measure}
-                      radius={7}
+                      radius={3}
                       pathOptions={{
-                        color: MEASURE_STYLE.vertexBorder,
-                        fillColor: MEASURE_STYLE.vertexFill,
-                        fillOpacity: 0.96,
+                        color: "#FFFFFF",
+                        fillColor: "#FFFFFF",
+                        fillOpacity: 1,
                         opacity: 1,
-                        weight: 2.5,
+                        weight: 0,
                       }}
                       interactive={false}
                     >
