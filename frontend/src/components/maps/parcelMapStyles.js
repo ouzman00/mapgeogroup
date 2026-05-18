@@ -399,6 +399,18 @@ export function getParcelPathOptions(parcelOrStatus, options = {}) {
   };
 }
 
+// Ordre logique d affichage des statuts dans la legende
+const STATUS_LEGEND_ORDER = [
+  "planned",
+  "draft",
+  "surveying",
+  "processing",
+  "ready",
+  "completed",
+  "to_verify",
+  "disputed",
+];
+
 export function getAvailableLegendItems(features = []) {
   const normalizedFeatures = Array.isArray(features)
     ? features.filter(Boolean)
@@ -408,6 +420,32 @@ export function getAvailableLegendItems(features = []) {
     return [];
   }
 
+  // 1. Lister les statuts presents dans le portefeuille pour les afficher en haut
+  const presentStatuses = new Set();
+  for (const feature of normalizedFeatures) {
+    const rawStatus = feature?.parcel?.status;
+    if (rawStatus && PARCEL_STATUS_STYLES[rawStatus]) {
+      presentStatuses.add(rawStatus);
+    }
+  }
+
+  const statusItems = STATUS_LEGEND_ORDER
+    .filter((status) => presentStatuses.has(status))
+    .map((status) => {
+      const style = PARCEL_STATUS_STYLES[status];
+      return {
+        id: `status-${status}`,
+        label: style.legend || style.label || status,
+        symbol: "polygon",
+        color: style.color,
+        fillColor: style.fillColor,
+        fillOpacity: 0.2,
+        strokeOpacity: 1,
+        weight: 3,
+      };
+    });
+
+  // 2. Items contextuels (alertes metier)
   const hasGeometryError = normalizedFeatures.some((feature) =>
     Boolean(
       feature?.geometryWarning ||
@@ -426,10 +464,12 @@ export function getAvailableLegendItems(features = []) {
     return gap.severity === "warning" || gap.severity === "danger";
   });
 
-  return PROFESSIONAL_LEGEND_ITEMS.filter((item) => {
+  const contextItems = PROFESSIONAL_LEGEND_ITEMS.filter((item) => {
     if (item.id === "geometry-error") return hasGeometryError;
     if (item.id === "has-documents") return hasDocuments;
     if (item.id === "surface-warning") return hasSurfaceWarning;
     return true;
   });
+
+  return [...statusItems, ...contextItems];
 }
