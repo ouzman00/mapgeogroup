@@ -344,7 +344,9 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       // Offset CONSTANT en pixels ecran (~14px), peu importe le zoom.
       // C est le standard cartographique pro (QGIS, ArcGIS). offsetOutside
       // utilise map.project/unproject pour convertir 14 pixels en latlng.
-      const labelPoint = offsetOutside(mid, point, nextPoint, centroid, 14, map);
+      // Offset adaptatif en metres : 1.5 m pour petits segments, 4 m pour grands
+      const offset = Math.max(1.5, Math.min(distance * 0.025, 4));
+      const labelPoint = offsetOutside(mid, point, nextPoint, centroid, offset);
       markers.push({
         id: `${tone}-side-${ringIndex}-${index}`,
         point: labelPoint,
@@ -357,9 +359,9 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
   return markers;
 }
 
-function buildGeometryMeasurementOverlay(geometry, tone = "default", map = null) {
+function buildGeometryMeasurementOverlay(geometry, tone = "default") {
   const rings = geometryToRings(geometry);
-  const sideMarkers = buildSideMarkersFromRings(rings, tone, true, map);
+  const sideMarkers = buildSideMarkersFromRings(rings, tone, true);
   const area = geometryAreaM2Projected(geometry);
   const perimeter = rings.reduce((total, ring) => total + distanceAlongPoints(stripMeasurementClosingPoint(ring), true), 0);
   const center = geometryCentroid(geometry) || rings[0]?.[0] || null;
@@ -378,13 +380,13 @@ function buildGeometryMeasurementOverlay(geometry, tone = "default", map = null)
   };
 }
 
-function buildMeasurementDraftOverlay(draft, map = null) {
+function buildMeasurementDraftOverlay(draft) {
   const previewPoints = getMeasurementPreviewPoints(draft);
   const cleanPoints = draft?.mode === "surface" ? stripMeasurementClosingPoint(previewPoints) : previewPoints;
   const isSurface = draft?.mode === "surface" && cleanPoints.length >= 3;
   const geometry = isSurface ? polygonGeometryFromLatLngRing(cleanPoints) : null;
-  const sideMarkers = buildSideMarkersFromRings([cleanPoints], "measure", isSurface, map);
-  const overlay = geometry ? buildGeometryMeasurementOverlay(geometry, "measure", map) : { sideMarkers: [], areaMarker: null };
+  const sideMarkers = buildSideMarkersFromRings([cleanPoints], "measure", isSurface);
+  const overlay = geometry ? buildGeometryMeasurementOverlay(geometry, "measure") : { sideMarkers: [], areaMarker: null };
 
   return {
     sideMarkers,
@@ -1883,8 +1885,8 @@ export default function PortfolioMapShell({
   useEffect(() => {
     editGeometryRef.current = editGeometry;
   }, [editGeometry]);
-  const selectedMeasurementOverlay = useMemo(() => buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure", map), [activeFeature, map, mapZoom]);
-  const measurementDraftOverlay = useMemo(() => buildMeasurementDraftOverlay(measurementDraft, map), [measurementDraft, map, mapZoom]);
+  const selectedMeasurementOverlay = useMemo(() => buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure"), [activeFeature]);
+  const measurementDraftOverlay = useMemo(() => buildMeasurementDraftOverlay(measurementDraft), [measurementDraft]);
   const labelFeatures = useMemo(() => {
     const isValidFeature = (feature) =>
       feature?.rings?.length > 0 &&
