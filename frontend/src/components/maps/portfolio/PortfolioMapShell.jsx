@@ -256,69 +256,7 @@ function ringCentroid(ring) {
  * Decale les side markers de facon constante en pixels
  * quel que soit le zoom.
  */
-function repositionSideMarkersOutsideInPixels(markers, map, pixels = 16) {
-  if (!Array.isArray(markers) || !map) return markers;
 
-  if (
-    typeof map.project !== "function" ||
-    typeof map.unproject !== "function" ||
-    typeof map.getZoom !== "function"
-  ) {
-    return markers;
-  }
-
-  const zoom = map.getZoom();
-
-  return markers.map((m) => {
-    if (!m?.midPoint || !m?.segA || !m?.segB) return m;
-
-    try {
-      const midPx = map.project(L.latLng(m.midPoint[0], m.midPoint[1]), zoom);
-      const aPx = map.project(L.latLng(m.segA[0], m.segA[1]), zoom);
-      const bPx = map.project(L.latLng(m.segB[0], m.segB[1]), zoom);
-
-      const dx = bPx.x - aPx.x;
-      const dy = bPx.y - aPx.y;
-
-      let nx = -dy;
-      let ny = dx;
-
-      const norm = Math.hypot(nx, ny);
-      if (!norm) return m;
-
-      nx /= norm;
-      ny /= norm;
-
-      if (m.ringCentroid) {
-        const cPx = map.project(
-          L.latLng(m.ringCentroid[0], m.ringCentroid[1]),
-          zoom
-        );
-
-        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
-
-        if (dot > 0) {
-          nx = -nx;
-          ny = -ny;
-        }
-      }
-
-      const offsetPx = L.point(
-        midPx.x + nx * pixels,
-        midPx.y + ny * pixels
-      );
-
-      const ll = map.unproject(offsetPx, zoom);
-
-      return {
-        ...m,
-        point: [ll.lat, ll.lng],
-      };
-    } catch {
-      return m;
-    }
-  });
-}
 
 
 // Decalage perpendiculaire vers l exterieur du polygone.
@@ -398,6 +336,114 @@ function offsetOutside(midPt, segA, segB, centroid, offsetPixels = 14, map = nul
   ];
 }
 
+function isMobileCartographyViewportSafe() {
+  try {
+    return typeof isMobileCartographyViewport === "function"
+      ? isMobileCartographyViewport()
+      : false;
+  } catch {
+    return false;
+  }
+}
+
+function getSideMarkerPixelOptions(map) {
+  const zoom = typeof map?.getZoom === "function" ? map.getZoom() : 18;
+  const mobile = isMobileCartographyViewportSafe();
+
+  return {
+    zoom,
+    offsetPixels: mobile ? 42 : 34,
+    minSegmentPixels: mobile ? 95 : 72,
+    minZoom: mobile ? 18 : 16,
+  };
+}
+
+function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
+  if (!Array.isArray(markers) || markers.length === 0) return [];
+
+  if (
+    !map ||
+    typeof map.project !== "function" ||
+    typeof map.unproject !== "function" ||
+    typeof map.getZoom !== "function"
+  ) {
+    return markers.map((marker) => ({ ...marker, visible: true }));
+  }
+
+  const options = getSideMarkerPixelOptions(map);
+  const zoom = options.zoom;
+  const offsetPixels = Number.isFinite(pixels) ? pixels : options.offsetPixels;
+
+  const projected = markers.map((marker) => {
+    if (!marker?.midPoint || !marker?.segA || !marker?.segB) {
+      return { ...marker, visible: false };
+    }
+
+    try {
+      const midPx = map.project(L.latLng(marker.midPoint[0], marker.midPoint[1]), zoom);
+      const aPx = map.project(L.latLng(marker.segA[0], marker.segA[1]), zoom);
+      const bPx = map.project(L.latLng(marker.segB[0], marker.segB[1]), zoom);
+
+      const dx = bPx.x - aPx.x;
+      const dy = bPx.y - aPx.y;
+      const segmentPixels = Math.hypot(dx, dy);
+
+      let nx = -dy;
+      let ny = dx;
+
+      const norm = Math.hypot(nx, ny);
+      if (!norm) return { ...marker, visible: false };
+
+      nx /= norm;
+      ny /= norm;
+
+      if (marker.ringCentroid) {
+        const cPx = map.project(L.latLng(marker.ringCentroid[0], marker.ringCentroid[1]), zoom);
+        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
+
+        if (dot > 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+      }
+
+      const adaptiveOffset = Math.max(offsetPixels, Math.min(54, segmentPixels * 0.34));
+      const labelPx = L.point(midPx.x + nx * adaptiveOffset, midPx.y + ny * adaptiveOffset);
+      const labelLatLng = map.unproject(labelPx, zoom);
+
+      return {
+        ...marker,
+        point: [labelLatLng.lat, labelLatLng.lng],
+        labelPx,
+        segmentPixels,
+        visible: zoom >= options.minZoom && segmentPixels >= options.minSegmentPixels,
+      };
+    } catch {
+      return { ...marker, visible: false };
+    }
+  });
+
+  const kept = [];
+
+  return projected.map((marker) => {
+    if (!marker.visible || !marker.labelPx) return { ...marker, visible: false };
+
+    const collides = kept.some((other) => {
+      const dx = other.labelPx.x - marker.labelPx.x;
+      const dy = other.labelPx.y - marker.labelPx.y;
+      return Math.hypot(dx, dy) < 46;
+    });
+
+    if (collides) {
+      return { ...marker, visible: false };
+    }
+
+    kept.push(marker);
+    return marker;
+  });
+}
+
+
 function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
   const markers = [];
   (Array.isArray(rings) ? rings : []).forEach((ring, ringIndex) => {
@@ -414,9 +460,7 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       const mid = midpoint(point, nextPoint);
       const segA = point;
       const segB = nextPoint;
- const segA = point;
-      const segB = nextPoint;
-      // Offset CONSTANT en pixels ecran (~14px), peu importe le zoom.
+// Offset CONSTANT en pixels ecran (~14px), peu importe le zoom.
       // C est le standard cartographique pro (QGIS, ArcGIS). offsetOutside
       // utilise map.project/unproject pour convertir 14 pixels en latlng.
       // Offset adaptatif en metres : 1.5 m pour petits segments, 4 m pour grands

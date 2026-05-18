@@ -2762,7 +2762,6 @@ html body .leaflet-tooltip.mapgeo-parcel-tooltip::before {
   border-top-color: #FFFFFF !important;
 }
 
-/* === CARTO FIX - labels de mesures lisibles === */
 html body .mapgeo-side-label-shell {
   overflow: visible !important;
   pointer-events: none !important;
@@ -2785,6 +2784,42 @@ html body .mapgeo-side-label {
   html body .mapgeo-side-label {
     font-size: 10px !important;
     -webkit-text-stroke: 2.2px #ffffff !important;
+  }
+
+  .mapgeo-measure-panel {
+    max-height: min(48vh, 360px) !important;
+  }
+}
+
+/* === CARTO FIX - labels de mesures lisibles === */
+html body .mapgeo-side-label-shell {
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+html body .mapgeo-side-label {
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-text-stroke: 2.8px #ffffff !important;
+  paint-order: stroke fill !important;
+  text-shadow:
+    -1px -1px 0 #ffffff,
+    1px -1px 0 #ffffff,
+    -1px 1px 0 #ffffff,
+    1px 1px 0 #ffffff,
+    0 2px 3px rgba(0, 0, 0, 0.38) !important;
+}
+
+@media (max-width: 767px) {
+  html body .mapgeo-side-label {
+    font-size: 9.5px !important;
+    -webkit-text-stroke: 2.5px #ffffff !important;
   }
 
   .mapgeo-measure-panel {
