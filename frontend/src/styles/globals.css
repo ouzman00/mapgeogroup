@@ -2892,12 +2892,7 @@ html body .mapgeo-legend-scroll {
 }
 
 html body .mapgeo-parcel-sublegend {
-  background: rgba(255, 255, 255, 0.05) !important;
-}
-
-html body .mapgeo-parcel-sublegend .mapgeo-side-label,
-html body .mapgeo-parcel-sublegend span {
-  color: inherit;
+  background: transparent !important;
 }
 
 @media (max-width: 767px) {
@@ -2907,21 +2902,9 @@ html body .mapgeo-parcel-sublegend span {
   }
 
   html body .mapgeo-legend-scroll {
-    max-height: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     padding-right: 4px !important;
-  }
-
-  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel {
-    max-height: min(56dvh, 390px) !important;
-    overflow: hidden !important;
-  }
-
-  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-scroll {
-    max-height: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
   }
 }
 

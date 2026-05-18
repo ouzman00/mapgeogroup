@@ -259,6 +259,114 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
   const unavailable = !canToggleLayer(layer);
   const layerLabel = layerDisplayName(layer);
   const status = layerStatus(layer);
+  const isParcelsLayer = isParcelsLegendLayer(layer);
+  const hasServerLegend = items.some(isLegendImageItem);
+  const showInlineSymbol = !isParcelsLayer && !hasServerLegend && items.length > 0;
+  const showItemDetails = visible && !unavailable && (
+    isParcelsLayer
+      ? items.length > 0
+      : hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend")
+  );
+
+  const handleToggle = (event) => {
+    event.stopPropagation();
+
+    if (unavailable) {
+      return;
+    }
+
+    onToggleLayer?.(layer.id);
+  };
+
+  return (
+    <div
+      className={`rounded-xl border px-2 py-2 transition ${
+        visible ? "border-white/10 bg-white/[0.055]" : "border-white/10 bg-white/[0.025]"
+      } ${unavailable ? "opacity-65" : ""}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={handleToggle}
+            disabled={unavailable}
+            className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
+              visible && !unavailable
+                ? "border-mapgeo-sand/40 bg-mapgeo-primary/70 text-white shadow-soft"
+                : "border-white/20 bg-white/[0.035] text-transparent hover:border-white/30 hover:bg-white/[0.065]"
+            }`}
+            aria-pressed={visible && !unavailable}
+            aria-label={visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
+            title={unavailable ? `${layerLabel} indisponible` : visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
+          >
+            {visible && !unavailable ? <Check size={20} strokeWidth={3} /> : null}
+          </button>
+
+          <span className="min-w-0">
+            <span className={`block truncate text-[13px] font-extrabold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
+              {layerLabel}
+            </span>
+
+            <span
+              className={`mt-0.5 flex items-center gap-1.5 text-[11px] font-bold ${
+                status.tone === "error"
+                  ? "text-red-200"
+                  : status.tone === "warning"
+                    ? "text-mapgeo-sand/80"
+                    : status.tone === "loading"
+                      ? "text-white/70"
+                      : status.tone === "ok"
+                        ? "text-white/55"
+                        : "text-white/42"
+              }`}
+            >
+              {status.tone === "error" ? <AlertTriangle size={12} /> : null}
+              {status.tone === "loading" ? <Loader2 size={12} className="animate-spin" /> : null}
+              <span className="truncate">{status.label}</span>
+            </span>
+          </span>
+        </span>
+
+        {showInlineSymbol ? <LegendSymbol item={items[0]} muted={!visible || unavailable} /> : null}
+      </div>
+
+      {showItemDetails ? (
+        <div className={`mt-2 space-y-2 border-t border-white/10 pt-2 ${isParcelsLayer ? "mapgeo-parcel-sublegend" : ""}`}>
+          {items.map((item) => {
+            const isImageLegend = isLegendImageItem(item);
+            const itemKey = `${layer.id}-${item.id || item.label || item.url || item.imageUrl || item.imageEndpoint || "legend"}`;
+
+            if (isImageLegend) {
+              return (
+                <div key={itemKey} className="rounded-xl border border-white/10 bg-black/10 p-2">
+                  <div className="mb-1.5 truncate text-[12px] font-extrabold text-white/75">
+                    {item.label || "Légende publiée par le serveur WMS"}
+                  </div>
+                  <LegendSymbol item={item} compact={false} />
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={itemKey}
+                className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/65"
+              >
+                <span className="truncate">{item.label}</span>
+                <LegendSymbol item={item} />
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}) {
+  const items = legendItems(layer, features);
+  const visible = layer?.visible !== false;
+  const unavailable = !canToggleLayer(layer);
+  const layerLabel = layerDisplayName(layer);
+  const status = layerStatus(layer);
   const hasServerLegend = items.some(isLegendImageItem);
   const showInlineSymbol = !hasServerLegend;
   const showItemDetails = visible && !unavailable && (hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend"));
@@ -420,7 +528,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
   return (
     <div
-      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] max-h-[46%] overflow-y-auto rounded-2xl border border-white/10 bg-[#07111b]/88 p-2.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[252px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
+      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] max-h-[46%] overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/88 p-2.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[252px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
