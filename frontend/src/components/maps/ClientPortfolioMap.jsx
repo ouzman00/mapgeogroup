@@ -650,6 +650,7 @@ export default function ClientPortfolioMap({
           mapContainerRef={mapContainerRef}
           map={map}
           setMap={setMap}
+          mapZoom={mapZoom}
           setMapZoom={setMapZoom}
           activeFeature={portfolio.activeFeature}
           viewportFeatures={portfolio.viewportFeatures}

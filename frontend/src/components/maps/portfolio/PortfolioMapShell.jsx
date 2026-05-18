@@ -1694,6 +1694,7 @@ export default function PortfolioMapShell({
   mapContainerRef,
   map,
   setMap,
+  mapZoom = 16,
   setMapZoom,
   activeFeature,
   viewportFeatures,
