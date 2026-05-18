@@ -25,13 +25,13 @@ export const PARCEL_STATUS_STYLES = {
     color: "#B45309",
     fillColor: "#FDE7C7",
     label: "Vérification",
-    legend: "Ancien statut : levé en cours",
+    legend: "Levé en cours",
   },
   processing: {
     color: "#B45309",
     fillColor: "#FDE7C7",
     label: "Vérification",
-    legend: "Ancien statut : traitement",
+    legend: "Traitement",
   },
   draft: {
     color: "#123B5D",
@@ -43,13 +43,13 @@ export const PARCEL_STATUS_STYLES = {
     color: "#0F766E",
     fillColor: "#D8F3EE",
     label: "Terminée",
-    legend: "Ancien statut : dossier prêt",
+    legend: "Dossier prêt",
   },
   disputed: {
     color: "#B45309",
     fillColor: "#FDE7C7",
     label: "Vérification",
-    legend: "Ancien statut : litige",
+    legend: "Litige",
   },
 };
 
