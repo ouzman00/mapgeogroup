@@ -712,7 +712,7 @@ export default function PortfolioInspector({
     : emptyInspector;
 
   return (
-    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0c1a28]/96 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+    <aside className="mapgeo-portfolio-inspector-inner flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-white/10 bg-[#0c1a28]/96 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
       <div className="shrink-0 border-b border-white/10 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

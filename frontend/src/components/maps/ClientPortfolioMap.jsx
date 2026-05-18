@@ -615,14 +615,23 @@ export default function ClientPortfolioMap({
       data-mobile-panel={mobilePanel}
     >
       <div className="mapgeo-mobile-carto-tabs md:hidden" role="tablist" aria-label="Navigation cartographie mobile">
-        <button type="button" aria-pressed={mobilePanel === "map"} onClick={() => setMobilePanel("map")}>
-          Carte
+        <button type="button" aria-pressed={mobilePanel === "map"} onClick={() => setMobilePanel("map")} aria-label="Carte">
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polygon points="3,6 9,3 15,6 21,3 21,18 15,21 9,18 3,21" /><line x1="9" y1="3" x2="9" y2="18" /><line x1="15" y1="6" x2="15" y2="21" />
+          </svg>
+          <span>Carte</span>
         </button>
-        <button type="button" aria-pressed={mobilePanel === "search"} onClick={() => setMobilePanel("search")}>
-          Recherche
+        <button type="button" aria-pressed={mobilePanel === "search"} onClick={() => setMobilePanel("search")} aria-label="Recherche parcelles">
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span>Parcelles</span>
         </button>
-        <button type="button" aria-pressed={mobilePanel === "inspector"} onClick={() => setMobilePanel("inspector")}>
-          Fiche
+        <button type="button" aria-pressed={mobilePanel === "inspector"} onClick={() => setMobilePanel("inspector")} aria-label="Fiche parcelle">
+          <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14,2 14,8 20,8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="13" y2="17" />
+          </svg>
+          <span>Fiche</span>
         </button>
       </div>
       <div className="mapgeo-portfolio-grid grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)] min-[1180px]:grid-cols-[300px_minmax(0,1fr)_340px] 2xl:grid-cols-[320px_minmax(0,1fr)_360px]">
