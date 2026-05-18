@@ -2415,6 +2415,12 @@ export default function PortfolioMapShell({
   }, [editSaving]);
 
 
+  useEffect(() => {
+    if (!showMeasurements || !inlineEditOpen) return;
+    closeInlineEdit();
+  }, [closeInlineEdit, inlineEditOpen, showMeasurements]);
+
+
   const handleExportPng = async () => {
     setShowLegend(false);
     setShowMeasurements(false);
@@ -2805,6 +2811,7 @@ export default function PortfolioMapShell({
           setShowMeasurements={setShowMeasurements}
           setShowVertices={setShowVertices}
           onStartEdit={canManageParcels ? startInlineEdit : undefined}
+          onStopEdit={closeInlineEdit}
           onOpenExportOptions={() => setShowPrintDialog(true)}
           onExportPng={handleExportPng}
           onExportJpeg={handleExportJpeg}

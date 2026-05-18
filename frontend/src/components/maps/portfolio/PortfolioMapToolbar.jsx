@@ -113,6 +113,7 @@ export default function FloatingMapToolbar({
   setShowMeasurements,
   setShowVertices,
   onStartEdit,
+  onStopEdit,
   onOpenExportOptions,
   onExportPng,
   onExportJpeg,
@@ -172,11 +173,18 @@ export default function FloatingMapToolbar({
                     setActiveCommand("tools");
                     setShowMeasurements(false);
                     setShowVertices(false);
+
+                    if (inlineEditActive) {
+                      onStopEdit?.();
+                      return;
+                    }
+
                     onStartEdit?.();
                   }}
                 />
               ) : null}
               <ToolbarButton active={showMeasurements} icon={Ruler} label="Mesures" forceLabel className={compactToolButtonClass} title="Mesures" onClick={() => {
+                  onStopEdit?.();
                   setShowLegend(false);
                   setShowVertices(false);
                   setActiveCommand("tools");
@@ -193,7 +201,9 @@ export default function FloatingMapToolbar({
                 disabled={verticesDisabled}
                 onClick={() => {
                   if (verticesDisabled) return;
+                  onStopEdit?.();
                   setActiveCommand("tools");
+                  setShowMeasurements(false);
                   setShowVertices((current) => !current);
                 }}
               />
