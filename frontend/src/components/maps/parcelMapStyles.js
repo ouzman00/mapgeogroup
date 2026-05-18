@@ -1,57 +1,59 @@
 import { PARCEL_STATUS_LABELS } from "../../constants/parcelConstants";
 
 export const PARCEL_STATUS_STYLES = {
-  // --- Statuts principaux ---
-  // Bleu : mission planifiee, pas encore demarree
+  // Mission planifiee : bleu clair / royal
   planned: {
-    color: "#1D4ED8",
-    fillColor: "#3B82F6",
+    color: "#2563EB",
+    fillColor: "#2563EB",
     label: PARCEL_STATUS_LABELS.planned,
     legend: "Mission planifiée",
   },
-  // Orange amber : en cours de verification / levé
-  to_verify: {
-    color: "#D97706",
-    fillColor: "#F59E0B",
-    label: PARCEL_STATUS_LABELS.to_verify,
-    legend: "Vérification à faire",
+  // Brouillon : indigo (proche du bleu, mais distinguable)
+  draft: {
+    color: "#4F46E5",
+    fillColor: "#4F46E5",
+    label: "Brouillon",
+    legend: "Brouillon",
   },
-  // Vert : dossier complet et terminé
-  completed: {
-    color: "#059669",
-    fillColor: "#10B981",
-    label: PARCEL_STATUS_LABELS.completed,
-    legend: "Terminée",
-  },
-  // --- Alias / anciens statuts (meme couleur que leur equivalent) ---
+  // Leve en cours : cyan (terrain actif)
   surveying: {
-    color: "#D97706",
-    fillColor: "#F59E0B",
+    color: "#0891B2",
+    fillColor: "#0891B2",
     label: "Levé en cours",
     legend: "Levé en cours",
   },
+  // Traitement : teal fonce (bureau, post-leve)
   processing: {
-    color: "#D97706",
-    fillColor: "#F59E0B",
+    color: "#0F766E",
+    fillColor: "#0F766E",
     label: "Traitement",
     legend: "Traitement",
   },
-  draft: {
-    color: "#1D4ED8",
-    fillColor: "#3B82F6",
-    label: "Brouillon",
-    legend: "Plan en préparation",
-  },
+  // Dossier pret : vert sombre (proche de la fin)
   ready: {
-    color: "#059669",
-    fillColor: "#10B981",
-    label: "Prêt",
+    color: "#15803D",
+    fillColor: "#15803D",
+    label: "Dossier prêt",
     legend: "Dossier prêt",
   },
-  // Litige : violet pour le distinguer clairement des autres
+  // Bornage realise : vert vif (termine)
+  completed: {
+    color: "#22C55E",
+    fillColor: "#22C55E",
+    label: PARCEL_STATUS_LABELS.completed,
+    legend: "Bornage réalisé",
+  },
+  // A verifier : orange ambre
+  to_verify: {
+    color: "#D97706",
+    fillColor: "#D97706",
+    label: PARCEL_STATUS_LABELS.to_verify,
+    legend: "À vérifier",
+  },
+  // Litige : rouge
   disputed: {
-    color: "#7C3AED",
-    fillColor: "#8B5CF6",
+    color: "#DC2626",
+    fillColor: "#DC2626",
     label: "Litige",
     legend: "Litige",
   },
