@@ -294,13 +294,23 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
   }
 
   /**
-   * Selection : gros contour navy bien visible, fill leger pour confirmer la parcelle.
-   * Le fond satellite/plan reste lisible a l interieur, comme sur les SIG metier.
+   * Selection :
+   * - conserve la couleur statut/metier
+   * - contour fortement epaissi
+   * - fill discret pour garder le fond visible
+   * - rendu type SIG/cadastre moderne
    */
   if (active && !editing && !geometryError) {
-    color = "#0B2236";
+    // Conserve la couleur statut definie plus haut
+    color = color || style.color || "#123B5D";
+
+    // Contour fort pour bien identifier la parcelle active
     weight = ACTIVE_WEIGHT;
-    fillOpacity = 0.18;
+
+    // Fill leger : on garde le satellite/plan visible
+    fillOpacity = Math.max(fillOpacity, 0.16);
+
+    opacity = 1;
     dashArray = null;
   }
 
