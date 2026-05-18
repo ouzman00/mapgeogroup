@@ -310,7 +310,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     // Fill leger : on garde le satellite/plan visible
     fillOpacity = Math.max(fillOpacity, 0.16);
 
-    opacity = 1;
+    // opacity geree par Leaflet via le style final
     dashArray = null;
   }
 
