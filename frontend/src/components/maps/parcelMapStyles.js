@@ -322,7 +322,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     color = "#2563EB";
     fillColor = "#DBEAFE";
     weight = EDITING_WEIGHT;
-    dashArray = "10 6";
+    dashArray = null;
     fillOpacity = 0.10;
   }
 
@@ -330,7 +330,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     color = "#475569";
     fillColor = "#E2E8F0";
     weight = LOCKED_WEIGHT;
-    dashArray = "3 6";
+    dashArray = null;
     fillOpacity = 0.04;
   }
 
@@ -342,7 +342,7 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
     color = "#DC2626";
     fillColor = "#FEE2E2";
     weight = ERROR_WEIGHT;
-    dashArray = "6 4";
+    dashArray = null;
     fillOpacity = active ? 0.16 : 0.08;
   }
 
