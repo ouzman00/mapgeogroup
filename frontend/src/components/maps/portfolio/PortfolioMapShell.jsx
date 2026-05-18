@@ -317,13 +317,15 @@ function offsetOutside(midPt, segA, segB, centroid, offsetPixels = 14, map = nul
     }
   }
 
-  const fallbackMeters = 1.5;
+  // Le parametre `offsetPixels` est utilise comme valeur en METRES en mode fallback.
+  // L appelant fournit donc directement la distance en metres souhaitee.
+  const offsetMeters = Math.max(0.3, offsetPixels);
   const latRad = (midPt[0] * Math.PI) / 180;
   const metersPerDegLng = 111320 * Math.cos(latRad);
   const metersPerDegLat = 111320;
   return [
-    midPt[0] + (ny * fallbackMeters) / metersPerDegLat,
-    midPt[1] + (nx * fallbackMeters) / metersPerDegLng,
+    midPt[0] + (ny * offsetMeters) / metersPerDegLat,
+    midPt[1] + (nx * offsetMeters) / metersPerDegLng,
   ];
 }
 

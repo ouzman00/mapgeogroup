@@ -483,7 +483,8 @@ export default function ClientPortfolioMap({
     const firstFeature = portfolio.filteredFeatures[0];
 
     if (firstFeature) {
-      setMobilePanel("inspector");
+      // On garde l utilisateur sur la carte. La parcelle est selectionnee
+      // et le bandeau "Fiche" reste accessible via la barre d onglets.
       handleFeatureSelection(firstFeature, {
         focus: true,
         reason: "search",

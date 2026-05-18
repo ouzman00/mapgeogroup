@@ -116,32 +116,15 @@ textarea:focus {
   border: none;
 }
 
-/* Side label : decale visuellement le texte au-dessus du segment */
+/* Side label : centrage horizontal et vertical du shell sur le milieu du segment.
+   Le rotate du texte est applique inline dans le HTML par createSideLabelIcon. */
 .mapgeo-side-label-shell {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  /* Le shell est centre sur le milieu du segment, le texte remonte de 10px */
 }
 .mapgeo-side-label-shell .mapgeo-side-label {
   transform-origin: center center;
-  /* Le rotate est applique inline dans le HTML, on ajoute un decalage perpendiculaire ici */
-  /* margin-top negatif pour eloigner du segment */
-  margin-bottom: 14px;
-}
-
-/* Side label : decale visuellement le texte au-dessus du segment */
-.mapgeo-side-label-shell {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  /* Le shell est centre sur le milieu du segment, le texte remonte de 10px */
-}
-.mapgeo-side-label-shell .mapgeo-side-label {
-  transform-origin: center center;
-  /* Le rotate est applique inline dans le HTML, on ajoute un decalage perpendiculaire ici */
-  /* margin-top negatif pour eloigner du segment */
-  margin-bottom: 14px;
 }
 
 .mapgeo-vertex-icon {
