@@ -16,7 +16,7 @@ from .views import (
     UserAccessActionView,
     UserDetailView,
     UserInviteView,
-    UserListView,,
+    UserListView,
     CurrentUserAvatarView,
 )
 
