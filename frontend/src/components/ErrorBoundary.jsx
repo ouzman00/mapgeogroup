@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { reloadForFreshBuild } from "../utils/lazyWithRetry";
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -13,6 +14,19 @@ export default class ErrorBoundary extends Component {
   componentDidCatch(error, errorInfo) {
     // Log local pour debug. Un service externe (Sentry) peut etre branche ici.
     console.error("ErrorBoundary capture une erreur React:", error, errorInfo);
+
+    const message = String(error?.message || error || "").toLowerCase();
+    const isChunkIssue =
+      message.includes("failed to fetch dynamically imported module") ||
+      message.includes("failed to load module script") ||
+      message.includes("expected a javascript-or-wasm module script") ||
+      message.includes("strict mime type checking") ||
+      message.includes("chunkloaderror") ||
+      message.includes("loading chunk");
+
+    if (isChunkIssue) {
+      reloadForFreshBuild("error-boundary");
+    }
   }
 
   handleReload = () => {

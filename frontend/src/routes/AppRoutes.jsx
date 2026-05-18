@@ -1,25 +1,26 @@
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import { hasManagementRole } from "../constants/roleConstants";
+import { lazyWithRetry } from "../utils/lazyWithRetry";
 
-const LoginPage = lazy(() => import("../pages/LoginPage.jsx"));
-const ForgotPasswordPage = lazy(() => import("../pages/ForgotPasswordPage.jsx"));
-const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage.jsx"));
-const DashboardPage = lazy(() => import("../pages/DashboardPage.jsx"));
-const ParcellesPage = lazy(() => import("../pages/ParcellesPage.jsx"));
-const ParcelleDetailPage = lazy(() => import("../pages/ParcelleDetailPage.jsx"));
-const ParcelleCartoPage = lazy(() => import("../pages/ParcelleCartoPage.jsx"));
-const DocumentsPage = lazy(() => import("../pages/DocumentsPage.jsx"));
-const DocumentDetailPage = lazy(() => import("../pages/DocumentDetailPage.jsx"));
-const NotificationsPage = lazy(() => import("../pages/NotificationsPage.jsx"));
-const SupportPage = lazy(() => import("../pages/SupportPage.jsx"));
-const SupportTicketDetailPage = lazy(() => import("../pages/SupportTicketDetailPage.jsx"));
-const SettingsPage = lazy(() => import("../pages/SettingsPage.jsx"));
-const UsersSettingsPage = lazy(() => import("../pages/UsersSettingsPage.jsx"));
-const ClientsPage = lazy(() => import("../pages/ClientsPage.jsx"));
-const ClientDetailPage = lazy(() => import("../pages/ClientDetailPage.jsx"));
-const ClientActivationPage = lazy(() => import("../pages/ClientActivationPage.jsx"));
+const LoginPage = lazyWithRetry(() => import("../pages/LoginPage.jsx"), "LoginPage");
+const ForgotPasswordPage = lazyWithRetry(() => import("../pages/ForgotPasswordPage.jsx"), "ForgotPasswordPage");
+const ResetPasswordPage = lazyWithRetry(() => import("../pages/ResetPasswordPage.jsx"), "ResetPasswordPage");
+const DashboardPage = lazyWithRetry(() => import("../pages/DashboardPage.jsx"), "DashboardPage");
+const ParcellesPage = lazyWithRetry(() => import("../pages/ParcellesPage.jsx"), "ParcellesPage");
+const ParcelleDetailPage = lazyWithRetry(() => import("../pages/ParcelleDetailPage.jsx"), "ParcelleDetailPage");
+const ParcelleCartoPage = lazyWithRetry(() => import("../pages/ParcelleCartoPage.jsx"), "ParcelleCartoPage");
+const DocumentsPage = lazyWithRetry(() => import("../pages/DocumentsPage.jsx"), "DocumentsPage");
+const DocumentDetailPage = lazyWithRetry(() => import("../pages/DocumentDetailPage.jsx"), "DocumentDetailPage");
+const NotificationsPage = lazyWithRetry(() => import("../pages/NotificationsPage.jsx"), "NotificationsPage");
+const SupportPage = lazyWithRetry(() => import("../pages/SupportPage.jsx"), "SupportPage");
+const SupportTicketDetailPage = lazyWithRetry(() => import("../pages/SupportTicketDetailPage.jsx"), "SupportTicketDetailPage");
+const SettingsPage = lazyWithRetry(() => import("../pages/SettingsPage.jsx"), "SettingsPage");
+const UsersSettingsPage = lazyWithRetry(() => import("../pages/UsersSettingsPage.jsx"), "UsersSettingsPage");
+const ClientsPage = lazyWithRetry(() => import("../pages/ClientsPage.jsx"), "ClientsPage");
+const ClientDetailPage = lazyWithRetry(() => import("../pages/ClientDetailPage.jsx"), "ClientDetailPage");
+const ClientActivationPage = lazyWithRetry(() => import("../pages/ClientActivationPage.jsx"), "ClientActivationPage");
 
 function LoadingScreen() {
   return (
