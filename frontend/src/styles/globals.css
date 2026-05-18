@@ -2873,3 +2873,55 @@ html body .mapgeo-side-label.is-measure {
   }
 }
 
+/* === CARTO LEGEND FIX - parcelles et scroll === */
+html body .mapgeo-legend-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  max-height: min(62vh, 520px) !important;
+}
+
+html body .mapgeo-legend-scroll {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+}
+
+html body .mapgeo-parcel-sublegend {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+html body .mapgeo-parcel-sublegend .mapgeo-side-label,
+html body .mapgeo-parcel-sublegend span {
+  color: inherit;
+}
+
+@media (max-width: 767px) {
+  html body .mapgeo-legend-panel {
+    max-height: min(58dvh, 420px) !important;
+    overflow: hidden !important;
+  }
+
+  html body .mapgeo-legend-scroll {
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 4px !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel {
+    max-height: min(56dvh, 390px) !important;
+    overflow: hidden !important;
+  }
+
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-scroll {
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+}
+

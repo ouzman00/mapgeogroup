@@ -177,6 +177,10 @@ function canToggleLayer(layer = {}) {
   return Boolean(layer?.id) && layer.available !== false && isReady(layer);
 }
 
+function isParcelsLegendLayer(layer = {}) {
+  return layer?.id === "parcels-portfolio" || layer?.group === "parcelles";
+}
+
 function layerDisplayName(layer = {}) {
   return layer?.id === "parcels-portfolio" || layer?.group === "parcelles" ? "Parcelles" : layer?.name || "Couche";
 }
@@ -195,19 +199,8 @@ function layerStatus(layer = {}) {
 }
 
 function legendItems(layer, features = []) {
-  if (layer?.id === "parcels-portfolio" || layer?.group === "parcelles") {
-    const items = getAvailableLegendItems(features);
-
-    return items.length
-      ? items
-      : [
-          {
-            label: "Parcelle",
-            symbol: "polygon",
-            color: "#123B5D",
-            fillColor: "rgba(199,178,153,0.18)",
-          },
-        ];
+  if (isParcelsLegendLayer(layer)) {
+    return getAvailableLegendItems(features);
   }
 
   if (layer?.id === "communes") {
@@ -269,6 +262,32 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
   const hasServerLegend = items.some(isLegendImageItem);
   const showInlineSymbol = !hasServerLegend;
   const showItemDetails = visible && !unavailable && (hasServerLegend || items.length > 1 || items.some((item) => item?.id && item?.symbol !== "wms-legend"));
+  const isParcelsLayer = isParcelsLegendLayer(layer);
+
+  if (isParcelsLayer) {
+    if (!items.length) return null;
+
+    return (
+      <div className={`mapgeo-parcel-sublegend rounded-xl border border-white/10 bg-white/[0.045] px-2 py-2 ${visible && !unavailable ? "" : "opacity-45"}`}>
+        <div className="space-y-1.5">
+          {items.map((item) => {
+            const itemKey = `${layer.id}-${item.id || item.label || "parcel-legend"}`;
+
+            return (
+              <div
+                key={itemKey}
+                className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/70"
+              >
+                <span className="min-w-0 truncate">{item.label}</span>
+                <LegendSymbol item={item} muted={!visible || unavailable} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
 
   const handleToggle = (event) => {
     event.stopPropagation();
@@ -426,7 +445,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
         </button>
       ) : null}
 
-      <div className="mt-2 space-y-1">
+      <div className="mapgeo-legend-scroll mt-2 space-y-1 pr-1">
         {legendLayers.length ? (
           legendLayers.map((layer) => (
             <LegendToggleRow
