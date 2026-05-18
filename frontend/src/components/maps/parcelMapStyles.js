@@ -2,20 +2,20 @@ import { PARCEL_STATUS_LABELS } from "../../constants/parcelConstants";
 
 export const PARCEL_STATUS_STYLES = {
   planned: {
-    color: "#123B5D",
-    fillColor: "#D9CAB8",
+    color: "#1E40AF",
+    fillColor: "#3B82F6",
     label: PARCEL_STATUS_LABELS.planned,
     legend: "Mission planifiée",
   },
   to_verify: {
     color: "#B45309",
-    fillColor: "#FDE7C7",
+    fillColor: "#F59E0B",
     label: PARCEL_STATUS_LABELS.to_verify,
     legend: "Vérification à faire",
   },
   completed: {
-    color: "#0F766E",
-    fillColor: "#D8F3EE",
+    color: "#047857",
+    fillColor: "#10B981",
     label: PARCEL_STATUS_LABELS.completed,
     legend: "Terminée",
   },
@@ -246,7 +246,9 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
   let color = style.color || "#123B5D";
   let fillColor = style.fillColor || "#C7B299";
   let weight = BASE_WEIGHT;
-  let fillOpacity = options.muted ? 0.008 : 0.018;
+  // Opacite de base : 0.20 normal, 0.08 muted (vs 0.018 / 0.008 avant).
+  // A ces valeurs, le code couleur statut est lisible sur satellite ET plan.
+  let fillOpacity = options.muted ? 0.08 : 0.22;
   let dashArray = null;
 
   /**
@@ -276,27 +278,27 @@ export function getParcelSymbology(parcelOrStatus, options = {}) {
   }
 
   if (hasDocuments) {
-    fillOpacity = Math.max(fillOpacity, 0.032);
+    fillOpacity = Math.max(fillOpacity, 0.28);
   }
 
   /**
-   * Hover : visible mais léger.
+   * Hover : on conserve la couleur statut et on intensifie l opacite,
+   * le contour passe en bleu pour signaler l interactivite.
    */
   if (hovered && !active && !editing && !lockedByOther && !geometryError) {
     color = "#2563EB";
-    fillColor = "#DBEAFE";
     weight = HOVER_WEIGHT;
-    fillOpacity = Math.max(fillOpacity, 0.065);
+    fillOpacity = Math.max(fillOpacity, 0.38);
   }
 
   /**
-   * Sélection : plus visible, mais sans gros contour disproportionné.
+   * Selection : on garde la couleur statut, contour fonce + remplissage marque.
+   * Le contour primary (bleu marine) signale clairement la parcelle active.
    */
   if (active && !editing && !geometryError) {
-    color = "#123B5D";
-    fillColor = "#C7B299";
+    color = "#0B2236";
     weight = ACTIVE_WEIGHT;
-    fillOpacity = 0.105;
+    fillOpacity = 0.55;
     dashArray = null;
   }
 
