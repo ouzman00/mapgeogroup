@@ -2827,3 +2827,87 @@ html body .mapgeo-side-label {
   }
 }
 
+/* === CARTO FINAL - placement propre des mesures === */
+html body .leaflet-marker-icon.mapgeo-side-label-shell,
+html body .mapgeo-side-label-shell {
+  width: 150px !important;
+  height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body .mapgeo-side-label-rotor {
+  width: 150px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transform-origin: 50% 50% !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+html body .mapgeo-side-label {
+  display: inline-block !important;
+  transform: none !important;
+  max-width: 138px !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  color: #111827 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  font-family: var(--font-sans, system-ui), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  paint-order: stroke fill !important;
+  -webkit-text-stroke: 2.8px #ffffff !important;
+  text-shadow:
+    -1px -1px 0 #ffffff,
+    1px -1px 0 #ffffff,
+    -1px 1px 0 #ffffff,
+    1px 1px 0 #ffffff,
+    0 2px 3px rgba(0, 0, 0, 0.38) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body .mapgeo-side-label.is-edit,
+html body .mapgeo-side-label.is-measure {
+  color: #111827 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+@media (max-width: 767px) {
+  html body .leaflet-marker-icon.mapgeo-side-label-shell,
+  html body .mapgeo-side-label-shell,
+  html body .mapgeo-side-label-rotor {
+    width: 154px !important;
+    height: 46px !important;
+  }
+
+  html body .mapgeo-side-label {
+    font-size: 9.5px !important;
+    max-width: 142px !important;
+    -webkit-text-stroke: 2.6px #ffffff !important;
+  }
+}
+

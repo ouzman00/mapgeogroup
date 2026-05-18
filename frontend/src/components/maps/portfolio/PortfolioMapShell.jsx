@@ -352,8 +352,8 @@ function getSideMarkerPixelOptions(map) {
 
   return {
     zoom,
-    offsetPixels: mobile ? 42 : 34,
-    minSegmentPixels: mobile ? 95 : 72,
+    offsetPixels: mobile ? 72 : 58,
+    minSegmentPixels: mobile ? 118 : 92,
     minZoom: mobile ? 18 : 16,
   };
 }
@@ -407,7 +407,7 @@ function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
         }
       }
 
-      const adaptiveOffset = Math.max(offsetPixels, Math.min(54, segmentPixels * 0.34));
+      const adaptiveOffset = Math.max(offsetPixels, Math.min(92, segmentPixels * 0.42));
       const labelPx = L.point(midPx.x + nx * adaptiveOffset, midPx.y + ny * adaptiveOffset);
       const labelLatLng = map.unproject(labelPx, zoom);
 

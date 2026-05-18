@@ -58,15 +58,14 @@ export function segmentAngleCss(pointA, pointB) {
 }
 
 export function createSideLabelIcon(label, tone = "default", angle = 0) {
-  // Label parallele au segment, place au-dessus (translateY = -8px).
-  // Le span est invisible (pas de fond), seul le texte avec halo apparait.
   const toneClass = tone === "edit" ? "is-edit" : tone === "measure" ? "is-measure" : "";
+  const safeAngle = Number.isFinite(angle) ? angle : 0;
+
   return L.divIcon({
     className: "mapgeo-side-label-shell",
-    html: `<span class="mapgeo-side-label ${toneClass}" style="transform: rotate(${angle.toFixed(1)}deg);" title="Longueur du côté">${escapeHtml(label)}</span>`,
-    iconSize: [120, 22],
-    // Ancre au centre exact du milieu du segment ; le CSS gere le decalage perpendiculaire.
-    iconAnchor: [60, 11],
+    html: `<span class="mapgeo-side-label-rotor" style="transform: rotate(${safeAngle.toFixed(1)}deg);"><span class="mapgeo-side-label ${toneClass}" title="Longueur du côté">${escapeHtml(label)}</span></span>`,
+    iconSize: [150, 44],
+    iconAnchor: [75, 22],
   });
 }
 
