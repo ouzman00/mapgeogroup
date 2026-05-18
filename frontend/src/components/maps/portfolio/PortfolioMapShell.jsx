@@ -341,12 +341,10 @@ function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
       const distance = computeDistanceBetweenPoints(point, nextPoint);
       if (!Number.isFinite(distance) || distance <= 0) continue;
       const mid = midpoint(point, nextPoint);
-      // Offset : 8 metres pour les petites parcelles, scale avec la taille du segment
-      // Offset proche du segment : 1.5 a 4 metres = ~10-15 pixels a zoom 18-19
-      // (echelle d affichage typique des parcelles individuelles).
-      // Le rendu reste lisible mais le label reste COLLE au segment.
-      const offset = Math.max(0.6, Math.min(distance * 0.008, 1.8));
-      const labelPoint = offsetOutside(mid, point, nextPoint, centroid, offset);
+      // Offset CONSTANT en pixels ecran (~14px), peu importe le zoom.
+      // C est le standard cartographique pro (QGIS, ArcGIS). offsetOutside
+      // utilise map.project/unproject pour convertir 14 pixels en latlng.
+      const labelPoint = offsetOutside(mid, point, nextPoint, centroid, 14, map);
       markers.push({
         id: `${tone}-side-${ringIndex}-${index}`,
         point: labelPoint,
@@ -1888,25 +1886,36 @@ export default function PortfolioMapShell({
   const selectedMeasurementOverlay = useMemo(() => buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure", map), [activeFeature, map, mapZoom]);
   const measurementDraftOverlay = useMemo(() => buildMeasurementDraftOverlay(measurementDraft, map), [measurementDraft, map, mapZoom]);
   const labelFeatures = useMemo(() => {
-    const withGeometry = displayedFeatures.filter(
-      (feature) =>
-        feature?.rings?.length > 0 &&
-        Array.isArray(feature.center) &&
-        feature.center.length === 2 &&
-        Number.isFinite(Number(feature.center[0])) &&
-        Number.isFinite(Number(feature.center[1])),
-    );
+    const isValidFeature = (feature) =>
+      feature?.rings?.length > 0 &&
+      Array.isArray(feature.center) &&
+      feature.center.length === 2 &&
+      Number.isFinite(Number(feature.center[0])) &&
+      Number.isFinite(Number(feature.center[1]));
+
+    const withGeometry = displayedFeatures.filter(isValidFeature);
 
     if (viewMode === "selection") {
       if (!activeFeature?.id) return [];
-
       return withGeometry.filter(
         (feature) => String(feature.id) === String(activeFeature.id),
       );
     }
 
+    // On force l inclusion de la parcelle active meme si elle n est pas
+    // dans le viewport actuel (utilisateur a dezoomée fortement).
+    // Sans ca, le badge disparait et l utilisateur perd la parcelle de vue.
+    if (activeFeature && isValidFeature(activeFeature)) {
+      const alreadyPresent = withGeometry.some(
+        (f) => String(f.id) === String(activeFeature.id),
+      );
+      if (!alreadyPresent) {
+        return [activeFeature, ...withGeometry];
+      }
+    }
+
     return withGeometry;
-  }, [displayedFeatures, viewMode, activeFeature?.id]);
+  }, [displayedFeatures, viewMode, activeFeature]);
 
   useEffect(() => {
     setMeasurementDraft((current) => ({ ...current, points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false }));
@@ -2066,13 +2075,16 @@ export default function PortfolioMapShell({
   }, []);
 
   const queueMeasurementPoint = useCallback((point) => {
-    if (isMobileCartographyViewport()) {
-      clearPendingMeasurementClick();
-      return;
-    }
-
     if (!showMeasurements || !Array.isArray(point) || point.length < 2) return;
     clearPendingMeasurementClick();
+    // En mobile, on accepte le tap direct sur la carte (sans delay)
+    // pour permettre le placement des points par doigt comme avant.
+    // Le bouton "Ajouter au centre" reste disponible en parallele.
+    if (isMobileCartographyViewport()) {
+      const snap = resolveMeasurementPoint(point);
+      appendMeasurementPoint(snap.point, snap);
+      return;
+    }
     measurementClickTimerRef.current = window.setTimeout(() => {
       const snap = resolveMeasurementPoint(point);
       appendMeasurementPoint(snap.point, snap);
@@ -2431,7 +2443,18 @@ export default function PortfolioMapShell({
             setLayerRuntime={layerState.setLayerRuntime}
           />
 
-          {parcelLayerVisible ? displayedFeatures.map((feature) => {
+          {parcelLayerVisible ? (() => {
+            // On itere sur displayedFeatures + on garantit que activeFeature
+            // est presente meme si elle est hors viewport (pour ne jamais la perdre).
+            const featuresToRender = (() => {
+              if (!activeFeature) return displayedFeatures;
+              const alreadyIn = displayedFeatures.some(
+                (f) => String(f.id) === String(activeFeature.id),
+              );
+              return alreadyIn ? displayedFeatures : [activeFeature, ...displayedFeatures];
+            })();
+
+            return featuresToRender.map((feature) => {
             const isActive = String(feature.id) === String(activeFeature?.id);
             if (inlineEditOpen && isActive) return null;
             if (!feature.rings.length) return null;
@@ -2444,9 +2467,32 @@ export default function PortfolioMapShell({
               geometryError: Boolean(feature.geometryWarning),
             };
 
-            // Bas zoom (vue regionale/departementale) : cercle colore par statut au centroide.
-            // Cela elimine le chevauchement visuel et donne une lecture rapide du portefeuille.
-            // La parcelle selectionnee reste en polygone pour rester reperable.
+            // Parcelle active a TRES bas zoom : marqueur distinctif (anneau + halo)
+            // pour qu elle reste reperable meme depuis une vue regionale.
+            if (mapZoom < POLYGON_MIN_ZOOM && isActive && feature.center) {
+              const symbology = getParcelSymbology(feature.parcel, renderOptions);
+              return (
+                <CircleMarker
+                  key={getFeatureRenderKey(feature, "active-marker")}
+                  center={feature.center}
+                  pane={MAP_PANES.parcels}
+                  radius={9}
+                  pathOptions={{
+                    color: "#FFFFFF",
+                    fillColor: symbology.fillColor || symbology.color,
+                    fillOpacity: 1,
+                    opacity: 1,
+                    weight: 4,
+                  }}
+                  eventHandlers={{
+                    click: (event) => handleParcelLayerClick(feature, event, feature.center),
+                    dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
+                  }}
+                />
+              );
+            }
+
+            // Bas zoom non-active : centroide colore standard.
             if (mapZoom < POLYGON_MIN_ZOOM && !isActive && feature.center) {
               const symbology = getParcelSymbology(feature.parcel, renderOptions);
               const radius = renderOptions.hovered ? CENTROID_RADIUS_BASE + 3 : CENTROID_RADIUS_BASE;
@@ -2494,7 +2540,8 @@ export default function PortfolioMapShell({
                 </Tooltip>
               </Polygon>
             );
-          }) : null}
+          });
+          })() : null}
 
           {labelsAreVisible
             ? labelFeatures.map((feature) => (
