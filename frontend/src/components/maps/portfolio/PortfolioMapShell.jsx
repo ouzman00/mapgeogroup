@@ -50,7 +50,6 @@ import SearchNoResultNotice from "./SearchNoResultNotice";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
 import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
-import useIsMobileViewport from "../../../hooks/useIsMobileViewport";
 import useCartoKeyboardShortcuts from "./useCartoKeyboardShortcuts";
 
 
@@ -1010,7 +1009,7 @@ function MeasurementOverlay({ draft }) {
 
   if (!previewPoints.length) return null;
 
-  const isMobileMeasureOverlay = isMobileReactive;
+  const isMobileMeasureOverlay = isMobileCartographyViewport();
   const isSurface = draft.mode === "surface";
   const polygonPoints = isSurface
     ? stripMeasurementClosingPoint(previewPoints)
@@ -1805,7 +1804,6 @@ export default function PortfolioMapShell({
   viewportSummary = null,
   onInlineEditStateChange,
 }) {
-  const isMobileReactive = useIsMobileViewport();
   const [activeCommand, setActiveCommand] = useState(null);
   const [measurementDraft, setMeasurementDraft] = useState({ mode: "distance", points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false });
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
@@ -1913,7 +1911,7 @@ export default function PortfolioMapShell({
   // Mobile: preview line follows the center reticle without adding points by touch.
   useEffect(() => {
     if (!map || !showMeasurements) return undefined;
-    if (!isMobileReactive) return undefined;
+    if (!isMobileCartographyViewport()) return undefined;
 
     let frame = null;
     let lastMovePreviewAt = 0;
@@ -2031,7 +2029,7 @@ export default function PortfolioMapShell({
   }, []);
 
   const queueMeasurementPoint = useCallback((point) => {
-    if (isMobileReactive) {
+    if (isMobileCartographyViewport()) {
       clearPendingMeasurementClick();
       return;
     }
@@ -2134,7 +2132,7 @@ export default function PortfolioMapShell({
       setIdentifyState(null);
 
       // Mobile: points are added only with the Ajouter button.
-      if (isMobileReactive) {
+      if (isMobileCartographyViewport()) {
         clearPendingMeasurementClick();
         return;
       }
@@ -2334,7 +2332,7 @@ export default function PortfolioMapShell({
 
               if (showMeasurements) {
                 // Mobile : le toucher écran ne doit ni créer, ni déplacer, ni prévisualiser un point.
-                if (isMobileReactive) return;
+                if (isMobileCartographyViewport()) return;
 
                 if (!point) {
                   setMeasurementDraft((current) => (current?.finished ? current : { ...current, cursorPoint: null, snapPoint: null, snapKind: null }));
@@ -2356,7 +2354,7 @@ export default function PortfolioMapShell({
                 setIdentifyState(null);
 
                 // Mobile: points are added only with the Ajouter button.
-                if (isMobileReactive) {
+                if (isMobileCartographyViewport()) {
                   clearPendingMeasurementClick();
                   return;
                 }
