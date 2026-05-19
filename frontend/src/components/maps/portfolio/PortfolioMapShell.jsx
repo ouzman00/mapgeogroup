@@ -1188,6 +1188,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     snapDistance: 24,
     snapMiddle: true,
     snapSegment: true,
+    draggable: true,
     preventMarkerRemoval: false,
     removeLayerBelowMinVertexCount: false,
   });
@@ -1284,7 +1285,18 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       layer.options.pane = MAP_PANES.edit;
       layer.options.bubblingMouseEvents = false;
       layer.setStyle?.(INLINE_EDIT_STYLE);
+
+      // Geoman doit réinitialiser la couche après modification de pmIgnore/pane.
+      // Sans cela, les sommets peuvent être visibles mais non déplaçables.
+      try {
+        L.PM?.reInitLayer?.(layer);
+      } catch (error) {
+        console.warn("Impossible de réinitialiser la couche Geoman.", error);
+      }
+
       layer.pm?.enable?.(editOptions);
+      layer.pm?.enableLayerDrag?.();
+      layer.dragging?.enable?.();
       scheduleGeomanVertexHandlesRefresh(map);
 
       if (layer.__mapgeoInlineEditRegistered) return;
