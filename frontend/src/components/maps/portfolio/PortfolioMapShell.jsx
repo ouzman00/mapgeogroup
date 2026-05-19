@@ -1238,7 +1238,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     const cleanupEditableLayer = (layer) => {
       layer.off?.(INLINE_EDIT_EVENTS, scheduleSync);
       if (layer.__mapgeoAddVertexHandler) layer.off?.("dblclick", layer.__mapgeoAddVertexHandler);
-      if (layer.__mapgeoDeleteVertexHandler) layer.off?.("click", layer.__mapgeoDeleteVertexHandler);
+      if (layer.__mapgeoDeleteVertexHandler) layer.off?.("contextmenu", layer.__mapgeoDeleteVertexHandler);
       layer.__mapgeoAddVertexHandler = null;
       layer.__mapgeoDeleteVertexHandler = null;
       layer.__mapgeoInlineEditRegistered = false;
@@ -1317,7 +1317,9 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       layer.__mapgeoAddVertexHandler = addVertexHandler;
       layer.__mapgeoDeleteVertexHandler = deleteVertexHandler;
       layer.on("dblclick", addVertexHandler);
-      layer.on("click", deleteVertexHandler);
+      // Suppression de sommet via clic droit / appui contextuel uniquement.
+      // On évite un handler click sur la couche, qui peut intercepter le drag des sommets Geoman.
+      layer.on("contextmenu", deleteVertexHandler);
       layer.on(INLINE_EDIT_EVENTS, scheduleSync);
     };
 
