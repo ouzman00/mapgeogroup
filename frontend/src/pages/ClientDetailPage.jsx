@@ -32,7 +32,7 @@ import { getErrorMessage, isNotFoundError } from "../services/responseUtils";
 import { getDocumentVisibilityLabel } from "../constants/documentConstants";
 import { getPortalAccessActionLabel, getPortalAccessLabel } from "../constants/clientConstants";
 import { getParcelStatusLabel, progressFromStatus } from "../constants/parcelConstants";
-import { getSupportPriorityLabel, getSupportStatusLabel, isResolvedOrClosed } from "../constants/supportConstants";
+import { getContacter MAPGEOPriorityLabel, getContacter MAPGEOStatusLabel, isResolvedOrClosed } from "../constants/supportConstants";
 import { formatDateLabel as safeFormatDateLabel } from "../utils/dateUtils";
 
 function formatNumber(value) {
@@ -374,13 +374,13 @@ export default function ClientDetailPage() {
 
   const clientAlerts = [
     { label: `${draftDocuments} document(s) en brouillon`, href: documentsHref },
-    { label: `${criticalTickets} ticket(s) prioritaire(s)`, href: supportHref },
+    { label: `${criticalTickets} échange(s) prioritaire(s)`, href: supportHref },
     { label: `${parcelsToVerify} parcelle(s) à vérifier`, href: buildHref("/parcelles", { organization_code: clientFilterValue, status: "to_verify" }) },
     { label: `${accessActionLabel} · portail ${portalLabel.toLowerCase()}`, onClick: resetAccess },
   ];
 
   return (
-    <DashboardLayout title={title} subtitle="Fiche client, portefeuille parcellaire, documents liés et tickets support.">
+    <DashboardLayout title={title} subtitle="Fiche client, portefeuille foncier, livrables et échanges MAPGEO.">
       <div className="space-y-6">
         <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -414,9 +414,9 @@ export default function ClientDetailPage() {
         {client ? (
           <>
             <section className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
-              <KpiCard icon={Map} label="Parcelles" value={formatNumber(parcels.length || client.parcels_count)} description="Portefeuille client" />
-              <KpiCard icon={FileText} label="Documents" value={formatNumber(documents.length)} description="Livrables liés" />
-              <KpiCard icon={MessageCircle} label="Tickets ouverts" value={formatNumber(openTickets)} description="Demandes support" />
+              <KpiCard icon={Map} label="Parcelles" value={formatNumber(parcels.length || client.parcels_count)} description="Portefeuille foncier" />
+              <KpiCard icon={FileText} label="Documents" value={formatNumber(documents.length)} description="Plans et rapports liés" />
+              <KpiCard icon={MessageCircle} label="Échanges ouverts" value={formatNumber(openTickets)} description="Échanges MAPGEO" />
               <KpiCard icon={BriefcaseBusiness} label="Avancement moyen" value={`${avgProgress}%`} description="Progression portefeuille" />
             </section>
 
@@ -446,7 +446,7 @@ export default function ClientDetailPage() {
                     )
                 ) : null}
 
-                <DetailTable title="Parcelles du client" columns={["Référence", "Commune", "Surface", "Statut", "Avancement", "Action"]} action={<Link to={parcelsHref} className="text-sm font-bold text-mapgeo-primary">Voir tout</Link>} empty="Aucune parcelle liée à ce client." colSpan={6}>
+                <DetailTable title="Portefeuille foncier du client" columns={["Référence", "Commune", "Surface", "Avancement", "Avancement", "Action"]} action={<Link to={parcelsHref} className="text-sm font-bold text-mapgeo-primary">Voir tout</Link>} empty="Aucune parcelle liée à ce client." colSpan={6}>
                   {parcels.length ? parcels.map((parcel) => {
                     const progress = Math.min(Math.max(Number(parcel.progress ?? progressFromStatus(parcel.status)), 0), 100);
                     return (
@@ -462,7 +462,7 @@ export default function ClientDetailPage() {
                   }) : null}
                 </DetailTable>
 
-                <DetailTable title="Documents liés" columns={["Document", "Type", "Statut", "Visibilité", "Date", "Action"]} action={<Link to={documentsHref} className="text-sm font-bold text-mapgeo-primary">Bibliothèque</Link>} empty="Aucun document lié à ce client." colSpan={6}>
+                <DetailTable title="Plans, rapports et livrables liés" columns={["Document", "Type", "Avancement", "Visibilité", "Date", "Action"]} action={<Link to={documentsHref} className="text-sm font-bold text-mapgeo-primary">Bibliothèque des livrables</Link>} empty="Aucun livrable lié à ce client." colSpan={6}>
                   {documents.length ? documents.map((doc) => (
                     <tr key={doc.id || doc.title}>
                       <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{doc.title || doc.name || "Document"}</td>
@@ -475,13 +475,13 @@ export default function ClientDetailPage() {
                   )) : null}
                 </DetailTable>
 
-                <DetailTable title="Tickets support liés" columns={["Référence", "Sujet", "Priorité", "Statut", "Date", "Action"]} action={<Link to={supportHref} className="text-sm font-bold text-mapgeo-primary">Support</Link>} empty="Aucun ticket support lié à ce client." colSpan={6}>
+                <DetailTable title="Échanges MAPGEO liés" columns={["Référence", "Sujet", "Priorité", "Avancement", "Date", "Action"]} action={<Link to={supportHref} className="text-sm font-bold text-mapgeo-primary">Contacter MAPGEO</Link>} empty="Aucun ticket support lié à ce client." colSpan={6}>
                   {tickets.length ? tickets.map((ticket) => (
                     <tr key={ticket.id || ticket.reference}>
                       <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{ticket.reference || `SUP-${ticket.id}`}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{ticket.subject || "—"}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.priority_label || getSupportPriorityLabel(ticket.priority)}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.status_label || getSupportStatusLabel(ticket.status)}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.priority_label || getContacter MAPGEOPriorityLabel(ticket.priority)}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.status_label || getContacter MAPGEOStatusLabel(ticket.status)}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{formatDateLabel(ticket.updated_at || ticket.created_at || ticket.date || ticket.lastReply)}</td>
                       <td className="px-5 py-4">{ticket.id ? <Link to={`/support/${ticket.id}`} className="text-sm font-bold text-mapgeo-primary">Ouvrir</Link> : "—"}</td>
                     </tr>

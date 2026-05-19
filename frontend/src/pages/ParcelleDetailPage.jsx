@@ -227,7 +227,7 @@ function ParcelDocumentsSection({ documents = [] }) {
   return (
     <article className="rounded-3xl border border-mapgeo-line bg-white p-6 shadow-soft">
       <h3 className="flex items-center gap-2 text-xl font-extrabold text-mapgeo-primary">
-        <FileText size={19} /> Documents liés
+        <FileText size={19} /> Plans, rapports et livrables liés
       </h3>
       <p className="mt-2 text-sm text-mapgeo-secondary/70">
         {documents.length} document(s) visible(s) pour votre profil.
@@ -375,7 +375,7 @@ function ParcelDetailContent({ parcel, returnTo }) {
       <ParcelHeader parcel={parcel} returnTo={returnTo} />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <InfoCard icon={FolderKanban} label="Statut" value={getParcelStatusLabel(parcel.status)} />
+        <InfoCard icon={FolderKanban} label="Avancement" value={getParcelStatusLabel(parcel.status)} />
         <InfoCard icon={UserRound} label="Propriétaire" value={ownerLabel} />
         <InfoCard icon={ShieldCheck} label="Organisation" value={organizationLabel} />
         <InfoCard icon={MapPinned} label="Localisation" value={locationLabel} />

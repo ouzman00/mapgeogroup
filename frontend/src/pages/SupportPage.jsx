@@ -32,10 +32,10 @@ import {
   SUPPORT_ATTACHMENT_MAX_SIZE_LABEL,
   SUPPORT_RESOLVED_STATUSES,
   SUPPORT_STATUS_LABELS,
-  getSupportPriorityLabel,
-  getSupportStatusLabel,
+  getContacter MAPGEOPriorityLabel,
+  getContacter MAPGEOStatusLabel,
   isResolvedOrClosed,
-  validateSupportAttachment,
+  validateContacter MAPGEOAttachment,
 } from "../constants/supportConstants";
 import { getRoleLabel } from "../constants/roleConstants";
 import { formatDateLabel } from "../utils/dateUtils";
@@ -80,11 +80,11 @@ function formatNumber(value) {
 }
 
 function statusLabel(status) {
-  return getSupportStatusLabel(status);
+  return getContacter MAPGEOStatusLabel(status);
 }
 
 function priorityLabel(priority) {
-  return getSupportPriorityLabel(priority);
+  return getContacter MAPGEOPriorityLabel(priority);
 }
 
 function ticketMatchesPeriod(ticket, period) {
@@ -274,7 +274,7 @@ function FilterBar({ filters, setFilters, onReset, isInternalPortal, clients = [
           </div>
         </label>
 
-        <SelectField label="Statut" value={filters.status} onChange={(value) => update("status", value)}>
+        <SelectField label="Avancement" value={filters.status} onChange={(value) => update("status", value)}>
           <option value="">Tous</option>
 
           {Object.entries(SUPPORT_STATUS_LABELS).map(([value, label]) => (
@@ -394,7 +394,7 @@ function TicketsTable({
   onClose,
   onDelete,
   isInternalPortal,
-  canManageSupport,
+  canManageContacter MAPGEO,
   selectedIds,
   deletingTicketId,
   bulkDeleting,
@@ -402,7 +402,7 @@ function TicketsTable({
   onToggleVisibleSelection,
   onDeleteSelected,
 }) {
-  const selectableTickets = canManageSupport ? tickets.filter((ticket) => ticket.id && !ticket.isMock) : [];
+  const selectableTickets = canManageContacter MAPGEO ? tickets.filter((ticket) => ticket.id && !ticket.isMock) : [];
   const selectedCount = selectedIds?.size || 0;
   const visibleSelected = selectableTickets.filter((ticket) => selectedIds?.has(ticket.id)).length;
   const allVisibleSelected = selectableTickets.length > 0 && visibleSelected === selectableTickets.length;
@@ -422,7 +422,7 @@ function TicketsTable({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {canManageSupport ? (
+          {canManageContacter MAPGEO ? (
             <>
               <label className="inline-flex items-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-extrabold text-mapgeo-primary shadow-sm">
                 <input
@@ -471,14 +471,14 @@ function TicketsTable({
           <table className="min-w-[1040px] w-full text-left text-sm">
             <thead>
               <tr className="border-b border-mapgeo-line bg-mapgeo-ivory/70 text-xs font-bold uppercase tracking-[0.10em] text-mapgeo-secondary/70">
-                {canManageSupport ? <th className="w-12 px-5 py-4" aria-label="Sélection" /> : null}
+                {canManageContacter MAPGEO ? <th className="w-12 px-5 py-4" aria-label="Sélection" /> : null}
                 <th className="px-5 py-4">Référence</th>
                 <th className="px-4 py-4">Sujet</th>
                 {isInternalPortal ? <th className="px-4 py-4">Client</th> : null}
                 <th className="px-4 py-4">Parcelle</th>
                 <th className="px-4 py-4">Catégorie</th>
                 <th className="px-4 py-4">Priorité</th>
-                <th className="px-4 py-4">Statut</th>
+                <th className="px-4 py-4">Avancement</th>
                 <th className="px-4 py-4">Dernière réponse</th>
                 <th className="px-5 py-4 text-right">Actions</th>
               </tr>
@@ -487,7 +487,7 @@ function TicketsTable({
             <tbody className="divide-y divide-mapgeo-line">
               {tickets.map((ticket) => (
                 <tr key={ticket.id} className="transition hover:bg-mapgeo-ivory/40">
-                  {canManageSupport ? (
+                  {canManageContacter MAPGEO ? (
                     <td className="px-5 py-4">
                       <label className="inline-flex h-6 w-6 items-center justify-center rounded-lg border border-mapgeo-line bg-white shadow-sm">
                         <input
@@ -554,7 +554,7 @@ function TicketsTable({
                         </Link>
                       ) : null}
 
-                      {canManageSupport && ticket.status !== "resolved" && ticket.status !== "closed" ? (
+                      {canManageContacter MAPGEO && ticket.status !== "resolved" && ticket.status !== "closed" ? (
                         <button
                           type="button"
                           onClick={() => onClose(ticket)}
@@ -565,7 +565,7 @@ function TicketsTable({
                         </button>
                       ) : null}
 
-                      {canManageSupport ? (
+                      {canManageContacter MAPGEO ? (
                         <button
                           type="button"
                           onClick={() => onDelete(ticket)}
@@ -771,7 +771,7 @@ function SelectInput({ label, value, onChange, children, required = false, disab
   );
 }
 
-function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPortal }) {
+function Contacter MAPGEOSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPortal }) {
   return (
     <aside className="relative overflow-hidden rounded-3xl bg-hero p-6 text-white shadow-panel">
       <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/[0.06] blur-3xl" />
@@ -782,7 +782,7 @@ function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPor
         </h3>
 
         <div className="mt-5 space-y-3 border-b border-white/10 pb-5">
-          <SummaryMetric icon={Ticket} label={isInternalPortal ? "Tickets ouverts" : "Demandes ouvertes"} value={formatNumber(metrics.open)} />
+          <SummaryMetric icon={Ticket} label={isInternalPortal ? "Échanges ouverts" : "Demandes ouvertes"} value={formatNumber(metrics.open)} />
           <SummaryMetric icon={Clock3} label="En cours" value={formatNumber(metrics.inProgress)} />
           <SummaryMetric icon={AlertTriangle} label={isInternalPortal ? "Urgents" : "Priorité haute"} value={formatNumber(isInternalPortal ? metrics.urgent : metrics.high)} />
           <SummaryMetric icon={CheckCircle2} label="Résolus / clôturés" value={formatNumber(metrics.resolved)} />
@@ -811,7 +811,7 @@ function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPor
               </>
             ) : (
               <>
-                <QuickAction icon={Ticket} label="Voir mes demandes ouvertes" onClick={onShowOpen} />
+                <QuickAction icon={Ticket} label="Contacter MAPGEO ouvertes" onClick={onShowOpen} />
                 <QuickAction icon={MessageCircle} label="Créer une nouvelle demande" href="#new-ticket" />
                 <QuickAction icon={History} label="Consulter mon historique" href="/support" />
               </>
@@ -898,10 +898,10 @@ function QuickAction({ icon: Icon, label, href, onClick }) {
   return <button type="button" onClick={onClick} className={className}>{content}</button>;
 }
 
-export default function SupportPage() {
+export default function Contacter MAPGEOPage() {
   const { user, isInternalPortal } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const canManageSupport = ["admin", "manager"].includes(user?.role);
+  const canManageContacter MAPGEO = ["admin", "manager"].includes(user?.role);
   const [tickets, setTickets] = useState([]);
   const [clients, setClients] = useState([]);
   const [filters, setFilters] = useState(() => ({
@@ -1036,7 +1036,7 @@ export default function SupportPage() {
   const resetFilters = () => setFilters(EMPTY_FILTERS);
 
   const handleAttachmentChange = (file) => {
-    const validationError = validateSupportAttachment(file);
+    const validationError = validateContacter MAPGEOAttachment(file);
     setAttachmentError(validationError);
     setForm((current) => ({ ...current, attachment: validationError ? null : file }));
   };
@@ -1058,7 +1058,7 @@ export default function SupportPage() {
         return;
       }
 
-      const validationError = validateSupportAttachment(form.attachment);
+      const validationError = validateContacter MAPGEOAttachment(form.attachment);
       if (validationError) {
         setAttachmentError(validationError);
         setError(validationError);
@@ -1095,7 +1095,7 @@ export default function SupportPage() {
   };
 
   const requestCloseTicket = (ticket) => {
-    if (!canManageSupport || !ticket?.id) return;
+    if (!canManageContacter MAPGEO || !ticket?.id) return;
     setTicketToClose(ticket);
   };
 
@@ -1119,7 +1119,7 @@ export default function SupportPage() {
   };
 
   const toggleSelectedTicket = (id) => {
-    if (!id || !canManageSupport) return;
+    if (!id || !canManageContacter MAPGEO) return;
     setSelectedTicketIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
@@ -1129,7 +1129,7 @@ export default function SupportPage() {
   };
 
   const toggleVisibleTickets = (items, shouldSelect) => {
-    if (!canManageSupport) return;
+    if (!canManageContacter MAPGEO) return;
     setSelectedTicketIds((current) => {
       const next = new Set(current);
       items.forEach((item) => {
@@ -1142,12 +1142,12 @@ export default function SupportPage() {
   };
 
   const requestDeleteTicket = (ticket) => {
-    if (!canManageSupport || !ticket?.id) return;
+    if (!canManageContacter MAPGEO || !ticket?.id) return;
     setTicketToDelete(ticket);
   };
 
   const confirmDeleteTicket = async () => {
-    if (!ticketToDelete?.id || !canManageSupport) return;
+    if (!ticketToDelete?.id || !canManageContacter MAPGEO) return;
 
     setDeletingTicketId(ticketToDelete.id);
     setMessage("");
@@ -1171,12 +1171,12 @@ export default function SupportPage() {
   };
 
   const requestDeleteSelectedTickets = () => {
-    if (!canManageSupport || selectedTicketIds.size === 0) return;
+    if (!canManageContacter MAPGEO || selectedTicketIds.size === 0) return;
     setPendingBulkDelete(true);
   };
 
   const confirmDeleteSelectedTickets = async () => {
-    if (!canManageSupport || selectedTicketIds.size === 0) return;
+    if (!canManageContacter MAPGEO || selectedTicketIds.size === 0) return;
 
     const ids = [...selectedTicketIds];
     setBulkDeletingTickets(true);
@@ -1203,7 +1203,7 @@ export default function SupportPage() {
 
   return (
     <DashboardLayout
-      title={isInternalPortal ? "Support & accompagnement" : "Mes demandes support"}
+      title={isInternalPortal ? "Contacter MAPGEO & accompagnement" : "Mes échanges avec MAPGEO"}
       subtitle={
         isInternalPortal
           ? "Centralisez les demandes, suivez les tickets et facilitez l’accompagnement des équipes et clients."
@@ -1214,7 +1214,7 @@ export default function SupportPage() {
         <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <nav className="text-sm font-semibold text-mapgeo-primary" aria-label="Fil d’Ariane">
-              Accueil <span className="mx-1 text-mapgeo-secondary/40">/</span> Support
+              Accueil <span className="mx-1 text-mapgeo-secondary/40">/</span> Contacter MAPGEO
             </nav>
 
             <p className="mt-2 max-w-2xl text-sm text-mapgeo-secondary/70 lg:hidden">
@@ -1235,10 +1235,10 @@ export default function SupportPage() {
         <section className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
           <KpiCard
             icon={Ticket}
-            label={isInternalPortal ? "Tickets ouverts" : "Demandes ouvertes"}
+            label={isInternalPortal ? "Échanges ouverts" : "Demandes ouvertes"}
             value={formatNumber(metrics.open)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets ouverts" : "Voir mes demandes ouvertes"}
+            action={isInternalPortal ? "Voir les tickets ouverts" : "Contacter MAPGEO ouvertes"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "open" })}
             tone="blue"
           />
@@ -1258,7 +1258,7 @@ export default function SupportPage() {
             label={isInternalPortal ? "Urgents" : "Priorité haute"}
             value={formatNumber(isInternalPortal ? metrics.urgent : metrics.high)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets urgents" : "Voir mes demandes importantes"}
+            action={isInternalPortal ? "Voir les tickets urgents" : "Contacter MAPGEO importantes"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, priority: isInternalPortal ? "urgent" : "high" })}
             tone="red"
           />
@@ -1268,7 +1268,7 @@ export default function SupportPage() {
             label="Résolus / clôturés"
             value={formatNumber(metrics.resolved)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets résolus / clôturés" : "Voir mes demandes traitées"}
+            action={isInternalPortal ? "Voir les tickets résolus / clôturés" : "Contacter MAPGEO traitées"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "resolved_or_closed" })}
             tone="green"
           />
@@ -1291,7 +1291,7 @@ export default function SupportPage() {
               onClose={requestCloseTicket}
               onDelete={requestDeleteTicket}
               isInternalPortal={isInternalPortal}
-              canManageSupport={canManageSupport}
+              canManageContacter MAPGEO={canManageContacter MAPGEO}
               selectedIds={selectedTicketIds}
               deletingTicketId={deletingTicketId}
               bulkDeleting={bulkDeletingTickets}
@@ -1332,7 +1332,7 @@ export default function SupportPage() {
             />
           </div>
 
-          <SupportSummary
+          <Contacter MAPGEOSummary
             metrics={metrics}
             user={user}
             onShowUrgent={selectUrgent}

@@ -218,8 +218,8 @@ function FilterBar({ filters, onChange, onReset, parcels, clients, isInternalPor
           ))}
         </SelectField>
 
-        <SelectField label="Statut" icon={ShieldCheck} value={filters.status} onChange={(value) => update("status", value)}>
-          <option value="">Tous les statuts</option>
+        <SelectField label="Avancement" icon={ShieldCheck} value={filters.status} onChange={(value) => update("status", value)}>
+          <option value="">Tous les avancements</option>
           {DOCUMENT_STATUS_OPTIONS.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
@@ -314,7 +314,7 @@ function DocumentsTable({
       <div className="flex flex-col gap-3 border-b border-mapgeo-line p-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h3 className="text-2xl font-extrabold text-mapgeo-primary">
-            {isInternalPortal ? "Liste des documents" : "Mes documents"}
+            {isInternalPortal ? "Liste des plans, rapports et livrables" : "Plans, rapports et livrables"}
           </h3>
           <p className="mt-1 text-sm text-mapgeo-secondary/70">
             {isInternalPortal
@@ -356,7 +356,7 @@ function DocumentsTable({
         <div className="p-6">
           <LoadingState
             title="Veuillez patienter"
-            message="Mise à jour des documents."
+            message="Mise à jour des livrables."
             compact
           />
         </div>
@@ -379,7 +379,7 @@ function DocumentsTable({
                 <th className="px-4 py-4">Type</th>
                 {isInternalPortal ? <th className="px-4 py-4">Client</th> : null}
                 <th className="px-4 py-4">Version</th>
-                <th className="px-4 py-4">Statut</th>
+                <th className="px-4 py-4">Avancement</th>
                 {isInternalPortal ? <th className="px-4 py-4">Visibilité</th> : null}
                 <th className="px-4 py-4">Date d’ajout</th>
                 <th className="px-5 py-4 text-right">Actions</th>
@@ -390,7 +390,7 @@ function DocumentsTable({
               {documents.length === 0 ? (
                 <tr>
                   <td colSpan={(isInternalPortal ? 9 : 7) + (canManage ? 1 : 0)} className="px-5 py-10 text-center text-mapgeo-secondary">
-                    Aucun document disponible.
+                    Aucun livrable disponible.
                   </td>
                 </tr>
               ) : (
@@ -509,7 +509,7 @@ function DocumentsTable({
       {!loading && !error ? (
         <div className="flex justify-center border-t border-mapgeo-line px-6 py-5">
           <button type="button" onClick={onShowAll} className="inline-flex items-center gap-2 text-sm font-extrabold text-mapgeo-primary transition hover:gap-3">
-            {isInternalPortal ? "Voir tous les documents" : "Voir tous mes documents"} <ChevronRight size={16} />
+            {isInternalPortal ? "Voir tous les livrables" : "Voir tous mes livrables"} <ChevronRight size={16} />
           </button>
         </div>
       ) : null}
@@ -565,10 +565,10 @@ function DocumentSummary({ documents, onSelectAlert, isInternalPortal, lastAdded
   const coveredParcels = new Set(documents.map((doc) => doc.parcel_reference).filter(Boolean)).size;
 
   const alerts = [
-    { label: "Documents en brouillon", color: "bg-mapgeo-sand", filter: { status: "draft" } },
-    { label: "Documents validés", color: "bg-mapgeo-sand", filter: { status: "validated" } },
-    { label: "Documents finaux", color: "bg-mapgeo-sand", filter: { status: "final" } },
-    { label: "Documents archivés", color: "bg-mapgeo-sand", filter: { status: "archived" } },
+    { label: "Livrables en préparation", color: "bg-mapgeo-sand", filter: { status: "draft" } },
+    { label: "Livrables validés", color: "bg-mapgeo-sand", filter: { status: "validated" } },
+    { label: "Livrables finaux", color: "bg-mapgeo-sand", filter: { status: "final" } },
+    { label: "Livrables archivés", color: "bg-mapgeo-sand", filter: { status: "archived" } },
   ];
 
   return (
@@ -577,14 +577,14 @@ function DocumentSummary({ documents, onSelectAlert, isInternalPortal, lastAdded
 
       <div className="relative">
         <h3 className="text-sm font-extrabold text-white">
-          {isInternalPortal ? "Résumé documentaire" : "Résumé de mes documents"}
+          {isInternalPortal ? "Résumé des livrables" : "Résumé de mes livrables"}
         </h3>
 
         <div className="mt-5 space-y-3 border-b border-white/10 pb-5">
-          <SummaryMetric icon={FileText} label="Documents disponibles" value={formatNumber(total)} />
-          <SummaryMetric icon={CheckCircle2} label="Documents finaux" value={formatNumber(finalCount)} />
+          <SummaryMetric icon={FileText} label="Plans, rapports et livrables" value={formatNumber(total)} />
+          <SummaryMetric icon={CheckCircle2} label="Livrables finaux" value={formatNumber(finalCount)} />
           {isInternalPortal ? <SummaryMetric icon={FilePenLine} label="Brouillons" value={formatNumber(draftCount)} /> : null}
-          <SummaryMetric icon={LayoutList} label="Parcelles couvertes" value={formatNumber(coveredParcels)} />
+          <SummaryMetric icon={LayoutList} label="Parcelles avec livrables" value={formatNumber(coveredParcels)} />
           <SummaryMetric icon={CalendarDays} label="Dernier ajout" value={lastAddedLabel} />
         </div>
 
@@ -686,7 +686,7 @@ function UploadPanel({ form, parcels, parcelQuery, setParcelQuery, parcelLoading
 
           {canManage ? (
             <>
-              <SelectInput label="Statut" name="status" value={form.status} onChange={onChange} options={DOCUMENT_STATUS_OPTIONS} />
+              <SelectInput label="Avancement" name="status" value={form.status} onChange={onChange} options={DOCUMENT_STATUS_OPTIONS} />
 
               <label className="flex items-center justify-between gap-3 rounded-2xl border border-mapgeo-line bg-white px-3 py-2.5 text-sm font-semibold text-mapgeo-primary">
                 <span>
@@ -909,7 +909,7 @@ export default function DocumentsPage() {
       return [
         {
           icon: FileText,
-          label: "Mes documents",
+          label: "Plans, rapports et livrables",
           value: formatNumber(total),
           description: "Sur la liste filtrée",
           action: "Voir mes documents",
@@ -918,19 +918,19 @@ export default function DocumentsPage() {
         },
         {
           icon: FileCheck2,
-          label: "Documents finaux",
+          label: "Livrables finaux",
           value: formatNumber(finals),
           description: "Sur la liste filtrée",
-          action: "Voir les documents finaux",
+          action: "Voir les livrables finaux",
           onClick: () => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "final" }),
           tone: "green",
         },
         {
           icon: LayoutList,
-          label: "Parcelles couvertes",
+          label: "Parcelles avec livrables",
           value: formatNumber(new Set(filteredDocuments.map((doc) => doc.parcel_reference).filter(Boolean)).size),
           description: "Sur la liste filtrée",
-          action: "Voir les parcelles",
+          action: "Visualiser les parcelles",
           href: "/parcelles",
           tone: "purple",
         },
@@ -940,10 +940,10 @@ export default function DocumentsPage() {
     return [
       {
         icon: FileText,
-        label: "Documents disponibles",
+        label: "Plans, rapports et livrables",
         value: formatNumber(total),
         description: "Sur la liste filtrée",
-        action: "Voir les documents",
+        action: "Voir les livrables",
         onClick: () => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code }),
         tone: "blue",
       },
@@ -958,16 +958,16 @@ export default function DocumentsPage() {
       },
       {
         icon: FileCheck2,
-        label: "Documents finaux",
+        label: "Livrables finaux",
         value: formatNumber(finals),
         description: "Sur la liste filtrée",
-        action: "Voir les documents finaux",
+        action: "Voir les livrables finaux",
         onClick: () => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "final" }),
         tone: "green",
       },
       {
         icon: UsersRound,
-        label: "Documents visibles client",
+        label: "Livrables visibles client",
         value: formatNumber(visible),
         description: "Sur la liste filtrée",
         action: "Voir la visibilité",
@@ -1351,7 +1351,7 @@ export default function DocumentsPage() {
 
   return (
     <DashboardLayout
-      title={isInternalPortal ? "Bibliothèque documentaire" : "Mes documents"}
+      title={isInternalPortal ? "Bibliothèque des livrables documentaire" : "Plans, rapports et livrables"}
       subtitle={
         isInternalPortal
           ? "Centralisez les livrables liés aux parcelles et aux clients dans une bibliothèque claire et structurée."

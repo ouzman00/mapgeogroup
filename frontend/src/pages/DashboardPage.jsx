@@ -304,8 +304,8 @@ function FilterBar({
           </DashboardFilterSelect>
         ) : null}
 
-        <DashboardFilterSelect label="Statut dossier" icon={CheckCircle2} value={filters.status} onChange={(value) => update("status", value)}>
-          <option value="">Tous les statuts</option>
+        <DashboardFilterSelect label="Avancement du dossier" icon={CheckCircle2} value={filters.status} onChange={(value) => update("status", value)}>
+          <option value="">Tous les avancements</option>
           {PARCEL_STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
@@ -356,7 +356,7 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
       <div className="flex flex-col gap-3 border-b border-mapgeo-line p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
           <h3 className="text-xl font-extrabold text-mapgeo-primary">
-            {isClientPortal ? "Mes parcelles récentes" : "Portefeuilles clients récents"}
+            {isClientPortal ? "Mon portefeuille foncier récentes" : "Portefeuilles clients récents"}
           </h3>
           <p className="mt-1 text-sm text-mapgeo-secondary/70">
             {isClientPortal
@@ -394,7 +394,7 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
                 <th className="px-4 py-4">Parcelles</th>
                 <th className="px-4 py-4">Commune</th>
                 {isInternalPortal ? <th className="px-4 py-4">Responsable</th> : null}
-                <th className="px-4 py-4">Statut</th>
+                <th className="px-4 py-4">Avancement</th>
                 <th className="px-4 py-4">Avancement</th>
                 <th className="px-4 py-4">Dernière mise à jour</th>
                 <th className="px-5 py-4 text-right">Actions</th>
@@ -468,7 +468,7 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
           <div className="flex flex-col items-center gap-2 text-center">
             {progressFilterNotice ? <p className="text-xs font-semibold text-mapgeo-secondary/70">{progressFilterNotice}</p> : null}
             <Link to={isClientPortal ? "/parcelles" : mapHref} state={{ returnTo }} className="inline-flex items-center gap-2 text-sm font-extrabold text-mapgeo-primary transition hover:gap-3">
-              {isClientPortal ? "Voir mes parcelles" : "Voir la carte avec les filtres"} <ChevronRight size={16} />
+              {isClientPortal ? "Visualiser mes parcelles" : "Voir la carte avec les filtres"} <ChevronRight size={16} />
             </Link>
           </div>
         </div>
@@ -479,14 +479,14 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
 
 function OperationalSummary({ stats, user, isClientPortal }) {
   const clientActions = [
-    { label: "Voir mes parcelles", icon: MapIcon, color: "text-mapgeo-sand", href: "/parcelles" },
-    { label: "Consulter mes documents", icon: FileText, color: "text-mapgeo-sand", href: "/documents" },
+    { label: "Visualiser mes parcelles", icon: MapIcon, color: "text-mapgeo-sand", href: "/parcelles" },
+    { label: "Consulter mes livrables", icon: FileText, color: "text-mapgeo-sand", href: "/documents" },
     { label: "Mes échanges avec MAPGEO", icon: MessageCircle, color: "text-mapgeo-sand", href: "/support" },
     { label: "Mes notifications", icon: BellRing, color: "text-mapgeo-sand", href: "/notifications" },
   ];
 
   const internalAlerts = [
-    { label: `${formatNumber(stats.disputed_parcels || 0)} dossier(s) bloqué(s)`, icon: AlertTriangle, color: "text-mapgeo-sand", href: "/parcelles?status=disputed" },
+    { label: `${formatNumber(stats.disputed_parcels || 0)} dossier(s) à débloquer`, icon: AlertTriangle, color: "text-mapgeo-sand", href: "/parcelles?status=disputed" },
     { label: `${formatNumber(stats.to_verify_parcels || 0)} vérification(s) en attente`, icon: Clock3, color: "text-mapgeo-sand", href: "/parcelles?status=to_verify" },
     { label: `${formatNumber(stats.unread_notifications || 0)} notification(s) non lue(s)`, icon: BellRing, color: "text-mapgeo-sand", href: "/notifications" },
   ];
@@ -507,9 +507,9 @@ function OperationalSummary({ stats, user, isClientPortal }) {
             <SummaryMetric icon={UsersRound} label="Clients actifs" value={formatNumber(stats.active_clients)} />
           ) : null}
 
-          <SummaryMetric icon={MapIcon} label={isClientPortal ? "Mes parcelles" : "Parcelles suivies"} value={formatNumber(stats.total_parcels)} />
+          <SummaryMetric icon={MapIcon} label={isClientPortal ? "Mon portefeuille foncier" : "Portefeuille foncier suivi"} value={formatNumber(stats.total_parcels)} />
           <SummaryMetric icon={FileText} label="Plans, rapports et livrables" value={formatNumber(stats.total_documents)} />
-          <SummaryMetric icon={MessageCircle} label={isClientPortal ? "Mes échanges avec MAPGEO" : "Tickets ouverts"} value={formatNumber(stats.open_support_tickets)} />
+          <SummaryMetric icon={MessageCircle} label={isClientPortal ? "Mes échanges avec MAPGEO" : "Échanges ouverts"} value={formatNumber(stats.open_support_tickets)} />
           <SummaryMetric icon={Clock3} label="Dernier accès" value={user?.username || "Utilisateur"} />
         </div>
 
@@ -590,7 +590,7 @@ function ExecutiveHero({ title, subtitle, stats, isClientPortal, canManageParcel
                   to="/parcelles"
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-5 py-3 text-sm font-extrabold text-mapgeo-primary shadow-soft transition hover:bg-mapgeo-ivory"
                 >
-                  <MapIcon size={18} /> Voir mes parcelles
+                  <MapIcon size={18} /> Visualiser mes parcelles
                 </Link>
               </>
             ) : canManageParcels ? (
@@ -629,7 +629,7 @@ function ExecutiveHero({ title, subtitle, stats, isClientPortal, canManageParcel
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <HeroMetric label={isClientPortal ? "Mon portefeuille foncier" : "Portefeuille foncier"} value={formatNumber(stats.total_parcels)} />
-            <HeroMetric label={isClientPortal ? "Dossiers actifs" : "Dossiers actifs"} value={formatNumber(stats.active_parcels)} />
+            <HeroMetric label={isClientPortal ? "Dossiers en cours" : "Dossiers en cours"} value={formatNumber(stats.active_parcels)} />
             <HeroMetric label="Plans, rapports et livrables" value={formatNumber(stats.total_documents)} />
             <HeroMetric label={isClientPortal ? "Notifications" : "Alertes"} value={formatNumber(stats.unread_notifications)} attention />
           </div>
@@ -743,10 +743,10 @@ export default function DashboardPage() {
       return [
         {
           icon: MapIcon,
-          label: "Mes parcelles",
+          label: "Mon portefeuille foncier",
           value: formatNumber(resolvedStats.total_parcels),
           description: "Parcelles rattachées à votre compte",
-          action: "Voir mes parcelles",
+          action: "Visualiser mes parcelles",
           href: "/parcelles",
           tone: "blue",
         },
@@ -835,7 +835,7 @@ export default function DashboardPage() {
         progress: Number(parcel.progress ?? progressFromStatus(parcel.status) ?? 0),
         updatedAt: formatDateLabel(parcel.updated_at),
         href: buildParcelMapUrl(parcel, filters, dashboardReturnTo),
-        action: "Ouvrir la carte",
+        action: "Visualiser sur la carte",
         accent: "bg-mapgeo-primary",
       }));
     }
