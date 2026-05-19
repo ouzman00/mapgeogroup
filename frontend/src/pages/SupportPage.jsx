@@ -32,10 +32,10 @@ import {
   SUPPORT_ATTACHMENT_MAX_SIZE_LABEL,
   SUPPORT_RESOLVED_STATUSES,
   SUPPORT_STATUS_LABELS,
-  getContacter MAPGEOPriorityLabel,
-  getContacter MAPGEOStatusLabel,
+  getSupportPriorityLabel,
+  getSupportStatusLabel,
   isResolvedOrClosed,
-  validateContacter MAPGEOAttachment,
+  validateSupportAttachment,
 } from "../constants/supportConstants";
 import { getRoleLabel } from "../constants/roleConstants";
 import { formatDateLabel } from "../utils/dateUtils";
@@ -80,11 +80,11 @@ function formatNumber(value) {
 }
 
 function statusLabel(status) {
-  return getContacter MAPGEOStatusLabel(status);
+  return getSupportStatusLabel(status);
 }
 
 function priorityLabel(priority) {
-  return getContacter MAPGEOPriorityLabel(priority);
+  return getSupportPriorityLabel(priority);
 }
 
 function ticketMatchesPeriod(ticket, period) {
@@ -394,7 +394,7 @@ function TicketsTable({
   onClose,
   onDelete,
   isInternalPortal,
-  canManageContacter MAPGEO,
+  canManageSupport,
   selectedIds,
   deletingTicketId,
   bulkDeleting,
@@ -402,7 +402,7 @@ function TicketsTable({
   onToggleVisibleSelection,
   onDeleteSelected,
 }) {
-  const selectableTickets = canManageContacter MAPGEO ? tickets.filter((ticket) => ticket.id && !ticket.isMock) : [];
+  const selectableTickets = canManageSupport ? tickets.filter((ticket) => ticket.id && !ticket.isMock) : [];
   const selectedCount = selectedIds?.size || 0;
   const visibleSelected = selectableTickets.filter((ticket) => selectedIds?.has(ticket.id)).length;
   const allVisibleSelected = selectableTickets.length > 0 && visibleSelected === selectableTickets.length;
@@ -422,7 +422,7 @@ function TicketsTable({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {canManageContacter MAPGEO ? (
+          {canManageSupport ? (
             <>
               <label className="inline-flex items-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-extrabold text-mapgeo-primary shadow-sm">
                 <input
@@ -471,7 +471,7 @@ function TicketsTable({
           <table className="min-w-[1040px] w-full text-left text-sm">
             <thead>
               <tr className="border-b border-mapgeo-line bg-mapgeo-ivory/70 text-xs font-bold uppercase tracking-[0.10em] text-mapgeo-secondary/70">
-                {canManageContacter MAPGEO ? <th className="w-12 px-5 py-4" aria-label="Sélection" /> : null}
+                {canManageSupport ? <th className="w-12 px-5 py-4" aria-label="Sélection" /> : null}
                 <th className="px-5 py-4">Référence</th>
                 <th className="px-4 py-4">Sujet</th>
                 {isInternalPortal ? <th className="px-4 py-4">Client</th> : null}
@@ -487,7 +487,7 @@ function TicketsTable({
             <tbody className="divide-y divide-mapgeo-line">
               {tickets.map((ticket) => (
                 <tr key={ticket.id} className="transition hover:bg-mapgeo-ivory/40">
-                  {canManageContacter MAPGEO ? (
+                  {canManageSupport ? (
                     <td className="px-5 py-4">
                       <label className="inline-flex h-6 w-6 items-center justify-center rounded-lg border border-mapgeo-line bg-white shadow-sm">
                         <input
@@ -554,7 +554,7 @@ function TicketsTable({
                         </Link>
                       ) : null}
 
-                      {canManageContacter MAPGEO && ticket.status !== "resolved" && ticket.status !== "closed" ? (
+                      {canManageSupport && ticket.status !== "resolved" && ticket.status !== "closed" ? (
                         <button
                           type="button"
                           onClick={() => onClose(ticket)}
@@ -565,7 +565,7 @@ function TicketsTable({
                         </button>
                       ) : null}
 
-                      {canManageContacter MAPGEO ? (
+                      {canManageSupport ? (
                         <button
                           type="button"
                           onClick={() => onDelete(ticket)}
@@ -898,10 +898,10 @@ function QuickAction({ icon: Icon, label, href, onClick }) {
   return <button type="button" onClick={onClick} className={className}>{content}</button>;
 }
 
-export default function Contacter MAPGEOPage() {
+export default function SupportPage() {
   const { user, isInternalPortal } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const canManageContacter MAPGEO = ["admin", "manager"].includes(user?.role);
+  const canManageSupport = ["admin", "manager"].includes(user?.role);
   const [tickets, setTickets] = useState([]);
   const [clients, setClients] = useState([]);
   const [filters, setFilters] = useState(() => ({
@@ -910,7 +910,18 @@ export default function Contacter MAPGEOPage() {
     status: searchParams.get("status") || "",
     organization_code: searchParams.get("organization_code") || searchParams.get("client") || "",
   }));
-  const [form, setForm] = useState(EMPTY_TICKET_FORM);
+  const initialParcelFromQuery = searchParams.get("parcel") || "";
+  const initialParcelRefFromQuery = searchParams.get("parcel_ref") || "";
+  const initialSubjectFromQuery = searchParams.get("subject") || "";
+  const [form, setForm] = useState(() => ({
+    ...EMPTY_TICKET_FORM,
+    parcel: initialParcelFromQuery,
+    subject: initialSubjectFromQuery,
+    category: initialParcelFromQuery ? "Parcelle" : EMPTY_TICKET_FORM.category,
+    description: initialParcelRefFromQuery
+      ? `Bonjour MAPGEO,\n\nJ’ai une question concernant la parcelle ${initialParcelRefFromQuery}.\n\n`
+      : EMPTY_TICKET_FORM.description,
+  }));
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [closingTicketId, setClosingTicketId] = useState(null);
@@ -935,6 +946,12 @@ export default function Contacter MAPGEOPage() {
     pageSize: 50,
     debounceMs: 300,
   });
+
+  useEffect(() => {
+    if (initialParcelRefFromQuery) {
+      setFormParcelQuery(initialParcelRefFromQuery);
+    }
+  }, [initialParcelRefFromQuery, setFormParcelQuery]);
 
   const normalizedTickets = useMemo(() => tickets.map(normalizeTicket), [tickets]);
 
@@ -1036,7 +1053,7 @@ export default function Contacter MAPGEOPage() {
   const resetFilters = () => setFilters(EMPTY_FILTERS);
 
   const handleAttachmentChange = (file) => {
-    const validationError = validateContacter MAPGEOAttachment(file);
+    const validationError = validateSupportAttachment(file);
     setAttachmentError(validationError);
     setForm((current) => ({ ...current, attachment: validationError ? null : file }));
   };
@@ -1058,7 +1075,7 @@ export default function Contacter MAPGEOPage() {
         return;
       }
 
-      const validationError = validateContacter MAPGEOAttachment(form.attachment);
+      const validationError = validateSupportAttachment(form.attachment);
       if (validationError) {
         setAttachmentError(validationError);
         setError(validationError);
@@ -1080,6 +1097,9 @@ export default function Contacter MAPGEOPage() {
 
       setForm(EMPTY_TICKET_FORM);
       setAttachmentError("");
+      if (searchParams.get("parcel") || searchParams.get("parcel_ref") || searchParams.get("subject")) {
+        setSearchParams(new URLSearchParams(), { replace: true });
+      }
       setMessage(
         form.attachment
           ? "Ticket créé avec succès. La pièce jointe a été transmise via une route sécurisée."
@@ -1095,7 +1115,7 @@ export default function Contacter MAPGEOPage() {
   };
 
   const requestCloseTicket = (ticket) => {
-    if (!canManageContacter MAPGEO || !ticket?.id) return;
+    if (!canManageSupport || !ticket?.id) return;
     setTicketToClose(ticket);
   };
 
@@ -1119,7 +1139,7 @@ export default function Contacter MAPGEOPage() {
   };
 
   const toggleSelectedTicket = (id) => {
-    if (!id || !canManageContacter MAPGEO) return;
+    if (!id || !canManageSupport) return;
     setSelectedTicketIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
@@ -1129,7 +1149,7 @@ export default function Contacter MAPGEOPage() {
   };
 
   const toggleVisibleTickets = (items, shouldSelect) => {
-    if (!canManageContacter MAPGEO) return;
+    if (!canManageSupport) return;
     setSelectedTicketIds((current) => {
       const next = new Set(current);
       items.forEach((item) => {
@@ -1142,12 +1162,12 @@ export default function Contacter MAPGEOPage() {
   };
 
   const requestDeleteTicket = (ticket) => {
-    if (!canManageContacter MAPGEO || !ticket?.id) return;
+    if (!canManageSupport || !ticket?.id) return;
     setTicketToDelete(ticket);
   };
 
   const confirmDeleteTicket = async () => {
-    if (!ticketToDelete?.id || !canManageContacter MAPGEO) return;
+    if (!ticketToDelete?.id || !canManageSupport) return;
 
     setDeletingTicketId(ticketToDelete.id);
     setMessage("");
@@ -1171,12 +1191,12 @@ export default function Contacter MAPGEOPage() {
   };
 
   const requestDeleteSelectedTickets = () => {
-    if (!canManageContacter MAPGEO || selectedTicketIds.size === 0) return;
+    if (!canManageSupport || selectedTicketIds.size === 0) return;
     setPendingBulkDelete(true);
   };
 
   const confirmDeleteSelectedTickets = async () => {
-    if (!canManageContacter MAPGEO || selectedTicketIds.size === 0) return;
+    if (!canManageSupport || selectedTicketIds.size === 0) return;
 
     const ids = [...selectedTicketIds];
     setBulkDeletingTickets(true);
@@ -1291,7 +1311,7 @@ export default function Contacter MAPGEOPage() {
               onClose={requestCloseTicket}
               onDelete={requestDeleteTicket}
               isInternalPortal={isInternalPortal}
-              canManageContacter MAPGEO={canManageContacter MAPGEO}
+              canManageSupport={canManageSupport}
               selectedIds={selectedTicketIds}
               deletingTicketId={deletingTicketId}
               bulkDeleting={bulkDeletingTickets}

@@ -8,6 +8,7 @@ import {
   Layers,
   Loader2,
   MapPinned,
+  MessageCircle,
   Ruler,
   ShieldCheck,
   UserRound,
@@ -94,6 +95,20 @@ function buildParcelCartoHref(parcel, returnTo) {
   return `/parcelles/${parcel.id}/carto${query ? `?${query}` : ""}`;
 }
 
+function buildParcelSupportHref(parcel, returnTo) {
+  const params = new URLSearchParams();
+  const reference = parcel?.reference || parcel?.title_number || parcel?.id || "";
+
+  if (parcel?.id) params.set("parcel", parcel.id);
+  if (reference) params.set("parcel_ref", reference);
+  if (returnTo) params.set("returnTo", returnTo);
+
+  params.set("subject", reference ? `Question sur la parcelle ${reference}` : "Question sur ma parcelle");
+
+  const query = params.toString();
+  return `/support${query ? `?${query}` : ""}`;
+}
+
 function StateCard({ tone = "default", title, message, actions = null }) {
   const isLoading = tone === "loading";
   const toneClass =
@@ -139,6 +154,7 @@ function ParcelHeader({ parcel, returnTo }) {
   const ownerLabel = parcel.owner_name || parcel.owner_client_code || "Client";
   const locationLabel = parcel.location || parcel.commune || parcel.village || "Sans localisation";
   const cartoHref = buildParcelCartoHref(parcel, returnTo);
+  const supportHref = buildParcelSupportHref(parcel, returnTo);
 
   return (
     <div className="rounded-3xl border border-mapgeo-line bg-white p-5 shadow-soft">
@@ -167,7 +183,14 @@ function ParcelHeader({ parcel, returnTo }) {
             to={cartoHref}
             className="inline-flex items-center gap-2 rounded-2xl bg-mapgeo-primary px-4 py-3 text-sm font-bold text-white shadow-panel transition hover:bg-mapgeo-primary/95"
           >
-            <MapPinned size={16} /> Ouvrir dans la cartographie
+            <MapPinned size={16} /> Visualiser sur la carte
+          </Link>
+
+          <Link
+            to={supportHref}
+            className="inline-flex items-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-4 py-3 text-sm font-bold text-mapgeo-primary shadow-soft transition hover:bg-mapgeo-ivory"
+          >
+            <MessageCircle size={16} /> Poser une question sur cette parcelle
           </Link>
 
           <span className="inline-flex items-center gap-2 rounded-full border border-mapgeo-line bg-white px-3 py-2 text-sm font-bold text-mapgeo-primary">
@@ -375,6 +398,7 @@ function ParcelDetailContent({ parcel, returnTo }) {
   const organizationLabel = parcel.organization_name || parcel.organization_code || "—";
   const locationLabel = parcel.location || parcel.commune || parcel.village || "—";
   const cartoHref = buildParcelCartoHref(parcel, returnTo);
+  const supportHref = buildParcelSupportHref(parcel, returnTo);
   const effectiveArea = firstPositiveNumber(parcel.area, parcel.computed_area);
   const effectivePerimeter = firstPositiveNumber(parcel.perimeter, parcel.computed_perimeter);
   const projectedX = parcel.centroid_easting ?? parcel.centroid_x ?? null;
@@ -502,7 +526,14 @@ function ParcelDetailContent({ parcel, returnTo }) {
                 to={cartoHref}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel transition hover:bg-mapgeo-primary/95"
               >
-                <MapPinned size={17} /> Ouvrir dans la cartographie
+                <MapPinned size={17} /> Visualiser sur la carte
+              </Link>
+
+              <Link
+                to={supportHref}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-5 py-3 text-sm font-extrabold text-mapgeo-primary transition hover:bg-mapgeo-ivory"
+              >
+                <MessageCircle size={17} /> Question sur cette parcelle
               </Link>
 
               <Link
