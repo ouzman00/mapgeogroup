@@ -771,7 +771,7 @@ function SelectInput({ label, value, onChange, children, required = false, disab
   );
 }
 
-function Contacter MAPGEOSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPortal }) {
+function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPortal }) {
   return (
     <aside className="relative overflow-hidden rounded-3xl bg-hero p-6 text-white shadow-panel">
       <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/[0.06] blur-3xl" />
@@ -1352,7 +1352,7 @@ export default function SupportPage() {
             />
           </div>
 
-          <Contacter MAPGEOSummary
+          <SupportSummary
             metrics={metrics}
             user={user}
             onShowUrgent={selectUrgent}
