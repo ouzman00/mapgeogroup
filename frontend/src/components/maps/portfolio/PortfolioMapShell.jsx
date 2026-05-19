@@ -1188,9 +1188,14 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     snapDistance: 24,
     snapMiddle: true,
     snapSegment: true,
-    draggable: true,
+    draggable: false,
     preventMarkerRemoval: false,
     removeLayerBelowMinVertexCount: false,
+    panes: {
+      vertexPane: "markerPane",
+      markerPane: "markerPane",
+      layerPane: MAP_PANES.edit,
+    },
   });
 
   useEffect(() => {
@@ -1209,6 +1214,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     const group = L.featureGroup().addTo(map);
     groupRef.current = group;
     onGeometryGetterChangeRef.current?.(() => collectGeometryFromLayerGroup(group));
+    const editRenderer = L.svg({ pane: MAP_PANES.edit, padding: 0.2 });
     const editOptions = layerEditOptionsRef.current;
 
     // Protection defensive : Geoman plante parfois en appelant disableLayerDrag()
@@ -1283,8 +1289,10 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       if (!group.hasLayer(layer)) group.addLayer(layer);
       layer.options.pmIgnore = false;
       layer.options.pane = MAP_PANES.edit;
+      layer.options.renderer = editRenderer;
+      layer.options.interactive = true;
       layer.options.bubblingMouseEvents = false;
-      layer.setStyle?.(INLINE_EDIT_STYLE);
+      layer.setStyle?.({ ...INLINE_EDIT_STYLE, renderer: editRenderer });
 
       // Geoman doit réinitialiser la couche après modification de pmIgnore/pane.
       // Sans cela, les sommets peuvent être visibles mais non déplaçables.
@@ -1295,8 +1303,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       }
 
       layer.pm?.enable?.(editOptions);
-      layer.pm?.enableLayerDrag?.();
-      layer.dragging?.enable?.();
+      layer.pm?.disableLayerDrag?.();
       scheduleGeomanVertexHandlesRefresh(map);
 
       if (layer.__mapgeoInlineEditRegistered) return;
@@ -1325,7 +1332,9 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       if (sourceForLeaflet) {
         L.geoJSON(sourceForLeaflet, {
           pane: MAP_PANES.edit,
-          style: INLINE_EDIT_STYLE,
+          renderer: editRenderer,
+          interactive: true,
+          style: { ...INLINE_EDIT_STYLE, renderer: editRenderer },
           pmIgnore: false,
         }).eachLayer((layer) => {
           registerEditableLayer(layer);
