@@ -1730,6 +1730,7 @@ export default function PortfolioMapShell({
   const editHistoryIndexRef = useRef(-1);
   const measurementClickTimerRef = useRef(null);
   const lastMeasurementPanAtRef = useRef(0);
+  const createParcelVertexDragActiveRef = useRef(false);
   const { isMobile: isMobileCartography } = useCartographyViewport();
   const measurementSummary = useMemo(() => buildMeasurementSummary(activeFeature), [activeFeature]);
   const measurementDraftSummary = useMemo(() => buildMeasurementDraftSummary(measurementDraft), [measurementDraft]);
@@ -1757,11 +1758,6 @@ export default function PortfolioMapShell({
   const createParcelDraftGeometry = useMemo(
     () => (createParcelDraftPoints.length >= 3 ? polygonGeometryFromLatLngRing(createParcelDraftPoints) : null),
     [createParcelDraftPoints],
-  );
-
-  const createParcelDraftSummary = useMemo(
-    () => buildMeasurementDraftSummary(createParcelDraftMeasurement),
-    [createParcelDraftMeasurement],
   );
 
   const createParcelDraftOverlay = useMemo(() => {
@@ -1820,10 +1816,33 @@ export default function PortfolioMapShell({
     const wasEnabled = map.doubleClickZoom?.enabled?.();
     map.doubleClickZoom?.disable?.();
 
-    return () => {
-      if (wasEnabled) map.doubleClickZoom?.enable?.();
+    const handleCreateParcelDrawingKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cancelCreateParcelDrawing();
+        return;
+      }
+
+      if (event.key === "Backspace" || event.key === "Delete") {
+        event.preventDefault();
+        removeLastCreateParcelDraftPoint();
+        return;
+      }
+
+      if (event.key === "Enter" && createParcelDraftGeometry) {
+        event.preventDefault();
+        finishCreateParcelDrawing();
+      }
     };
-  }, [map, createParcelDrawingActive]);
+
+    window.addEventListener("keydown", handleCreateParcelDrawingKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleCreateParcelDrawingKeyDown);
+      if (wasEnabled) map.doubleClickZoom?.enable?.();
+      createParcelVertexDragActiveRef.current = false;
+    };
+  }, [map, createParcelDrawingActive, cancelCreateParcelDrawing, finishCreateParcelDrawing, removeLastCreateParcelDraftPoint, createParcelDraftGeometry]);
 
   const editMeasurementOverlay = useMemo(() => {
     const overlay = buildGeometryMeasurementOverlay(editGeometry, "edit");
@@ -2347,7 +2366,9 @@ export default function PortfolioMapShell({
               setCursorPosition(point);
 
               if (createParcelDrawingActive) {
-                setCreateParcelDraftCursorPoint(point || null);
+                if (!createParcelVertexDragActiveRef.current) {
+                  setCreateParcelDraftCursorPoint(point || null);
+                }
                 return;
               }
 
@@ -2479,12 +2500,24 @@ export default function PortfolioMapShell({
                   draggable
                   eventHandlers={{
                     dragstart: () => {
+                      createParcelVertexDragActiveRef.current = true;
                       setCreateParcelDraftCursorPoint(null);
                     },
                     dragend: (event) => {
                       const latlng = event.target?.getLatLng?.();
+                      createParcelVertexDragActiveRef.current = false;
                       if (!latlng) return;
                       updateCreateParcelDraftPoint(index, [latlng.lat, latlng.lng]);
+                    },
+                    contextmenu: (event) => {
+                      event.originalEvent?.preventDefault?.();
+                      event.originalEvent?.stopPropagation?.();
+
+                      if (createParcelDraftGeometry) {
+                        finishCreateParcelDrawing();
+                      } else {
+                        cancelCreateParcelDrawing();
+                      }
                     },
                   }}
                 />
@@ -2791,6 +2824,45 @@ export default function PortfolioMapShell({
         <NorthArrow />
         <MapStatusBar cursorPosition={cursorPosition} coordinateSystem={coordinateSystem} features={displayedFeatures} />
         <ViewportSampleNotice summary={viewportSummary} />
+
+        {createParcelDrawingActive ? (
+          <div
+            className="mapgeo-create-draw-mobile-actions mapgeo-export-hidden pointer-events-auto absolute bottom-3 left-3 right-3 z-[960] rounded-2xl border border-mapgeo-sand/35 bg-[#07111b]/92 p-2.5 text-white shadow-[0_18px_50px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:hidden"
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-[11px] font-bold leading-4 text-white/65">
+              Place les sommets sur la carte. Double-tape, Entrée ou Terminer pour valider.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={finishCreateParcelDrawing}
+                disabled={!createParcelDraftGeometry}
+                className="rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-extrabold text-mapgeo-ivory transition hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Terminer
+              </button>
+              <button
+                type="button"
+                onClick={removeLastCreateParcelDraftPoint}
+                disabled={!createParcelDraftPoints.length}
+                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Retour
+              </button>
+              <button
+                type="button"
+                onClick={cancelCreateParcelDrawing}
+                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10"
+              >
+                Annuler
+              </button>
+              <span className="ml-auto text-[11px] font-bold text-white/45">{createParcelDraftPoints.length} sommet{createParcelDraftPoints.length > 1 ? "s" : ""}</span>
+            </div>
+          </div>
+        ) : null}
 
         {map ? <MiniMap parentMap={map} activeBaseLayer={activeBaseLayer} /> : null}
         <LegendPanel

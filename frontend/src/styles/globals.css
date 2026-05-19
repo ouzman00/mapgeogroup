@@ -2918,3 +2918,22 @@ html body .mapgeo-side-label.is-measure {
   box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.28), 0 8px 18px rgba(0, 0, 0, 0.35);
 }
 
+
+/* Manual parcel creation final UX. */
+.mapgeo-create-draw-mode,
+.mapgeo-create-draw-mode .leaflet-container,
+.mapgeo-create-draw-mode .leaflet-pane,
+.mapgeo-create-draw-mode .leaflet-grab,
+.mapgeo-create-draw-mode .leaflet-dragging {
+  cursor: default !important;
+}
+
+.mapgeo-create-draw-mode .mapgeo-create-draft-vertex,
+.mapgeo-create-draw-mode .mapgeo-create-draft-vertex span,
+.mapgeo-create-draft-vertex,
+.mapgeo-create-draft-vertex span {
+  cursor: move !important;
+  pointer-events: auto !important;
+  touch-action: none !important;
+}
+
