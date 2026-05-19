@@ -17,7 +17,9 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { getParcelStatusLabel, progressFromStatus } from "../constants/parcelConstants";
 import useParcels from "../hooks/useParcels";
 import DashboardLayout from "../layouts/DashboardLayout";
+import ClientActionsPanel from "../components/ui/ClientActionsPanel";
 import { getErrorMessage, isNotFoundError } from "../services/responseUtils";
+import clientActionService from "../services/clientActionService";
 import { formatDateLabel as safeFormatDateLabel } from "../utils/dateUtils";
 
 function hasValue(value) {
@@ -251,6 +253,54 @@ function ParcelDocumentsSection({ documents = [] }) {
   );
 }
 
+function ParcelClientActionsSection({ parcelId }) {
+  const [actions, setActions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadActions = async () => {
+    if (!parcelId) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const items = await clientActionService.getOpenActions({ parcel: parcelId });
+      setActions(items);
+    } catch (loadError) {
+      console.error(loadError);
+      setError("Impossible de charger les actions attendues.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadActions();
+  }, [parcelId]);
+
+  const completeAction = async (item) => {
+    try {
+      const updated = await clientActionService.completeAction(item.id);
+      setActions((current) => current.filter((actionItem) => actionItem.id !== updated.id));
+    } catch (completeError) {
+      console.error(completeError);
+      setError("Impossible de terminer cette action.");
+    }
+  };
+
+  return (
+    <ClientActionsPanel
+      title="Actions attendues sur cette parcelle"
+      actions={actions}
+      loading={loading}
+      error={error}
+      emptyLabel="Aucune action attendue pour cette parcelle."
+      onComplete={completeAction}
+    />
+  );
+}
+
 function ParcelTimelineSection({ events = [] }) {
   if (!events.length) {
     return null;
@@ -468,6 +518,7 @@ function ParcelDetailContent({ parcel, returnTo }) {
         </aside>
       </section>
 
+      <ParcelClientActionsSection parcelId={parcel.id} />
       <ParcelTimelineSection events={parcel.timeline_events || []} />
       <ParcelBoundariesSection sides={parcel.sides || []} />
 

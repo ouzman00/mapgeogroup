@@ -22,12 +22,14 @@ import {
 import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
 import dashboardService from "../services/dashboardService";
+import clientActionService from "../services/clientActionService";
 import parcelService from "../services/parcelService";
 import { fetchAllClients } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import { PARCEL_STATUS_OPTIONS, getParcelStatusClasses, getParcelStatusLabel, normalizeParcelStatus, progressFromStatus } from "../constants/parcelConstants";
 import { premium } from "../components/ui/designSystem";
 import LoadingState from "../components/ui/LoadingState";
+import ClientActionsPanel from "../components/ui/ClientActionsPanel";
 import { canManageBackoffice, getRoleLabel } from "../constants/roleConstants";
 import { formatDateLabel } from "../utils/dateUtils";
 
@@ -664,6 +666,9 @@ export default function DashboardPage() {
   const [parcelsLoading, setParcelsLoading] = useState(false);
   const [parcelsError, setParcelsError] = useState("");
   const [error, setError] = useState("");
+  const [clientActions, setClientActions] = useState([]);
+  const [clientActionsLoading, setClientActionsLoading] = useState(false);
+  const [clientActionsError, setClientActionsError] = useState("");
 
   // Chargement initial : stats + annuaire clients (pas les parcelles)
   useEffect(() => {
@@ -691,6 +696,36 @@ export default function DashboardPage() {
 
     loadDashboard();
   }, [isInternalPortal]);
+
+  const loadClientActions = async () => {
+    setClientActionsLoading(true);
+    setClientActionsError("");
+
+    try {
+      const items = await clientActionService.getOpenActions();
+      setClientActions(items);
+    } catch (actionError) {
+      console.error(actionError);
+      setClientActionsError("Impossible de charger les actions attendues.");
+    } finally {
+      setClientActionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isClientPortal) return;
+    loadClientActions();
+  }, [isClientPortal]);
+
+  const completeClientAction = async (item) => {
+    try {
+      const updated = await clientActionService.completeAction(item.id);
+      setClientActions((current) => current.filter((actionItem) => actionItem.id !== updated.id));
+    } catch (actionError) {
+      console.error(actionError);
+      setClientActionsError("Impossible de terminer cette action.");
+    }
+  };
 
   // Rechargement des parcelles à chaque changement de filtre (requête backend)
   useEffect(() => {
@@ -922,7 +957,17 @@ export default function DashboardPage() {
         </div>
 
         <section className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
-          <PortfolioTable
+          {isClientPortal ? (
+          <ClientActionsPanel
+            title="Actions attendues pour faire avancer mes dossiers"
+            actions={clientActions}
+            loading={clientActionsLoading}
+            error={clientActionsError}
+            onComplete={completeClientAction}
+          />
+        ) : null}
+
+        <PortfolioTable
             rows={portfolioRows}
             loading={loading || parcelsLoading}
             error={error || parcelsError}
