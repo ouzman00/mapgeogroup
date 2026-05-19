@@ -6,7 +6,7 @@ function stopLeafletPropagation(event) {
   event?.nativeEvent?.stopImmediatePropagation?.();
 }
 
-function DraggableMapPanel({ children, className, initialOffset = { x: 0, y: 0 }, ariaLabel = "Déplacer le panneau" }) {
+export function DraggableMapPanel({ children, className, initialOffset = { x: 0, y: 0 }, ariaLabel = "Déplacer le panneau" }) {
   const panelRef = useRef(null);
   const dragStateRef = useRef(null);
   const [offset, setOffset] = useState(initialOffset);
