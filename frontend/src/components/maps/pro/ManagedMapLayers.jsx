@@ -472,12 +472,23 @@ function bboxFromMap(map) {
   return [sw.lng, sw.lat, ne.lng, ne.lat].map((value) => Number(value).toFixed(6)).join(",");
 }
 
+function isAbortError(error) {
+  return (
+    error?.name === "AbortError" ||
+    error?.name === "CanceledError" ||
+    error?.code === "ERR_CANCELED" ||
+    String(error?.message || "").toLowerCase().includes("canceled") ||
+    String(error?.message || "").toLowerCase().includes("aborted")
+  );
+}
+
 function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
   const map = useMap();
   const [data, setData] = useState(null);
   const [zoom, setZoom] = useState(() => map.getZoom());
   const requestSeqRef = useRef(0);
   const timerRef = useRef(null);
+  const abortControllerRef = useRef(null);
   const lastRequestKeyRef = useRef("");
   const layerRef = useRef(layer);
 
@@ -500,6 +511,8 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
     setZoom(currentZoom);
 
     if (currentZoom < minZoom || currentZoom > maxZoom) {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
       setData(null);
       lastRequestKeyRef.current = "";
       setLayerRuntime(currentLayer.id, { loading: false, error: "" });
@@ -519,24 +532,36 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
       const requestSeq = requestSeqRef.current + 1;
       requestSeqRef.current = requestSeq;
 
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       setLayerRuntime(currentLayer.id, { loading: true, error: "" });
 
       try {
-        const payload = await mapLayerService.getLayerGeoJson(currentLayer, {
-          bbox,
-          limit: currentLayer.limit || 1500,
-        });
+        const payload = await mapLayerService.getLayerGeoJson(
+          currentLayer,
+          {
+            bbox,
+            limit: currentLayer.limit || 1500,
+          },
+          { signal: controller.signal },
+        );
 
-        if (requestSeq !== requestSeqRef.current) return;
+        if (requestSeq !== requestSeqRef.current || controller.signal.aborted) return;
 
         const featureCount = Array.isArray(payload?.features) ? payload.features.length : 0;
         setData({ ...payload, __requestKey: requestKey });
         setLayerRuntime(currentLayer.id, { loading: false, error: "", featureCount });
       } catch (error) {
-        if (requestSeq !== requestSeqRef.current) return;
+        if (requestSeq !== requestSeqRef.current || controller.signal.aborted || isAbortError(error)) return;
 
         console.warn(`Impossible de charger la couche SIG ${currentLayer.name}.`, error);
         setLayerRuntime(currentLayer.id, { loading: false, error: currentLayer.privateLayer ? "Erreur couche privée" : "Erreur couche SIG" });
+      } finally {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
       }
     }, 450);
   }, [map, setLayerRuntime]);
@@ -552,11 +577,15 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
     return () => {
       map.off("moveend zoomend", handleViewport);
       if (timerRef.current) window.clearTimeout(timerRef.current);
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
       requestSeqRef.current += 1;
     };
   }, [map, loadLayer]);
 
   useEffect(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     lastRequestKeyRef.current = "";
     setData(null);
     loadLayer();
