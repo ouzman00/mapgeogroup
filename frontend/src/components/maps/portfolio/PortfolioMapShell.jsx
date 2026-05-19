@@ -1157,6 +1157,75 @@ function getFeatureRenderKey(feature, prefix = "feature") {
   return `${prefix}-${feature?.id || "parcel"}-${revision}-${ringSignature}`;
 }
 
+function getFeatureGeometryRevision(feature) {
+  const parcel = feature?.parcel || {};
+  const explicitRevision = parcel._local_geometry_revision || parcel.geometry_updated_at || parcel.updated_at || feature?.updatedAt || "";
+  const ringSignature = (feature?.rings || [])
+    .map((ring) => {
+      const first = ring?.[0] || [];
+      const last = ring?.[ring.length - 1] || [];
+      return `${ring?.length || 0}:${first[0] || ""},${first[1] || ""}:${last[0] || ""},${last[1] || ""}`;
+    })
+    .join("|");
+
+  return `${explicitRevision}|${ringSignature}`;
+}
+
+function getZoomBucket(mapZoom) {
+  const zoom = Number(mapZoom);
+  if (!Number.isFinite(zoom)) return 0;
+  return Math.max(0, Math.min(22, Math.round(zoom)));
+}
+
+function getCachedMapValue(cache, key, factory) {
+  if (cache.has(key)) return cache.get(key);
+  const value = factory();
+  cache.set(key, value);
+  return value;
+}
+
+function pruneCacheMap(cache, activeKeys, maxSize = 800) {
+  if (!cache || cache.size <= maxSize) return;
+
+  for (const key of cache.keys()) {
+    if (!activeKeys.has(key)) cache.delete(key);
+    if (cache.size <= maxSize) break;
+  }
+}
+
+function getParcelRenderMemoKey(feature, options = {}) {
+  return [
+    feature?.id || "parcel",
+    getFeatureGeometryRevision(feature),
+    `z${options.zoomBucket ?? 0}`,
+    options.renderKind || "polygon",
+    options.active ? "active" : "inactive",
+    options.hovered ? "hovered" : "idle",
+    options.hasDocuments ? "docs" : "nodocs",
+    options.editing ? "editing" : "readonly",
+    options.geometryError ? "geom-error" : "geom-ok",
+  ].join("|");
+}
+
+function getParcelBadgeMemoKey(feature, active = false) {
+  return [
+    feature?.id || "parcel",
+    getFeatureGeometryRevision(feature),
+    feature?.parcel?.reference || "",
+    feature?.statusLabel || "",
+    active ? "active" : "inactive",
+  ].join("|");
+}
+
+function getSideLabelMemoKey(item = {}) {
+  return [
+    item.id || item.label || "side",
+    item.label || "",
+    item.tone || "default",
+    Math.round(Number(item.angle) || 0),
+  ].join("|");
+}
+
 function getSnapKindLabel(kind) {
   if (kind === "measurement") return "point de mesure";
   if (kind === "vertex") return "sommet";
@@ -2002,6 +2071,9 @@ export default function PortfolioMapShell({
   const editHistoryIndexRef = useRef(-1);
   const measurementClickTimerRef = useRef(null);
   const lastMeasurementPanAtRef = useRef(0);
+  const parcelRenderCacheRef = useRef(new Map());
+  const parcelBadgeIconCacheRef = useRef(new Map());
+  const sideLabelIconCacheRef = useRef(new Map());
   const { isMobile: isMobileCartography } = useCartographyViewport();
   const measurementSummary = useMemo(() => buildMeasurementSummary(activeFeature), [activeFeature]);
   const editMeasurementOverlay = useMemo(() => {
@@ -2062,6 +2134,137 @@ export default function PortfolioMapShell({
 
     return withGeometry;
   }, [displayedFeatures, viewMode, activeFeature]);
+
+  const parcelRenderItems = useMemo(() => {
+    const featuresToRender = (() => {
+      if (!activeFeature) return displayedFeatures;
+
+      const alreadyIn = displayedFeatures.some(
+        (feature) => String(feature.id) === String(activeFeature.id),
+      );
+
+      return alreadyIn ? displayedFeatures : [activeFeature, ...displayedFeatures];
+    })();
+
+    const zoomBucket = getZoomBucket(mapZoom);
+    const activeKeys = new Set();
+    const items = [];
+
+    featuresToRender.forEach((feature) => {
+      const isActive = String(feature.id) === String(activeFeature?.id);
+      if (inlineEditOpen && isActive) return;
+      if (!feature?.rings?.length) return;
+
+      const hovered = String(feature.id) === String(hoveredFeatureId);
+      const renderOptions = {
+        active: isActive,
+        hovered,
+        hasDocuments: feature.documents.length > 0,
+        editing: inlineEditOpen && isActive,
+        geometryError: Boolean(feature.geometryWarning),
+      };
+
+      const renderKind = mapZoom < POLYGON_MIN_ZOOM && feature.center
+        ? (isActive ? "active-marker" : "centroid")
+        : "polygon";
+
+      const cacheKey = getParcelRenderMemoKey(feature, { ...renderOptions, renderKind, zoomBucket });
+      activeKeys.add(cacheKey);
+
+      const cached = getCachedMapValue(parcelRenderCacheRef.current, cacheKey, () => {
+        const symbology = getParcelSymbology(feature.parcel, renderOptions);
+        return {
+          symbology,
+          pathOptions: getParcelPathOptions(feature.parcel, renderOptions),
+        };
+      });
+
+      items.push({
+        feature,
+        renderKind,
+        symbology: cached.symbology,
+        pathOptions: cached.pathOptions,
+        renderKey: getFeatureRenderKey(feature, renderKind),
+      });
+    });
+
+    pruneCacheMap(parcelRenderCacheRef.current, activeKeys);
+    return items;
+  }, [activeFeature, displayedFeatures, hoveredFeatureId, inlineEditOpen, mapZoom]);
+
+  const labelMarkerItems = useMemo(() => {
+    const activeKeys = new Set();
+
+    const items = labelFeatures.map((feature) => {
+      const active = String(feature.id) === String(activeFeature?.id);
+      const cacheKey = getParcelBadgeMemoKey(feature, active);
+      activeKeys.add(cacheKey);
+
+      const icon = getCachedMapValue(
+        parcelBadgeIconCacheRef.current,
+        cacheKey,
+        () => createParcelBadgeIcon(feature.parcel.reference, feature.statusLabel, active),
+      );
+
+      return { feature, icon };
+    });
+
+    pruneCacheMap(parcelBadgeIconCacheRef.current, activeKeys, 600);
+    return items;
+  }, [activeFeature?.id, labelFeatures]);
+
+  const selectedDimensionMarkers = useMemo(() => {
+    const activeKeys = new Set();
+
+    const items = selectedMeasurementOverlay.sideMarkers
+      .filter((item) => item.visible !== false)
+      .map((item) => {
+        const cacheKey = getSideLabelMemoKey(item);
+        activeKeys.add(cacheKey);
+
+        return {
+          ...item,
+          icon: getCachedMapValue(
+            sideLabelIconCacheRef.current,
+            cacheKey,
+            () => createSideLabelIcon(item.label, item.tone, item.angle || 0),
+          ),
+        };
+      });
+
+    pruneCacheMap(sideLabelIconCacheRef.current, activeKeys, 800);
+    return items;
+  }, [selectedMeasurementOverlay.sideMarkers]);
+
+  const measurementDraftDimensionMarkers = useMemo(
+    () =>
+      measurementDraftOverlay.sideMarkers
+        .filter((item) => item.visible !== false)
+        .map((item) => ({
+          ...item,
+          icon: getCachedMapValue(
+            sideLabelIconCacheRef.current,
+            getSideLabelMemoKey(item),
+            () => createSideLabelIcon(item.label, item.tone, item.angle || 0),
+          ),
+        })),
+    [measurementDraftOverlay.sideMarkers],
+  );
+
+  const editDimensionMarkers = useMemo(
+    () =>
+      editMeasurementOverlay.sideMarkers
+        .filter((item) => item.visible !== false)
+        .map((item) => ({
+          ...item,
+          icon: getCachedMapValue(
+            sideLabelIconCacheRef.current,
+            getSideLabelMemoKey(item),
+            () => createSideLabelIcon(item.label, item.tone, item.angle || 0),
+          ),
+        })),
+    [editMeasurementOverlay.sideMarkers],
+  );
 
   useEffect(() => {
     setMeasurementDraft((current) => ({ ...current, points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false }));
@@ -2580,117 +2783,90 @@ export default function PortfolioMapShell({
             setLayerRuntime={layerState.setLayerRuntime}
           />
 
-          {parcelLayerVisible ? (() => {
-            // On itere sur displayedFeatures + on garantit que activeFeature
-            // est presente meme si elle est hors viewport (pour ne jamais la perdre).
-            const featuresToRender = (() => {
-              if (!activeFeature) return displayedFeatures;
-              const alreadyIn = displayedFeatures.some(
-                (f) => String(f.id) === String(activeFeature.id),
-              );
-              return alreadyIn ? displayedFeatures : [activeFeature, ...displayedFeatures];
-            })();
+          {parcelLayerVisible
+            ? parcelRenderItems.map(({ feature, renderKind, symbology, pathOptions, renderKey }) => {
+                if (renderKind === "active-marker") {
+                  return (
+                    <CircleMarker
+                      key={renderKey}
+                      center={feature.center}
+                      pane={MAP_PANES.parcels}
+                      radius={9}
+                      pathOptions={{
+                        color: "#FFFFFF",
+                        fillColor: symbology.fillColor || symbology.color,
+                        fillOpacity: 1,
+                        opacity: 1,
+                        weight: 4,
+                      }}
+                      eventHandlers={{
+                        click: (event) => handleParcelLayerClick(feature, event, feature.center),
+                        dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
+                      }}
+                    />
+                  );
+                }
 
-            return featuresToRender.map((feature) => {
-            const isActive = String(feature.id) === String(activeFeature?.id);
-            if (inlineEditOpen && isActive) return null;
-            if (!feature.rings.length) return null;
+                if (renderKind === "centroid") {
+                  const radius = String(feature.id) === String(hoveredFeatureId) ? CENTROID_RADIUS_BASE + 3 : CENTROID_RADIUS_BASE;
 
-            const renderOptions = {
-              active: isActive,
-              hovered: String(feature.id) === String(hoveredFeatureId),
-              hasDocuments: feature.documents.length > 0,
-              editing: inlineEditOpen && isActive,
-              geometryError: Boolean(feature.geometryWarning),
-            };
+                  return (
+                    <CircleMarker
+                      key={renderKey}
+                      center={feature.center}
+                      pane={MAP_PANES.parcels}
+                      radius={radius}
+                      pathOptions={{
+                        color: symbology.color,
+                        fillColor: symbology.fillColor,
+                        fillOpacity: 0.85,
+                        opacity: 1,
+                        weight: 2,
+                      }}
+                      eventHandlers={{
+                        click: (event) => handleParcelLayerClick(feature, event, feature.center),
+                        dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
+                        mouseover: () => setHoveredFeatureId(feature.id),
+                        mouseout: () => setHoveredFeatureId(null),
+                      }}
+                    >
+                      <Tooltip direction="top" offset={[0, -4]} opacity={0.96} className="mapgeo-parcel-tooltip">
+                        <strong>{feature.parcel.reference}</strong>
+                        <span>{feature.statusLabel}</span>
+                      </Tooltip>
+                    </CircleMarker>
+                  );
+                }
 
-            // Parcelle active a TRES bas zoom : marqueur distinctif (anneau + halo)
-            // pour qu elle reste reperable meme depuis une vue regionale.
-            if (mapZoom < POLYGON_MIN_ZOOM && isActive && feature.center) {
-              const symbology = getParcelSymbology(feature.parcel, renderOptions);
-              return (
-                <CircleMarker
-                  key={getFeatureRenderKey(feature, "active-marker")}
-                  center={feature.center}
-                  pane={MAP_PANES.parcels}
-                  radius={9}
-                  pathOptions={{
-                    color: "#FFFFFF",
-                    fillColor: symbology.fillColor || symbology.color,
-                    fillOpacity: 1,
-                    opacity: 1,
-                    weight: 4,
-                  }}
-                  eventHandlers={{
-                    click: (event) => handleParcelLayerClick(feature, event, feature.center),
-                    dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
-                  }}
-                />
-              );
-            }
-
-            // Bas zoom non-active : centroide colore standard.
-            if (mapZoom < POLYGON_MIN_ZOOM && !isActive && feature.center) {
-              const symbology = getParcelSymbology(feature.parcel, renderOptions);
-              const radius = renderOptions.hovered ? CENTROID_RADIUS_BASE + 3 : CENTROID_RADIUS_BASE;
-              return (
-                <CircleMarker
-                  key={getFeatureRenderKey(feature, "centroid")}
-                  center={feature.center}
-                  pane={MAP_PANES.parcels}
-                  radius={radius}
-                  pathOptions={{
-                    color: symbology.color,
-                    fillColor: symbology.fillColor,
-                    fillOpacity: 0.85,
-                    opacity: 1,
-                    weight: 2,
-                  }}
-                  eventHandlers={{
-                    click: (event) => handleParcelLayerClick(feature, event, feature.center),
-                    dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
-                    mouseover: () => setHoveredFeatureId(feature.id),
-                    mouseout: () => setHoveredFeatureId(null),
-                  }}
-                >
-                  <Tooltip direction="top" offset={[0, -4]} opacity={0.96} className="mapgeo-parcel-tooltip"><strong>{feature.parcel.reference}</strong><span>{feature.statusLabel}</span></Tooltip>
-                </CircleMarker>
-              );
-            }
-
-            return (
-              <Polygon
-                key={getFeatureRenderKey(feature, "polygon")}
-                positions={feature.positions}
-                pane={MAP_PANES.parcels}
-                pathOptions={getParcelPathOptions(feature.parcel, renderOptions)}
-                eventHandlers={{
-                  click: (event) => handleParcelLayerClick(feature, event),
-                  dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
-                  mouseover: () => setHoveredFeatureId(feature.id),
-                  mouseout: () => setHoveredFeatureId(null),
-                }}
-              >
-                <Tooltip direction="top" offset={[0, -4]} opacity={0.96} className="mapgeo-parcel-tooltip">
-                  <strong>{feature.parcel.reference}</strong>
-                  <span>{feature.statusLabel}</span>
-                </Tooltip>
-              </Polygon>
-            );
-          });
-          })() : null}
+                return (
+                  <Polygon
+                    key={renderKey}
+                    positions={feature.positions}
+                    pane={MAP_PANES.parcels}
+                    pathOptions={pathOptions}
+                    eventHandlers={{
+                      click: (event) => handleParcelLayerClick(feature, event),
+                      dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
+                      mouseover: () => setHoveredFeatureId(feature.id),
+                      mouseout: () => setHoveredFeatureId(null),
+                    }}
+                  >
+                    <Tooltip direction="top" offset={[0, -4]} opacity={0.96} className="mapgeo-parcel-tooltip">
+                      <strong>{feature.parcel.reference}</strong>
+                      <span>{feature.statusLabel}</span>
+                    </Tooltip>
+                  </Polygon>
+                );
+              })
+            : null}
 
           {labelsAreVisible
-            ? labelFeatures.map((feature) => (
+            ? labelMarkerItems.map(({ feature, icon }) => (
                 <Marker
                   key={getFeatureRenderKey(feature, "label")}
                   position={feature.center}
                   pane={MAP_PANES.labels}
-                  icon={createParcelBadgeIcon(
-                    feature.parcel.reference,
-                    feature.statusLabel,
-                    String(feature.id) === String(activeFeature?.id),
-                  )}
+                  icon={icon}
                   interactive={!showMeasurements}
                   eventHandlers={showMeasurements ? undefined : {
                     click: (event) => handleParcelLayerClick(feature, event, feature.center),
@@ -2730,24 +2906,24 @@ export default function PortfolioMapShell({
               : null}
 
             {showVertices && vertexDisplayOptions.dimensions !== false
-              ? selectedMeasurementOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
+              ? selectedDimensionMarkers.map((item) => (
                   <Marker
                     key={`selected-${item.id}`}
                     position={item.point}
                     pane={MAP_PANES.measure}
-                    icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
+                    icon={item.icon}
                     interactive={false}
                   />
                 ))
               : null}
 
             {showMeasurements
-              ? measurementDraftOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
+              ? measurementDraftDimensionMarkers.map((item) => (
                   <Marker
                     key={item.id}
                     position={item.point}
                     pane={MAP_PANES.measure}
-                    icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
+                    icon={item.icon}
                     interactive={false}
                   />
                 ))
@@ -2765,12 +2941,12 @@ export default function PortfolioMapShell({
           />
 
           {inlineEditOpen
-          ? editMeasurementOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
+          ? editDimensionMarkers.map((item) => (
               <Marker
                 key={item.id}
                 position={item.point}
                 pane={MAP_PANES.measure}
-                icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
+                icon={item.icon}
                 interactive={false}
               />
             ))
