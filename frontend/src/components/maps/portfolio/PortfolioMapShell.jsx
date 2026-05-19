@@ -47,7 +47,7 @@ import MiniMap from "../pro/MiniMap";
 import IdentifyCard from "./IdentifyCard";
 import FloatingMapToolbar from "./PortfolioMapToolbar";
 import SearchNoResultNotice from "./SearchNoResultNotice";
-import MapToolFeedbackPanel, { DraggableMapPanel } from "./panels/MapFloatingPanels";
+import MapToolFeedbackPanel, { DraggableMapPanel, PanelMoveHandle } from "./panels/MapFloatingPanels";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import useCartographyViewport from "./hooks/useCartographyViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";

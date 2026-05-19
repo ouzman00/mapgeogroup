@@ -133,7 +133,7 @@ export function DraggableMapPanel({ children, className, initialOffset = { x: 0,
   );
 }
 
-function PanelMoveHandle({ dragHandleProps, onReset, onClose, closeLabel = "Fermer" }) {
+export function PanelMoveHandle({ dragHandleProps, onReset, onClose, closeLabel = "Fermer" }) {
   return (
     <div className="mb-2 flex items-center justify-between gap-2 border-b border-white/10 pb-2">
       <button
