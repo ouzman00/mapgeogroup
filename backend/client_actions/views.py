@@ -14,8 +14,7 @@ class ClientActionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        from parcels.models import Parcel
-        visible_parcels = filter_parcels_for_user(Parcel.objects.all(), user)
+        visible_parcels = filter_parcels_for_user(user)
 
         queryset = (
             ClientAction.objects
@@ -41,32 +40,38 @@ class ClientActionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if getattr(user, "role", None) not in MANAGER_ROLES:
-            self.permission_denied(self.request, message="Seul le back-office peut créer une action attendue.")
+            self.permission_denied(
+                self.request,
+                message="Seul le back-office peut créer une action attendue.",
+            )
         serializer.save(created_by=user)
 
     def perform_update(self, serializer):
         user = self.request.user
         if getattr(user, "role", None) not in MANAGER_ROLES:
-            self.permission_denied(self.request, message="Seul le back-office peut modifier une action attendue.")
+            self.permission_denied(
+                self.request,
+                message="Seul le back-office peut modifier une action attendue.",
+            )
         serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
         if getattr(user, "role", None) not in MANAGER_ROLES:
-            self.permission_denied(self.request, message="Seul le back-office peut supprimer une action attendue.")
+            self.permission_denied(
+                self.request,
+                message="Seul le back-office peut supprimer une action attendue.",
+            )
         instance.delete()
 
     @action(detail=True, methods=["patch"])
     def complete(self, request, pk=None):
         action_item = self.get_object()
 
-        if action_item.status == ClientAction.STATUS_DONE:
-            serializer = ClientActionSerializer(action_item, context=self.get_serializer_context())
-            return Response(serializer.data)
-
-        action_item.status = ClientAction.STATUS_DONE
-        action_item.completed_at = timezone.now()
-        action_item.save(update_fields=["status", "completed_at", "updated_at"])
+        if action_item.status != ClientAction.STATUS_DONE:
+            action_item.status = ClientAction.STATUS_DONE
+            action_item.completed_at = timezone.now()
+            action_item.save(update_fields=["status", "completed_at", "updated_at"])
 
         serializer = ClientActionSerializer(action_item, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_200_OK)

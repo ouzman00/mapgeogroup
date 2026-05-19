@@ -58,11 +58,7 @@ class ClientAction(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.parcel_id} · {self.title}"
-
-    @property
-    def is_open(self) -> bool:
-        return self.status == self.STATUS_OPEN
+        return f"{self.parcel.reference} · {self.title}"
 
     def mark_done(self):
         self.status = self.STATUS_DONE
