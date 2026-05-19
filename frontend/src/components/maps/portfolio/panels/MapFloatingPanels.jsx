@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Info, Ruler, Trash2, Undo2, X } from "lucide-react";
+import { Check, Info, Plus, Ruler, Trash2, Undo2, X } from "lucide-react";
 
 function stopLeafletPropagation(event) {
   event?.stopPropagation?.();
