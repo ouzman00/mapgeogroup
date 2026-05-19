@@ -1,4 +1,4 @@
-from django.db.models import Avg, Case, IntegerField, OuterRef, Subquery, Value, When
+from django.db.models import Avg, Case, IntegerField, OuterRef, Subquery, Sum, Value, When
 from django.db.models.functions import Coalesce
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -55,15 +55,18 @@ class DashboardStatsView(APIView):
         average_progress = round(progress_average or 0)
 
         blocked_count = parcels_qs.filter(status="disputed").count()
+        total_area = parcels_qs.aggregate(value=Sum("area"))["value"] or 0
 
         return Response({
             "total_parcels": parcels_qs.count(),
             "active_parcels": parcels_qs.exclude(status="completed").count(),
             "completed_parcels": parcels_qs.filter(status="completed").count(),
+            "ready_parcels": parcels_qs.filter(status="ready").count(),
             "to_verify_parcels": parcels_qs.filter(status="to_verify").count(),
             "blocked_parcels": blocked_count,
             "disputed_parcels": blocked_count,
             "average_progress": average_progress,
+            "total_area": total_area,
             "total_documents": documents_qs.count(),
             "validated_documents": documents_qs.filter(status__in=["validated", "final"]).count(),
             "draft_documents": documents_qs.filter(status="draft").count(),

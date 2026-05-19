@@ -37,6 +37,13 @@ const FALLBACK_STATS = {
   total_parcels: 0,
   active_parcels: 0,
   completed_parcels: 0,
+  ready_parcels: 0,
+  to_verify_parcels: 0,
+  blocked_parcels: 0,
+  disputed_parcels: 0,
+  total_area: 0,
+  validated_documents: 0,
+  draft_documents: 0,
   total_documents: 0,
   unread_notifications: 0,
   open_support_tickets: 0,
@@ -209,6 +216,17 @@ function buildParcelMapUrl(parcel, filters = {}, returnTo = "") {
 
 function formatNumber(value) {
   return new Intl.NumberFormat("fr-FR").format(Number(value || 0));
+}
+
+function formatArea(value) {
+  const area = Number(value || 0);
+  if (!Number.isFinite(area) || area <= 0) return "—";
+
+  if (area >= 10000) {
+    return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(area / 10000)} ha`;
+  }
+
+  return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(area)} m²`;
 }
 
 function averageProgress(items) {
@@ -941,6 +959,38 @@ export default function DashboardPage() {
             <KpiCard key={item.label} {...item} />
           ))}
         </section>
+
+        {isClientPortal ? (
+          <section className="rounded-3xl border border-mapgeo-line bg-white p-5 shadow-soft">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className={premium.eyebrow}>Résumé portefeuille foncier</p>
+                <h2 className="mt-1 text-2xl font-extrabold text-mapgeo-primary">Vue d’ensemble de mes dossiers</h2>
+                <p className="mt-2 text-sm leading-6 text-mapgeo-secondary/70">
+                  Une synthèse claire de vos parcelles, livrables et points nécessitant une action.
+                </p>
+              </div>
+              <Link
+                to={dashboardMapUrl}
+                state={{ returnTo: dashboardReturnTo }}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-4 py-3 text-sm font-extrabold text-white shadow-panel transition hover:bg-mapgeo-primary/95"
+              >
+                Visualiser mes parcelles
+              </Link>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <HeroMetric label="Surface totale" value={formatArea(resolvedStats.total_area)} />
+              <HeroMetric label="Dossiers prêts" value={formatNumber(resolvedStats.ready_parcels)} />
+              <HeroMetric label="À vérifier" value={formatNumber(resolvedStats.to_verify_parcels)} attention />
+              <HeroMetric label="À débloquer" value={formatNumber(resolvedStats.blocked_parcels || resolvedStats.disputed_parcels)} attention />
+              <HeroMetric label="Livrables validés" value={formatNumber(resolvedStats.validated_documents)} />
+              <HeroMetric label="Livrables en préparation" value={formatNumber(resolvedStats.draft_documents)} />
+              <HeroMetric label="Actions attendues" value={formatNumber(clientActions.length)} attention={clientActions.length > 0} />
+              <HeroMetric label="Échanges ouverts" value={formatNumber(resolvedStats.open_support_tickets)} />
+            </div>
+          </section>
+        ) : null}
 
         <FilterBar
           isInternalPortal={isInternalPortal}
