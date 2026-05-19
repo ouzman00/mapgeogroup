@@ -368,6 +368,8 @@ function ParcelClientActionsSection({ parcelId }) {
       onComplete={completeAction}
     />
   );
+}
+
 function getTimelineClientLabel(event = {}) {
   const title = String(event.title || "").trim();
 
