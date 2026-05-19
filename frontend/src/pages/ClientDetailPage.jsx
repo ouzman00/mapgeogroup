@@ -32,7 +32,7 @@ import { getErrorMessage, isNotFoundError } from "../services/responseUtils";
 import { getDocumentVisibilityLabel } from "../constants/documentConstants";
 import { getPortalAccessActionLabel, getPortalAccessLabel } from "../constants/clientConstants";
 import { getParcelStatusLabel, progressFromStatus } from "../constants/parcelConstants";
-import { getContacter MAPGEOPriorityLabel, getContacter MAPGEOStatusLabel, isResolvedOrClosed } from "../constants/supportConstants";
+import { getSupportPriorityLabel, getSupportStatusLabel, isResolvedOrClosed } from "../constants/supportConstants";
 import { formatDateLabel as safeFormatDateLabel } from "../utils/dateUtils";
 
 function formatNumber(value) {
@@ -480,8 +480,8 @@ export default function ClientDetailPage() {
                     <tr key={ticket.id || ticket.reference}>
                       <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{ticket.reference || `SUP-${ticket.id}`}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{ticket.subject || "—"}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.priority_label || getContacter MAPGEOPriorityLabel(ticket.priority)}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.status_label || getContacter MAPGEOStatusLabel(ticket.status)}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.priority_label || getSupportPriorityLabel(ticket.priority)}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.status_label || getSupportStatusLabel(ticket.status)}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{formatDateLabel(ticket.updated_at || ticket.created_at || ticket.date || ticket.lastReply)}</td>
                       <td className="px-5 py-4">{ticket.id ? <Link to={`/support/${ticket.id}`} className="text-sm font-bold text-mapgeo-primary">Ouvrir</Link> : "—"}</td>
                     </tr>

@@ -454,7 +454,7 @@ function TicketsTable({
         <div className="p-6">
           <LoadingState
             title="Veuillez patienter"
-            message="Mise à jour des demandes support."
+            message="Mise à jour des échanges MAPGEO."
             compact
           />
         </div>
@@ -771,14 +771,14 @@ function SelectInput({ label, value, onChange, children, required = false, disab
   );
 }
 
-function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPortal }) {
+function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, onShowAll, isInternalPortal }) {
   return (
     <aside className="relative overflow-hidden rounded-3xl bg-hero p-6 text-white shadow-panel">
       <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/[0.06] blur-3xl" />
 
       <div className="relative">
         <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white/80">
-          {isInternalPortal ? "Résumé support" : "Résumé de mes demandes"}
+          {isInternalPortal ? "Résumé support" : "Résumé de mes échanges"}
         </h3>
 
         <div className="mt-5 space-y-3 border-b border-white/10 pb-5">
@@ -807,13 +807,13 @@ function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, isInternalPor
               <>
                 <QuickAction icon={AlertTriangle} label="Voir les tickets urgents" onClick={onShowUrgent} />
                 <QuickAction icon={MessageCircle} label="Répondre aux tickets ouverts" onClick={onShowOpen} />
-                <QuickAction icon={History} label="Consulter l’historique des demandes" href="/support" />
+                <QuickAction icon={History} label="Voir tout l’historique" onClick={onShowAll} />
               </>
             ) : (
               <>
-                <QuickAction icon={Ticket} label="Contacter MAPGEO ouvertes" onClick={onShowOpen} />
-                <QuickAction icon={MessageCircle} label="Créer une nouvelle demande" href="#new-ticket" />
-                <QuickAction icon={History} label="Consulter mon historique" href="/support" />
+                <QuickAction icon={Ticket} label="Mes échanges ouverts" onClick={onShowOpen} />
+                <QuickAction icon={MessageCircle} label="Contacter MAPGEO" href="#new-ticket" />
+                <QuickAction icon={History} label="Voir tout l’historique" onClick={onShowAll} />
               </>
             )}
           </div>
@@ -1258,7 +1258,7 @@ export default function SupportPage() {
             label={isInternalPortal ? "Échanges ouverts" : "Demandes ouvertes"}
             value={formatNumber(metrics.open)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets ouverts" : "Contacter MAPGEO ouvertes"}
+            action={isInternalPortal ? "Voir les tickets ouverts" : "Mes échanges ouverts"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "open" })}
             tone="blue"
           />
@@ -1278,7 +1278,7 @@ export default function SupportPage() {
             label={isInternalPortal ? "Urgents" : "Priorité haute"}
             value={formatNumber(isInternalPortal ? metrics.urgent : metrics.high)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets urgents" : "Contacter MAPGEO importantes"}
+            action={isInternalPortal ? "Voir les tickets urgents" : "Échanges prioritaires"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, priority: isInternalPortal ? "urgent" : "high" })}
             tone="red"
           />
@@ -1288,7 +1288,7 @@ export default function SupportPage() {
             label="Résolus / clôturés"
             value={formatNumber(metrics.resolved)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets résolus / clôturés" : "Contacter MAPGEO traitées"}
+            action={isInternalPortal ? "Voir les tickets résolus / clôturés" : "Échanges traités"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "resolved_or_closed" })}
             tone="green"
           />
@@ -1357,6 +1357,7 @@ export default function SupportPage() {
             user={user}
             onShowUrgent={selectUrgent}
             onShowOpen={selectOpen}
+            onShowAll={resetFilters}
             isInternalPortal={isInternalPortal}
           />
         </section>
