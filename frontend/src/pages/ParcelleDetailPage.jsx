@@ -19,8 +19,10 @@ import { getParcelStatusLabel, progressFromStatus } from "../constants/parcelCon
 import useParcels from "../hooks/useParcels";
 import DashboardLayout from "../layouts/DashboardLayout";
 import ClientActionsPanel from "../components/ui/ClientActionsPanel";
+import FieldInterventionsPanel from "../components/ui/FieldInterventionsPanel";
 import { getErrorMessage, isNotFoundError } from "../services/responseUtils";
 import clientActionService from "../services/clientActionService";
+import fieldInterventionService from "../services/fieldInterventionService";
 import { formatDateLabel as safeFormatDateLabel } from "../utils/dateUtils";
 
 function hasValue(value) {
@@ -273,6 +275,41 @@ function ParcelDocumentsSection({ documents = [] }) {
         ))}
       </div>
     </article>
+  );
+}
+
+function ParcelFieldInterventionsSection({ parcelId }) {
+  const [interventions, setInterventions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadInterventions = async () => {
+    if (!parcelId) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const items = await fieldInterventionService.getParcelInterventions(parcelId);
+      setInterventions(items);
+    } catch (loadError) {
+      console.error(loadError);
+      setError("Impossible de charger les interventions terrain.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInterventions();
+  }, [parcelId]);
+
+  return (
+    <FieldInterventionsPanel
+      interventions={interventions}
+      loading={loading}
+      error={error}
+    />
   );
 }
 
@@ -549,6 +586,7 @@ function ParcelDetailContent({ parcel, returnTo }) {
         </aside>
       </section>
 
+      <ParcelFieldInterventionsSection parcelId={parcel.id} />
       <ParcelClientActionsSection parcelId={parcel.id} />
       <ParcelTimelineSection events={parcel.timeline_events || []} />
       <ParcelBoundariesSection sides={parcel.sides || []} />
