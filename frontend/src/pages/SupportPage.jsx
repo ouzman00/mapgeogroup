@@ -792,9 +792,9 @@ function SupportSummary({ metrics, user, onShowUrgent, onShowOpen, onShowAll, is
         <div className="mt-5 border-b border-white/10 pb-5">
           <h4 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white/75">Contact MAPGEO</h4>
           <div className="mt-3 space-y-3 text-sm">
-            <SummaryMetric icon={Mail} label="support@mapgeo.sn" value="" />
-            <SummaryMetric icon={Phone} label="+221 33 000 00 00" value="" />
-            <SummaryMetric icon={Clock3} label="Horaires : Lun–Ven • 08:30–18:00" value="" />
+            <SummaryMetric icon={Mail} label="contact@mapgeogroup.com" value="" />
+            <SummaryMetric icon={Phone} label="+221 76 938 85 06" value="" />
+            <SummaryMetric icon={Clock3} label="Horaires : Lun–Sam • 08:30–18:00" value="" />
             <SummaryMetric icon={CalendarDays} label={isInternalPortal ? "Délai estimé : 2 h urgent / 24 h standard" : "Délai estimé : 24 h standard"} value="" />
           </div>
         </div>

@@ -2937,3 +2937,42 @@ html body .mapgeo-side-label.is-measure {
   touch-action: none !important;
 }
 
+
+/* MapGeo legend: stable internal scroll when many layers are visible. */
+.mapgeo-legend-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mapgeo-legend-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  max-height: calc(min(560px, 72vh) - 92px);
+}
+
+.mapgeo-legend-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.mapgeo-legend-scroll::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(247, 245, 242, 0.24);
+}
+
+@media (max-width: 767px) {
+  .mapgeo-legend-panel {
+    max-height: min(58dvh, 430px);
+  }
+
+  .mapgeo-legend-scroll {
+    max-height: calc(min(58dvh, 430px) - 92px);
+  }
+}
+
