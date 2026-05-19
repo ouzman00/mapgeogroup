@@ -1303,7 +1303,10 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       }
 
       layer.pm?.enable?.(editOptions);
-      layer.pm?.disableLayerDrag?.();
+      // NB : on n appelle PAS layer.pm.disableLayerDrag() : cette methode
+      // desactive aussi le drag des markers de sommet sur Geoman 2.19,
+      // ce qui empeche l edition. Le drag du polygone entier est deja
+      // desactive via editOptions.draggable=false.
       scheduleGeomanVertexHandlesRefresh(map);
 
       if (layer.__mapgeoInlineEditRegistered) return;
