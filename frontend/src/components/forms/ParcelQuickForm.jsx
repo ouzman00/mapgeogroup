@@ -578,24 +578,24 @@ export default function ParcelQuickForm({
           {/* Aide contextuelle + bouton convertir */}
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <p className={hintClass}>{formatHint}</p>
-            {form.rawText.trim() ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handlePreviewGeometry}
-                  className={btnPrimary}
-                >
-                  Tracer sur la carte
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConvert}
-                  className={btnSecondary}
-                >
-                  ↺ Forcer la conversion
-                </button>
-              </div>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePreviewGeometry}
+                disabled={!form.rawText.trim()}
+                className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-45`}
+              >
+                Tracer sur la carte
+              </button>
+              <button
+                type="button"
+                onClick={handleConvert}
+                disabled={!form.rawText.trim()}
+                className={`${btnSecondary} disabled:cursor-not-allowed disabled:opacity-45`}
+              >
+                ↺ Forcer la conversion
+              </button>
+            </div>
           </div>
         </div>
 
