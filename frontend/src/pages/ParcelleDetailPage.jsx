@@ -251,6 +251,29 @@ function ParcelDocumentsSection({ documents = [] }) {
   );
 }
 
+function getTimelineClientLabel(event = {}) {
+  const title = String(event.title || "").trim();
+
+  const knownLabels = {
+    planned: "Dossier reçu",
+    surveying: "Levé en cours",
+    processing: "Traitement en cours",
+    draft: "Plan en préparation",
+    ready: "Dossier prêt",
+    completed: "Bornage réalisé",
+    disputed: "Point à arbitrer",
+    to_verify: "À vérifier",
+  };
+
+  if (knownLabels[title]) return knownLabels[title];
+  return title || "Avancement du dossier";
+}
+
+function getTimelineClientDescription(event = {}) {
+  if (event.description) return event.description;
+  return "Une étape de votre dossier a été enregistrée par MAPGEO.";
+}
+
 function ParcelTimelineSection({ events = [] }) {
   if (!events.length) {
     return null;
@@ -268,13 +291,13 @@ function ParcelTimelineSection({ events = [] }) {
         {sortedEvents.map((event) => (
           <div key={event.id} className="rounded-2xl border border-mapgeo-line bg-mapgeo-ivory/60 px-4 py-3">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-extrabold text-mapgeo-primary">{event.title || "Évènement"}</p>
+              <p className="text-sm font-extrabold text-mapgeo-primary">{getTimelineClientLabel(event)}</p>
               <span className="text-xs font-bold uppercase tracking-[0.14em] text-mapgeo-secondary/55">
                 {formatDate(event.event_date)} · {formatProgress(event.progress)}
               </span>
             </div>
             {event.description ? (
-              <p className="mt-2 text-sm leading-6 text-mapgeo-secondary/70">{event.description}</p>
+              <p className="mt-2 text-sm leading-6 text-mapgeo-secondary/70">{getTimelineClientDescription(event)}</p>
             ) : null}
           </div>
         ))}
