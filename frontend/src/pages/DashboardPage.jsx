@@ -481,7 +481,7 @@ function OperationalSummary({ stats, user, isClientPortal }) {
   const clientActions = [
     { label: "Voir mes parcelles", icon: MapIcon, color: "text-mapgeo-sand", href: "/parcelles" },
     { label: "Consulter mes documents", icon: FileText, color: "text-mapgeo-sand", href: "/documents" },
-    { label: "Mes demandes support", icon: MessageCircle, color: "text-mapgeo-sand", href: "/support" },
+    { label: "Mes échanges avec MAPGEO", icon: MessageCircle, color: "text-mapgeo-sand", href: "/support" },
     { label: "Mes notifications", icon: BellRing, color: "text-mapgeo-sand", href: "/notifications" },
   ];
 
@@ -508,8 +508,8 @@ function OperationalSummary({ stats, user, isClientPortal }) {
           ) : null}
 
           <SummaryMetric icon={MapIcon} label={isClientPortal ? "Mes parcelles" : "Parcelles suivies"} value={formatNumber(stats.total_parcels)} />
-          <SummaryMetric icon={FileText} label="Documents" value={formatNumber(stats.total_documents)} />
-          <SummaryMetric icon={MessageCircle} label={isClientPortal ? "Mes demandes support" : "Tickets ouverts"} value={formatNumber(stats.open_support_tickets)} />
+          <SummaryMetric icon={FileText} label="Plans, rapports et livrables" value={formatNumber(stats.total_documents)} />
+          <SummaryMetric icon={MessageCircle} label={isClientPortal ? "Mes échanges avec MAPGEO" : "Tickets ouverts"} value={formatNumber(stats.open_support_tickets)} />
           <SummaryMetric icon={Clock3} label="Dernier accès" value={user?.username || "Utilisateur"} />
         </div>
 
@@ -616,7 +616,7 @@ function ExecutiveHero({ title, subtitle, stats, isClientPortal, canManageParcel
                 state={{ returnTo: dashboardReturnTo }}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-5 py-3 text-sm font-extrabold text-mapgeo-primary shadow-soft transition hover:bg-mapgeo-ivory"
               >
-                <MapIcon size={18} /> Voir la cartographie
+                <MapIcon size={18} /> Visualiser les parcelles
               </Link>
             )}
           </div>
@@ -628,9 +628,9 @@ function ExecutiveHero({ title, subtitle, stats, isClientPortal, canManageParcel
           </p>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <HeroMetric label={isClientPortal ? "Mes parcelles" : "Parcelles"} value={formatNumber(stats.total_parcels)} />
+            <HeroMetric label={isClientPortal ? "Mon portefeuille foncier" : "Portefeuille foncier"} value={formatNumber(stats.total_parcels)} />
             <HeroMetric label={isClientPortal ? "Dossiers actifs" : "Dossiers actifs"} value={formatNumber(stats.active_parcels)} />
-            <HeroMetric label="Documents" value={formatNumber(stats.total_documents)} />
+            <HeroMetric label="Plans, rapports et livrables" value={formatNumber(stats.total_documents)} />
             <HeroMetric label={isClientPortal ? "Notifications" : "Alertes"} value={formatNumber(stats.unread_notifications)} attention />
           </div>
         </div>
@@ -752,19 +752,19 @@ export default function DashboardPage() {
         },
         {
           icon: FileText,
-          label: "Mes documents",
+          label: "Plans, rapports et livrables",
           value: formatNumber(resolvedStats.total_documents),
-          description: "Documents disponibles",
-          action: "Accéder aux documents",
+          description: "Plans, rapports et livrables disponibles",
+          action: "Voir mes livrables",
           href: "/documents",
           tone: "purple",
         },
         {
           icon: MessageCircle,
-          label: "Mes demandes support",
+          label: "Mes échanges avec MAPGEO",
           value: formatNumber(resolvedStats.open_support_tickets),
-          description: "Demandes en cours ou ouvertes",
-          action: "Voir mes demandes",
+          description: "Questions et échanges en cours",
+          action: "Contacter MAPGEO",
           href: "/support",
           tone: "green",
         },
@@ -786,26 +786,26 @@ export default function DashboardPage() {
         label: "Clients actifs",
         value: formatNumber(resolvedStats.active_clients),
         description: canManageParcels ? "Comptes opérationnels · portefeuille complet" : "Comptes dans votre périmètre",
-        action: canManageParcels ? "Voir les clients" : "Voir la cartographie",
+        action: canManageParcels ? "Voir les clients" : "Visualiser les parcelles",
         href: canManageParcels ? "/clients" : dashboardMapUrl,
         tone: "blue",
       },
       {
         icon: MapIcon,
-        label: "Parcelles suivies",
+        label: "Portefeuille foncier suivi",
         value: formatNumber(resolvedStats.total_parcels),
         description: "Portefeuille global · KPI serveur complet",
-        action: "Voir la carte filtrée",
+        action: "Visualiser les parcelles filtrées",
         href: dashboardMapUrl,
         state: { returnTo: dashboardReturnTo },
         tone: "green",
       },
       {
         icon: FileText,
-        label: "Documents disponibles",
+        label: "Plans, rapports et livrables",
         value: formatNumber(resolvedStats.total_documents),
         description: "Livrables reliés aux parcelles · portefeuille complet",
-        action: "Accéder aux documents",
+        action: "Voir mes livrables",
         href: "/documents",
         tone: "purple",
       },
@@ -884,7 +884,7 @@ export default function DashboardPage() {
   const title = isClientPortal ? "Mon espace client" : "Pilotage cartographique";
 
   const subtitle = isClientPortal
-    ? "Retrouvez vos parcelles, vos documents et vos demandes support."
+    ? "Retrouvez vos parcelles, vos livrables et vos échanges avec MAPGEO."
     : "Supervisez les clients, les dossiers et les parcelles avec une lecture métier claire.";
 
   return (
