@@ -376,17 +376,17 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
       <div className="flex flex-col gap-3 border-b border-mapgeo-line p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
           <h3 className="text-xl font-extrabold text-mapgeo-primary">
-            {isClientPortal ? "Mon portefeuille foncier récentes" : "Portefeuilles clients récents"}
+            {isClientPortal ? "Mes dossiers fonciers récents" : "Portefeuilles clients récents"}
           </h3>
           <p className="mt-1 text-sm text-mapgeo-secondary/70">
             {isClientPortal
-              ? "Suivez l’avancement de vos parcelles et consultez leur dossier."
+              ? "Accédez rapidement aux dossiers récemment mis à jour."
               : "Suivez les 100 dernières parcelles chargées, regroupées par portefeuille client. Les KPI ci-dessus viennent des statistiques serveur complètes."}
           </p>
         </div>
 
         <div className="inline-flex items-center gap-2 text-xs font-medium text-mapgeo-secondary/70">
-          <Clock3 size={15} /> Données synchronisées avec le backend
+          <Clock3 size={15} /> Informations mises à jour
           <RotateCcw size={15} className="text-mapgeo-primary" />
         </div>
       </div>
@@ -407,15 +407,15 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
 
       {!loading && !error ? (
         <div className="overflow-x-auto">
-          <table className="mapgeo-table min-w-[860px] w-full text-left text-sm">
+          <table className="mapgeo-table min-w-[760px] w-full text-left text-sm">
             <thead>
               <tr className="border-b border-mapgeo-line bg-mapgeo-ivory/70 text-xs font-bold uppercase tracking-[0.10em] text-mapgeo-secondary/70">
                 {isInternalPortal ? <th className="px-5 py-4">Client</th> : null}
                 <th className="px-4 py-4">Parcelles</th>
                 <th className="px-4 py-4">Commune</th>
                 {isInternalPortal ? <th className="px-4 py-4">Responsable</th> : null}
-                <th className="px-4 py-4">Avancement</th>
-                <th className="px-4 py-4">Avancement</th>
+                <th className="px-4 py-4">État du dossier</th>
+                <th className="px-4 py-4">Progression</th>
                 <th className="px-4 py-4">Dernière mise à jour</th>
                 <th className="px-5 py-4 text-right">Actions</th>
               </tr>
@@ -723,8 +723,9 @@ export default function DashboardPage() {
       const items = await clientActionService.getOpenActions();
       setClientActions(items);
     } catch (actionError) {
-      console.error(actionError);
-      setClientActionsError("Impossible de charger les actions attendues.");
+      console.warn("Actions attendues indisponibles pour le moment.", actionError);
+      setClientActions([]);
+      setClientActionsError("");
     } finally {
       setClientActionsLoading(false);
     }
@@ -1009,7 +1010,7 @@ export default function DashboardPage() {
         <section className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
           {isClientPortal ? (
             <ClientActionsPanel
-              title="Actions attendues pour faire avancer mes dossiers"
+              title="À faire pour mes dossiers"
               actions={clientActions}
               loading={clientActionsLoading}
               error={clientActionsError}
@@ -1028,7 +1029,9 @@ export default function DashboardPage() {
             progressFilterNotice={progressFilterNotice}
           />
 
-          <OperationalSummary stats={resolvedStats} user={user} isClientPortal={isClientPortal} />
+          {!isClientPortal ? (
+            <OperationalSummary stats={resolvedStats} user={user} isClientPortal={isClientPortal} />
+          ) : null}
         </section>
       </div>
     </DashboardLayout>
