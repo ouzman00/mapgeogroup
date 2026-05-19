@@ -201,6 +201,8 @@ export default function ParcelQuickForm({
   onSuccess,
   onCancel,
   onGeometryPreview,
+  onStartGeometryDrawing,
+  geometryPreviewValue,
 }) {
   const [form, setForm] = useState(() => toForm(initialValues));
   const [submitting, setSubmitting] = useState(false);
@@ -217,6 +219,17 @@ export default function ParcelQuickForm({
     setMessageType("info");
     setLiveParseError("");
   }, [initialValues]);
+
+  useEffect(() => {
+    if (!geometryPreviewValue) return;
+
+    setForm((f) => ({
+      ...f,
+      geometry: geometryPreviewValue,
+      rawText: geometryToCoordinateText(geometryPreviewValue) || f.rawText,
+    }));
+    setLiveParseError("");
+  }, [geometryPreviewValue]);
 
   // Parse debounced while user types
   const handleRawTextChange = (event) => {
@@ -585,11 +598,18 @@ export default function ParcelQuickForm({
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
+                  onClick={onStartGeometryDrawing}
+                  className={btnPrimary}
+                >
+                  Tracer une parcelle sur la carte
+                </button>
+                <button
+                  type="button"
                   onClick={handlePreviewGeometry}
                   disabled={!form.rawText.trim()}
-                  className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-45`}
+                  className={`${btnSecondary} disabled:cursor-not-allowed disabled:opacity-45`}
                 >
-                  Tracer sur la carte
+                  Prévisualiser les coordonnées
                 </button>
                 <button
                   type="button"

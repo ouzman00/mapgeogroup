@@ -1683,10 +1683,14 @@ export default function PortfolioMapShell({
   editRequestKey = 0,
   viewportSummary = null,
   createParcelPreviewGeometry = null,
+  createParcelDrawingActive = false,
+  onCreateGeometryDrawn,
+  onCancelCreateGeometryDrawing,
   onInlineEditStateChange,
 }) {
   const [activeCommand, setActiveCommand] = useState(null);
   const [measurementDraft, setMeasurementDraft] = useState({ mode: "distance", points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false });
+  const [createParcelDraftPoints, setCreateParcelDraftPoints] = useState([]);
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
   const [deleteVertexMode, setDeleteVertexMode] = useState(false);
   const [userLocationEnabled, setUserLocationEnabled] = useState(false);
@@ -1725,6 +1729,40 @@ export default function PortfolioMapShell({
     () => (createParcelPreviewGeometry ? geometryToRings(createParcelPreviewGeometry) : []),
     [createParcelPreviewGeometry],
   );
+  const createParcelDraftGeometry = useMemo(
+    () => (createParcelDraftPoints.length >= 3 ? polygonGeometryFromLatLngRing(createParcelDraftPoints) : null),
+    [createParcelDraftPoints],
+  );
+
+  const finishCreateParcelDrawing = useCallback(() => {
+    if (!createParcelDraftGeometry) return;
+
+    onCreateGeometryDrawn?.(createParcelDraftGeometry);
+    setCreateParcelDraftPoints([]);
+  }, [createParcelDraftGeometry, onCreateGeometryDrawn]);
+
+  const cancelCreateParcelDrawing = useCallback(() => {
+    setCreateParcelDraftPoints([]);
+    onCancelCreateGeometryDrawing?.();
+  }, [onCancelCreateGeometryDrawing]);
+
+  useEffect(() => {
+    if (!createParcelDrawingActive) {
+      setCreateParcelDraftPoints([]);
+    }
+  }, [createParcelDrawingActive]);
+
+  useEffect(() => {
+    if (!map || !createParcelDrawingActive) return undefined;
+
+    const wasEnabled = map.doubleClickZoom?.enabled?.();
+    map.doubleClickZoom?.disable?.();
+
+    return () => {
+      if (wasEnabled) map.doubleClickZoom?.enable?.();
+    };
+  }, [map, createParcelDrawingActive]);
+
   const editMeasurementOverlay = useMemo(() => {
     const overlay = buildGeometryMeasurementOverlay(editGeometry, "edit");
     return Object.assign({}, overlay, {
@@ -2264,6 +2302,14 @@ export default function PortfolioMapShell({
               }
             }}
             onMapClick={(point, event) => {
+              if (createParcelDrawingActive) {
+                if (!point) return;
+                setActiveCommand(null);
+                setIdentifyState(null);
+                setCreateParcelDraftPoints((current) => [...current, point]);
+                return;
+              }
+
               if (showMeasurements) {
                 if (inlineEditOpen) closeInlineEdit();
                 setActiveCommand(null);
@@ -2282,6 +2328,11 @@ export default function PortfolioMapShell({
               setIdentifyState(null);
             }}
             onMapDoubleClick={() => {
+              if (createParcelDrawingActive) {
+                finishCreateParcelDrawing();
+                return;
+              }
+
               if (showMeasurements) {
                 clearPendingMeasurementClick();
                 finishMeasurementDraft();
@@ -2294,6 +2345,11 @@ export default function PortfolioMapShell({
               if (showMeasurements) lastMeasurementPanAtRef.current = Date.now();
             }}
             onMapContextMenu={() => {
+              if (createParcelDrawingActive) {
+                cancelCreateParcelDrawing();
+                return;
+              }
+
               if (showMeasurements) finishMeasurementDraft();
             }}
           />
@@ -2309,6 +2365,56 @@ export default function PortfolioMapShell({
             visibleOperationalLayers={visibleExternalLayers}
             setLayerRuntime={layerState.setLayerRuntime}
           />
+
+          {createParcelDrawingActive ? (
+            <>
+              {createParcelDraftPoints.length >= 2 ? (
+                <Polyline
+                  key="create-parcel-draft-line"
+                  positions={createParcelDraftPoints}
+                  pane={MAP_PANES.edit}
+                  pathOptions={{
+                    color: "#FACC15",
+                    opacity: 1,
+                    weight: 4,
+                    dashArray: "8 6",
+                  }}
+                  interactive={false}
+                />
+              ) : null}
+              {createParcelDraftPoints.length >= 3 ? (
+                <Polygon
+                  key="create-parcel-draft"
+                  positions={createParcelDraftPoints}
+                  pane={MAP_PANES.edit}
+                  pathOptions={{
+                    color: "#FACC15",
+                    fillColor: "#FACC15",
+                    fillOpacity: 0.12,
+                    opacity: 1,
+                    weight: 3,
+                    dashArray: "8 6",
+                  }}
+                  interactive={false}
+                />
+              ) : null}
+              {createParcelDraftPoints.map((point, index) => (
+                <CircleMarker
+                  key={`create-parcel-draft-point-${index}`}
+                  center={point}
+                  pane={MAP_PANES.edit}
+                  radius={5}
+                  pathOptions={{
+                    color: "#FFFFFF",
+                    fillColor: "#FACC15",
+                    fillOpacity: 1,
+                    weight: 2,
+                  }}
+                  interactive={false}
+                />
+              ))}
+            </>
+          ) : null}
 
           {createParcelPreviewRings.length ? (
             <Polygon
@@ -2568,6 +2674,38 @@ export default function PortfolioMapShell({
         <NorthArrow />
         <MapStatusBar cursorPosition={cursorPosition} coordinateSystem={coordinateSystem} features={displayedFeatures} />
         <ViewportSampleNotice summary={viewportSummary} />
+
+        {createParcelDrawingActive ? (
+          <div
+            className="mapgeo-create-draw-panel mapgeo-export-hidden pointer-events-auto absolute left-1/2 top-4 z-[960] w-[min(420px,calc(100%-2rem))] -translate-x-1/2 rounded-2xl border border-mapgeo-sand/35 bg-[#07111b]/92 p-3 text-white shadow-[0_18px_50px_rgba(0,0,0,0.32)] backdrop-blur-xl"
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-mapgeo-sand/70">Tracer une parcelle</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-white/65">
+              Clique sur la carte pour placer les sommets. Double-clique ou utilise Terminer pour valider.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={finishCreateParcelDrawing}
+                disabled={!createParcelDraftGeometry}
+                className="rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-extrabold text-mapgeo-ivory transition hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Terminer
+              </button>
+              <button
+                type="button"
+                onClick={cancelCreateParcelDrawing}
+                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10"
+              >
+                Annuler
+              </button>
+              <span className="text-[11px] font-bold text-white/45">{createParcelDraftPoints.length} sommet{createParcelDraftPoints.length > 1 ? "s" : ""}</span>
+            </div>
+          </div>
+        ) : null}
 
         {map ? <MiniMap parentMap={map} activeBaseLayer={activeBaseLayer} /> : null}
         <LegendPanel

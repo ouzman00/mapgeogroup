@@ -125,6 +125,7 @@ export default function ClientPortfolioMap({
   const [identifyState, setIdentifyState] = useState(null);
   const [mapEditActive, setMapEditActive] = useState(false);
   const [createParcelPreviewGeometry, setCreateParcelPreviewGeometry] = useState(null);
+  const [createParcelDrawingActive, setCreateParcelDrawingActive] = useState(false);
 
   const [parcelOverrides, setParcelOverrides] = useState({});
   const [deletedParcelIds, setDeletedParcelIds] = useState(() => new Set());
@@ -614,6 +615,26 @@ export default function ClientPortfolioMap({
     onCreateParcel?.();
   }, [onCreateParcel]);
 
+  const handleStartCreateGeometryDrawing = useCallback(() => {
+    if (!canCreateParcel) return;
+
+    setCreateParcelPreviewGeometry(null);
+    setCreateParcelDrawingActive(true);
+    setShowMeasurements(false);
+    setShowVertices(false);
+    setMobilePanel("map");
+  }, [canCreateParcel]);
+
+  const handleCreateGeometryDrawn = useCallback((geometry) => {
+    setCreateParcelPreviewGeometry(geometry || null);
+    setCreateParcelDrawingActive(false);
+    setMobilePanel("inspector");
+  }, []);
+
+  const handleCancelCreateGeometryDrawing = useCallback(() => {
+    setCreateParcelDrawingActive(false);
+  }, []);
+
   return (
     <div
       className="mapgeo-portfolio-root flex h-full min-h-0 flex-col overflow-auto bg-[#07111b] px-3 pb-3 pt-2 text-mapgeo-primary md:px-4 md:pb-4 lg:overflow-hidden"
@@ -702,6 +723,9 @@ export default function ClientPortfolioMap({
           onDeleteParcel={canArchiveParcels ? handleDeleteParcel : undefined}
           viewportSummary={viewportSummary}
           createParcelPreviewGeometry={createParcelPreviewGeometry}
+          createParcelDrawingActive={createParcelDrawingActive}
+          onCreateGeometryDrawn={handleCreateGeometryDrawn}
+          onCancelCreateGeometryDrawing={handleCancelCreateGeometryDrawing}
           onInlineEditStateChange={setMapEditActive}
         />
 
@@ -754,11 +778,15 @@ export default function ClientPortfolioMap({
           }
           onCancelCreateParcel={() => {
             setCreateParcelPreviewGeometry(null);
+            setCreateParcelDrawingActive(false);
             onCancelCreateParcel?.();
           }}
           onCreateGeometryPreview={setCreateParcelPreviewGeometry}
+          onStartCreateGeometryDrawing={handleStartCreateGeometryDrawing}
+          createGeometryPreviewValue={createParcelPreviewGeometry}
           onParcelCreated={async (newParcel) => {
             setCreateParcelPreviewGeometry(null);
+            setCreateParcelDrawingActive(false);
             // Ajoute immédiatement la nouvelle parcelle aux overrides pour l'afficher sur la carte
             // avant que le viewport ne se rafraîchisse
             if (newParcel?.id) {

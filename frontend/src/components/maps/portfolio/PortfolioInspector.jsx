@@ -634,6 +634,8 @@ export default function PortfolioInspector({
   onCancelCreateParcel,
   onParcelCreated,
   onCreateGeometryPreview,
+  onStartCreateGeometryDrawing,
+  createGeometryPreviewValue,
 }) {
   const emptyInspector = (
     <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.035] p-5 text-sm leading-6 text-white/60">
@@ -684,6 +686,8 @@ export default function PortfolioInspector({
       onSuccess={onParcelCreated}
       onCancel={onCancelCreateParcel}
       onGeometryPreview={onCreateGeometryPreview}
+      onStartGeometryDrawing={onStartCreateGeometryDrawing}
+      geometryPreviewValue={createGeometryPreviewValue}
       variant="dark"
       compact
     />
