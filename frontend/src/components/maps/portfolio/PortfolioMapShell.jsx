@@ -1748,8 +1748,8 @@ export default function PortfolioMapShell({
   );
 
   const createParcelDraftGeometry = useMemo(
-    () => (createParcelDraftPreviewPoints.length >= 3 ? polygonGeometryFromLatLngRing(createParcelDraftPreviewPoints) : null),
-    [createParcelDraftPreviewPoints],
+    () => (createParcelDraftPoints.length >= 3 ? polygonGeometryFromLatLngRing(createParcelDraftPoints) : null),
+    [createParcelDraftPoints],
   );
 
   const createParcelDraftSummary = useMemo(
@@ -2798,7 +2798,7 @@ export default function PortfolioMapShell({
               <button
                 type="button"
                 onClick={finishCreateParcelDrawing}
-                disabled={!createParcelDraftGeometry}
+                disabled={createParcelDraftPoints.length < 3}
                 className="rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-extrabold text-mapgeo-ivory transition hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 Terminer
