@@ -250,7 +250,10 @@ export default function ParcelleCartoPage() {
   const [searchParams] = useSearchParams();
   const { user, isInternalPortal } = useAuth();
   const { fetchOwners, owners } = useParcels();
-  const locallyLoadedParcelIdRef = useRef(null);
+  const parcelDetailsCacheRef = useRef(new Map());
+  const activeParcelRef = useRef(null);
+  const loadPortfolioRequestIdRef = useRef(0);
+  const loadPortfolioAbortRef = useRef(null);
   const selectionRequestIdRef = useRef(0);
 
   const [activeParcel, setActiveParcel] = useState(null);
@@ -287,6 +290,10 @@ export default function ParcelleCartoPage() {
 
   const initialSigLayers = useMemo(() => getMapConfig().sigLayers || [], []);
   const [sigLayers, setSigLayers] = useState(initialSigLayers);
+
+  useEffect(() => {
+    activeParcelRef.current = activeParcel;
+  }, [activeParcel]);
 
 
   useEffect(() => {
@@ -373,23 +380,32 @@ export default function ParcelleCartoPage() {
 
   useEffect(() => {
     let active = true;
+    const requestId = loadPortfolioRequestIdRef.current + 1;
+    loadPortfolioRequestIdRef.current = requestId;
+
+    if (loadPortfolioAbortRef.current) {
+      loadPortfolioAbortRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    loadPortfolioAbortRef.current = controller;
+
+    const isLatestRequest = () =>
+      active &&
+      loadPortfolioRequestIdRef.current === requestId &&
+      !controller.signal.aborted;
 
     async function loadPortfolio() {
-      // Si la parcelle vient d etre chargee localement via handleSelectParcel,
-      // on saute le double fetch (sinon : delai perceptible + voile de chargement).
-      if (id && locallyLoadedParcelIdRef.current === String(id)) {
-        locallyLoadedParcelIdRef.current = null;
-        return;
-      }
-
-      setLoading(true);
+      // Ne pas afficher de chargement bloquant quand une parcelle est déjà visible.
+      // La sélection optimiste reste affichée pendant les chargements de détail.
+      setLoading(!activeParcelRef.current);
       setFetchError("");
 
       try {
 
         if (!id) {
           const parcels = await fetchBusinessParcels(dashboardMapFilters);
-          if (!active) return;
+          if (!isLatestRequest()) return;
 
           setActiveParcel(null);
           setPortfolioOwnerName(selectedOrganizationCode || selectedOwnerClientCode || "Carte de travail");
@@ -397,9 +413,30 @@ export default function ParcelleCartoPage() {
           return;
         }
 
-        const detail = await parcelService.getParcelById(id);
-        if (!active) return;
+        const parcelId = String(id);
+        const cachedDetail = parcelDetailsCacheRef.current.get(parcelId);
 
+        if (cachedDetail) {
+          if (!isLatestRequest()) return;
+
+          setActiveParcel(cachedDetail);
+          setPortfolioOwnerName(cachedDetail.owner_name || cachedDetail.owner_client_code || portfolioOwnerName || "");
+          setPortfolioParcels((current) => {
+            const mergedById = new Map();
+
+            [cachedDetail, ...current].forEach((parcel) => {
+              if (parcel?.id) mergedById.set(String(parcel.id), parcel);
+            });
+
+            return Array.from(mergedById.values());
+          });
+          return;
+        }
+
+        const detail = await parcelService.getParcelById(id);
+        if (!isLatestRequest()) return;
+
+        parcelDetailsCacheRef.current.set(String(detail.id), detail);
         setActiveParcel(detail);
         setPortfolioOwnerName(detail.owner_name || detail.owner_client_code || "");
 
@@ -410,7 +447,7 @@ export default function ParcelleCartoPage() {
         // Client : on conserve le portefeuille autorisé du propriétaire.
         if (!canArchiveParcels && detail.owner_client_code) {
           portfolio = await fetchPortfolioParcelsByOwner(detail.owner_client_code);
-          if (!active) return;
+          if (!isLatestRequest()) return;
         }
 
         const mergedById = new Map();
@@ -421,7 +458,7 @@ export default function ParcelleCartoPage() {
 
         setPortfolioParcels(Array.from(mergedById.values()));
       } catch (error) {
-        if (!active) return;
+        if (!isLatestRequest()) return;
 
         if (id && isNotFoundError(error)) {
           setActiveParcel(null);
@@ -436,7 +473,7 @@ export default function ParcelleCartoPage() {
 
         setFetchError(getErrorMessage(error, "Erreur lors du chargement de la cartographie."));
       } finally {
-        if (active) setLoading(false);
+        if (isLatestRequest()) setLoading(false);
       }
     }
 
@@ -444,6 +481,10 @@ export default function ParcelleCartoPage() {
 
     return () => {
       active = false;
+      controller.abort();
+      if (loadPortfolioAbortRef.current === controller) {
+        loadPortfolioAbortRef.current = null;
+      }
     };
   }, [id, canArchiveParcels, selectedOrganizationCode, selectedOwnerClientCode, dashboardMapFilters]);
 
@@ -459,7 +500,7 @@ export default function ParcelleCartoPage() {
     // Sélection immédiate : pas de voile de chargement.
     setActiveParcel(optimisticParcel);
     setFetchError("");
-    locallyLoadedParcelIdRef.current = optimisticId;
+    parcelDetailsCacheRef.current.set(optimisticId, optimisticParcel);
     navigate(`/parcelles/${optimisticId}/carto`, { replace: true, state: { returnTo } });
 
     try {
@@ -468,7 +509,7 @@ export default function ParcelleCartoPage() {
       // Si une autre parcelle a été sélectionnée entre-temps, on ignore cette ancienne réponse.
       if (selectionRequestIdRef.current !== requestId) return;
 
-      locallyLoadedParcelIdRef.current = String(detail.id);
+      parcelDetailsCacheRef.current.set(String(detail.id), detail);
       setActiveParcel(detail);
       setPortfolioOwnerName(detail.owner_name || detail.owner_client_code || portfolioOwnerName);
 
