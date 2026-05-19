@@ -190,6 +190,7 @@ INSTALLED_APPS = [
     "documents",
     "notifications",
     "support",
+    "client_actions",
     "dashboard",
     "imports",
     "maplayers",

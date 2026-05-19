@@ -24,6 +24,7 @@ def health_check(_request):
 
 
 urlpatterns = [
+    path("api/", include("client_actions.urls")),
     path("admin/", admin.site.urls),
     path("api/health/", health_check, name="health-check"),
     path("api/auth/refresh/", CookieTokenRefreshView.as_view(), name="token-refresh"),
