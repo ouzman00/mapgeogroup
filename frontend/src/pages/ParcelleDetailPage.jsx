@@ -19,6 +19,7 @@ import useParcels from "../hooks/useParcels";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { getErrorMessage, isNotFoundError } from "../services/responseUtils";
 import { formatDateLabel as safeFormatDateLabel } from "../utils/dateUtils";
+import { exportParcelDetailPdf } from "../utils/parcelPdfExport";
 
 function hasValue(value) {
   return value !== null && value !== undefined && value !== "";
@@ -167,6 +168,14 @@ function ParcelHeader({ parcel, returnTo }) {
           >
             <MapPinned size={16} /> Visualiser sur la carte
           </Link>
+
+          <button
+            type="button"
+            onClick={() => exportParcelDetailPdf(parcel)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-mapgeo-line bg-white px-4 py-3 text-sm font-bold text-mapgeo-primary shadow-soft transition hover:bg-mapgeo-ivory"
+          >
+            <FileText size={16} /> Télécharger la fiche PDF
+          </button>
 
           <span className="inline-flex items-center gap-2 rounded-full border border-mapgeo-line bg-white px-3 py-2 text-sm font-bold text-mapgeo-primary">
             <FolderKanban size={16} /> {getParcelStatusLabel(parcel.status)}
