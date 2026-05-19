@@ -2890,3 +2890,14 @@ html body .mapgeo-side-label.is-measure {
   cursor: grabbing !important;
 }
 
+
+/* MapGeo create parcel drawing: use an arrow cursor instead of the Leaflet grab hand. */
+.mapgeo-create-draw-mode,
+.mapgeo-create-draw-mode .leaflet-container,
+.mapgeo-create-draw-mode .leaflet-pane,
+.mapgeo-create-draw-mode .leaflet-interactive,
+.mapgeo-create-draw-mode .leaflet-grab,
+.mapgeo-create-draw-mode .leaflet-dragging {
+  cursor: default !important;
+}
+

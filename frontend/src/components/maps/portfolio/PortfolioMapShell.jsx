@@ -2318,7 +2318,7 @@ export default function PortfolioMapShell({
   return (
     <section className="mapgeo-portfolio-shell order-1 relative min-h-[560px] min-w-0 overflow-hidden rounded-[18px] border border-white/10 bg-[#08131d] shadow-[0_24px_90px_rgba(0,0,0,0.32)] lg:order-2 lg:min-h-0">
       <div ref={mapContainerRef} className="mapgeo-printable-map relative h-full min-h-[560px] overflow-hidden rounded-[18px] bg-[#0a111a] lg:min-h-0">
-        <MapContainer preferCanvas center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""}`} zoomControl={false}>
+        <MapContainer preferCanvas center={activeFeature?.center || DEFAULT_MAP_CENTER} zoom={16} minZoom={2} maxZoom={22} doubleClickZoom={true} className={`h-full w-full ${showMeasurements ? "mapgeo-measure-mode" : ""} ${createParcelDrawingActive ? "mapgeo-create-draw-mode" : ""}`} zoomControl={false}>
           <MapPaneController />
 
           <PortfolioViewport mode={viewMode} activeFeature={activeFeature} features={viewportFeatures} onMapReady={setMap} viewportRequest={viewportRequest} onZoomChange={setMapZoom} />
@@ -2395,7 +2395,11 @@ export default function PortfolioMapShell({
             }}
             onMapContextMenu={() => {
               if (createParcelDrawingActive) {
-                cancelCreateParcelDrawing();
+                if (createParcelDraftGeometry) {
+                  finishCreateParcelDrawing();
+                } else {
+                  cancelCreateParcelDrawing();
+                }
                 return;
               }
 
