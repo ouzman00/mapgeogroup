@@ -170,6 +170,15 @@ function MapPaneController() {
       pane.style.zIndex = String(zIndex);
       pane.style.pointerEvents = pointerEvents;
     });
+
+    // Les poignées de sommets Geoman sont rendues dans le markerPane Leaflet natif.
+    // Le pane d'édition MapGeo est au-dessus des polygones standards ; on remonte donc
+    // markerPane au-dessus de l'édition pour garder les sommets drag-and-drop.
+    const markerPane = map.getPane("markerPane");
+    if (markerPane) {
+      markerPane.style.zIndex = "760";
+      markerPane.style.pointerEvents = "auto";
+    }
   }, [map]);
 
   return null;
