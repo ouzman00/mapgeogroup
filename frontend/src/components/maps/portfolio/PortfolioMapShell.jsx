@@ -48,6 +48,7 @@ import IdentifyCard from "./IdentifyCard";
 import FloatingMapToolbar from "./PortfolioMapToolbar";
 import SearchNoResultNotice from "./SearchNoResultNotice";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
+import useCartographyViewport from "./hooks/useCartographyViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
 import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragend pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
@@ -363,42 +364,6 @@ function getSideMarkerPixelOptions(map, isMobileOverride = null) {
     minSegmentPixels: mobile ? 44 : 34,
     minZoom: mobile ? 17 : 15,
   };
-}
-
-function useCartographyViewport() {
-  const [isMobile, setIsMobile] = useState(() => isMobileCartographyViewportSafe());
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    const mediaQueries = [
-      window.matchMedia?.("(max-width: 767px)"),
-      window.matchMedia?.("(pointer: coarse)"),
-      window.matchMedia?.("(hover: none)"),
-    ].filter(Boolean);
-
-    const refresh = () => {
-      setIsMobile(isMobileCartographyViewportSafe());
-    };
-
-    refresh();
-    window.addEventListener("resize", refresh, { passive: true });
-    window.addEventListener("orientationchange", refresh, { passive: true });
-
-    mediaQueries.forEach((query) => {
-      query.addEventListener?.("change", refresh);
-    });
-
-    return () => {
-      window.removeEventListener("resize", refresh);
-      window.removeEventListener("orientationchange", refresh);
-      mediaQueries.forEach((query) => {
-        query.removeEventListener?.("change", refresh);
-      });
-    };
-  }, []);
-
-  return { isMobile };
 }
 
 function repositionSideMarkersOutsideInPixels(markers, map, pixels, viewportOptions = {}) {
