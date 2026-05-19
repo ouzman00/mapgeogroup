@@ -52,7 +52,7 @@ import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import useCartographyViewport from "./hooks/useCartographyViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
 import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
-const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragend pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
+const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragstart pm:markerdrag pm:markerdragend pm:dragstart pm:drag pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
 const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
 const SNAP_TOLERANCE_PX = 24; // Augmenté de 18 à 24px pour plus de confort
@@ -642,6 +642,38 @@ function refreshGeomanLayerEdition(layer, editOptions) {
   layer.pm?.enable?.(editOptions);
 }
 
+function ensureGeomanVertexHandlesInteractive(map) {
+  const container = map?.getContainer?.();
+  if (!container) return;
+
+  const markerPane = map.getPane?.("markerPane");
+  if (markerPane) {
+    markerPane.style.zIndex = "860";
+    markerPane.style.pointerEvents = "auto";
+  }
+
+  container
+    .querySelectorAll(".leaflet-pm-marker, .leaflet-pm-draggable")
+    .forEach((element) => {
+      element.classList.add("mapgeo-geoman-edit-handle");
+      element.style.pointerEvents = "auto";
+      element.style.touchAction = "none";
+      element.style.zIndex = "10000";
+    });
+}
+
+function scheduleGeomanVertexHandlesRefresh(map) {
+  if (typeof requestAnimationFrame !== "function") {
+    ensureGeomanVertexHandlesInteractive(map);
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    ensureGeomanVertexHandlesInteractive(map);
+    requestAnimationFrame(() => ensureGeomanVertexHandlesInteractive(map));
+  });
+}
+
 function keepBoundsVisibleWithoutZoom(map, bounds) {
   if (!map || !bounds?.isValid?.()) return;
   const currentBounds = map.getBounds?.();
@@ -1191,6 +1223,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     };
 
     const scheduleSync = () => {
+      scheduleGeomanVertexHandlesRefresh(map);
       if (animationFrameRef.current) return;
       animationFrameRef.current = requestAnimationFrame(syncNow);
     };
@@ -1252,6 +1285,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       layer.options.bubblingMouseEvents = false;
       layer.setStyle?.(INLINE_EDIT_STYLE);
       layer.pm?.enable?.(editOptions);
+      scheduleGeomanVertexHandlesRefresh(map);
 
       if (layer.__mapgeoInlineEditRegistered) return;
       layer.__mapgeoInlineEditRegistered = true;
@@ -1291,8 +1325,12 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       if (sync) syncNow();
     };
 
-    reloadGeometryRef.current = (nextGeometry) => loadGeometryIntoGroup(nextGeometry, { keepVisible: false, sync: false });
+    reloadGeometryRef.current = (nextGeometry) => {
+      loadGeometryIntoGroup(nextGeometry, { keepVisible: false, sync: false });
+      scheduleGeomanVertexHandlesRefresh(map);
+    };
     loadGeometryIntoGroup(geometryRef.current || activeFeature.parcel?.geometry, { keepVisible: true, sync: true });
+    scheduleGeomanVertexHandlesRefresh(map);
 
     map.pm?.setGlobalOptions?.({
       continueDrawing: false,
@@ -1345,6 +1383,14 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     };
 
     const handleSync = () => scheduleSync();
+    const handleGeomanDragStart = () => {
+      try { map.dragging?.disable?.(); } catch {}
+      scheduleGeomanVertexHandlesRefresh(map);
+    };
+    const handleGeomanDragEnd = () => {
+      try { map.dragging?.enable?.(); } catch {}
+      scheduleSync();
+    };
     const handleMouseMove = (event) => {
       hoveredLatLngRef.current = event?.latlng || null;
     };
@@ -1362,6 +1408,8 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
     map.on("pm:create", handleCreate);
     map.on("pm:remove", handleRemove);
     map.on("pm:cut", handleCut);
+    map.on("pm:markerdragstart pm:dragstart", handleGeomanDragStart);
+    map.on("pm:markerdragend pm:dragend", handleGeomanDragEnd);
     map.on("mousemove", handleMouseMove);
     map.on("mouseout", handleMouseOut);
     map.on(INLINE_EDIT_EVENTS, handleSync);
@@ -1378,6 +1426,9 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       map.off("pm:create", handleCreate);
       map.off("pm:remove", handleRemove);
       map.off("pm:cut", handleCut);
+      map.off("pm:markerdragstart pm:dragstart", handleGeomanDragStart);
+      map.off("pm:markerdragend pm:dragend", handleGeomanDragEnd);
+      try { map.dragging?.enable?.(); } catch {}
       map.off("mousemove", handleMouseMove);
       map.off("mouseout", handleMouseOut);
       map.off(INLINE_EDIT_EVENTS, handleSync);

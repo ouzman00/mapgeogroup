@@ -2874,3 +2874,19 @@ html body .mapgeo-side-label.is-measure {
 }
 
 
+/* MapGeo geometry edition: keep Geoman vertex handles draggable above edit panes. */
+.mapgeo-geoman-edit-handle,
+.leaflet-pm-marker,
+.leaflet-pm-draggable {
+  pointer-events: auto !important;
+  touch-action: none !important;
+  cursor: grab !important;
+  z-index: 10000 !important;
+}
+
+.mapgeo-geoman-edit-handle:active,
+.leaflet-pm-marker:active,
+.leaflet-pm-draggable:active {
+  cursor: grabbing !important;
+}
+
