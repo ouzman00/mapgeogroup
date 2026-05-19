@@ -375,14 +375,17 @@ export default function ParcelleCartoPage() {
     let active = true;
 
     async function loadPortfolio() {
+      // Si la parcelle vient d etre chargee localement via handleSelectParcel,
+      // on saute le double fetch (sinon : delai perceptible + voile de chargement).
+      if (id && locallyLoadedParcelIdRef.current === String(id)) {
+        locallyLoadedParcelIdRef.current = null;
+        return;
+      }
+
       setLoading(true);
       setFetchError("");
 
       try {
-        if (id && locallyLoadedParcelIdRef.current === String(id)) {
-          locallyLoadedParcelIdRef.current = null;
-          return;
-        }
 
         if (!id) {
           const parcels = await fetchBusinessParcels(dashboardMapFilters);

@@ -115,23 +115,36 @@ export default function usePortfolioFeatures({ parcels, activeParcel, searchTerm
   }, [displayedFeatures, features]);
 
   const portfolioSpreadKm = useMemo(() => {
-    const centers = features.map((feature) => feature.center).filter((center) => Array.isArray(center) && center.length === 2);
-    let maxDistance = 0;
-    for (let i = 0; i < centers.length; i += 1) {
-      for (let j = i + 1; j < centers.length; j += 1) {
-        maxDistance = Math.max(maxDistance, haversineDistance(centers[i], centers[j]));
-      }
+    // Approximation rapide via la diagonale de la bbox (O(N) au lieu de O(N^2)).
+    // Suffisant pour afficher l etalement du portefeuille (precision +/- 10%).
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    let count = 0;
+    for (const feature of features) {
+      const c = feature?.center;
+      if (!Array.isArray(c) || c.length !== 2) continue;
+      const [lat, lng] = c;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      count += 1;
     }
-    return Math.round(maxDistance / 1000);
+    if (count < 2) return 0;
+    const diagonal = haversineDistance([minLat, minLng], [maxLat, maxLng]);
+    return Math.round(diagonal / 1000);
   }, [features]);
 
   const geometryCoverage = useMemo(() => features.filter((feature) => feature.rings.length > 0).length, [features]);
   const portfolioDocuments = useMemo(() => features.reduce((total, feature) => total + feature.documents.length, 0), [features]);
   const communesCount = useMemo(() => new Set(features.map((feature) => feature.parcel.commune).filter(Boolean)).size, [features]);
 
+  // ID stable pour eviter de recreer le tableau si l objet activeFeature change
+  // de reference mais que son id est le meme.
+  const activeFeatureId = activeFeature?.id != null ? String(activeFeature.id) : null;
   const legendFeatures = useMemo(
-    () => features.map((feature) => ({ ...feature, active: String(feature.id) === String(activeFeature?.id) })),
-    [features, activeFeature],
+    () => features.map((feature) => ({ ...feature, active: String(feature.id) === activeFeatureId })),
+    [features, activeFeatureId],
   );
 
   const labelsAreVisible = showLabels && activeLayerEnabled && (

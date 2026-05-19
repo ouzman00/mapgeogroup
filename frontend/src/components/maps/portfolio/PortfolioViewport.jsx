@@ -58,7 +58,7 @@ function getMoveOptions(requestReason) {
 
   return {
     animate: true,
-    duration: 0.75,
+    duration: 0.45,
     easeLinearity: 0.35,
   };
 }
@@ -79,13 +79,18 @@ export function PortfolioViewport({
   const userMovedMapRef = useRef(false);
   const programmaticMoveRef = useRef(false);
 
-  const points = useMemo(() => {
-    if (mode === "portfolio") {
-      return features.flatMap((feature) => flattenFeaturePoints(feature));
-    }
+  // En mode portfolio, points ne depend QUE de features (pas de activeFeature).
+  // En mode selection, points ne depend QUE de activeFeature.
+  // Cette separation evite des recalculs lourds quand on change juste de selection.
+  const portfolioPoints = useMemo(() => {
+    return features.flatMap((feature) => flattenFeaturePoints(feature));
+  }, [features]);
 
+  const selectionPoints = useMemo(() => {
     return flattenFeaturePoints(activeFeature);
-  }, [mode, features, activeFeature]);
+  }, [activeFeature]);
+
+  const points = mode === "portfolio" ? portfolioPoints : selectionPoints;
 
   const fallbackCenter = useMemo(() => {
     return (
@@ -163,7 +168,7 @@ export function PortfolioViewport({
 
       window.setTimeout(
         release,
-        moveOptions.animate ? 1800 : 250,
+        moveOptions.animate ? 900 : 250,
       );
     };
 
