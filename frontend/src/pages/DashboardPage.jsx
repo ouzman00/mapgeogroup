@@ -416,8 +416,8 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
                 {isInternalPortal ? <th className="px-4 py-4">Responsable</th> : null}
                 <th className="px-4 py-4">État du dossier</th>
                 <th className="px-4 py-4">Progression</th>
-                <th className="px-4 py-4">Dernière mise à jour</th>
-                <th className="px-5 py-4 text-right">Actions</th>
+                {isInternalPortal ? <th className="px-4 py-4">Dernière mise à jour</th> : null}
+                {isInternalPortal ? <th className="px-5 py-4 text-right">Actions</th> : null}
               </tr>
             </thead>
 
@@ -462,19 +462,21 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
                       </div>
                     </td>
 
-                    <td className="px-4 py-4 text-mapgeo-secondary">{row.updatedAt}</td>
+                    {isInternalPortal ? <td className="px-4 py-4 text-mapgeo-secondary">{row.updatedAt}</td> : null}
 
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={row.href || "/parcelles"}
-                          state={{ returnTo }}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-bold text-mapgeo-primary shadow-sm transition hover:border-mapgeo-primary/20 hover:bg-mapgeo-ivory"
-                        >
-                          {row.action}
-                        </Link>
-                      </div>
-                    </td>
+                    {isInternalPortal ? (
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={row.href || "/parcelles"}
+                            state={{ returnTo }}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-bold text-mapgeo-primary shadow-sm transition hover:border-mapgeo-primary/20 hover:bg-mapgeo-ivory"
+                          >
+                            {row.action}
+                          </Link>
+                        </div>
+                      </td>
+                    ) : null}
                   </tr>
                 ))
               )}
