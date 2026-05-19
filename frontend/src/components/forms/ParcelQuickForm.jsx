@@ -200,6 +200,7 @@ export default function ParcelQuickForm({
   compact = false,
   onSuccess,
   onCancel,
+  onGeometryPreview,
 }) {
   const [form, setForm] = useState(() => toForm(initialValues));
   const [submitting, setSubmitting] = useState(false);
@@ -301,8 +302,10 @@ export default function ParcelQuickForm({
     }
   };
 
-  const handleConvert = () => {
-    if (!form.rawText.trim()) return;
+  const parseCurrentGeometry = () => {
+    if (!form.rawText.trim()) {
+      return { geometry: null, error: "Aucune coordonnée à tracer." };
+    }
 
     const { geometry, error, format: parsedFormat, crs: parsedCrs } = tryParseGeometry(form.rawText, importFormat, importCrs);
 
@@ -312,9 +315,23 @@ export default function ParcelQuickForm({
     if (geometry) {
       setForm((f) => ({ ...f, geometry }));
       setLiveParseError("");
-    } else {
-      setLiveParseError(error || "Impossible de lire la geometrie.");
+      return { geometry, error: null };
     }
+
+    const message = error || "Impossible de lire la geometrie.";
+    setLiveParseError(message);
+    return { geometry: null, error: message };
+  };
+
+  const handleConvert = () => {
+    parseCurrentGeometry();
+  };
+
+  const handlePreviewGeometry = () => {
+    const { geometry } = parseCurrentGeometry();
+    if (!geometry) return;
+
+    onGeometryPreview?.(geometry);
   };
 
   const handleSubmit = async (event) => {
@@ -329,6 +346,7 @@ export default function ParcelQuickForm({
       setMessageType("success");
       setForm(EMPTY_FORM);
       setLiveParseError("");
+      onGeometryPreview?.(null);
       await onSuccess?.(savedParcel);
     } catch (error) {
       setMessage(getErrorMessage(error, "Impossible d'enregistrer la parcelle."));
@@ -561,13 +579,22 @@ export default function ParcelQuickForm({
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <p className={hintClass}>{formatHint}</p>
             {form.rawText.trim() ? (
-              <button
-                type="button"
-                onClick={handleConvert}
-                className={btnSecondary}
-              >
-                ↺ Forcer la conversion
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePreviewGeometry}
+                  className={btnPrimary}
+                >
+                  Tracer sur la carte
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConvert}
+                  className={btnSecondary}
+                >
+                  ↺ Forcer la conversion
+                </button>
+              </div>
             ) : null}
           </div>
         </div>

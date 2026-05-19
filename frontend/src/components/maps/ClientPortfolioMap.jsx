@@ -124,6 +124,7 @@ export default function ClientPortfolioMap({
 
   const [identifyState, setIdentifyState] = useState(null);
   const [mapEditActive, setMapEditActive] = useState(false);
+  const [createParcelPreviewGeometry, setCreateParcelPreviewGeometry] = useState(null);
 
   const [parcelOverrides, setParcelOverrides] = useState({});
   const [deletedParcelIds, setDeletedParcelIds] = useState(() => new Set());
@@ -608,6 +609,7 @@ export default function ClientPortfolioMap({
   );
 
   const handleCreateParcelRequest = useCallback(() => {
+    setCreateParcelPreviewGeometry(null);
     setMobilePanel("inspector");
     onCreateParcel?.();
   }, [onCreateParcel]);
@@ -699,6 +701,7 @@ export default function ClientPortfolioMap({
           onSaveParcelEdit={canManageParcels ? handleSaveParcelEdit : undefined}
           onDeleteParcel={canArchiveParcels ? handleDeleteParcel : undefined}
           viewportSummary={viewportSummary}
+          createParcelPreviewGeometry={createParcelPreviewGeometry}
           onInlineEditStateChange={setMapEditActive}
         />
 
@@ -749,8 +752,13 @@ export default function ClientPortfolioMap({
           createParcelDefaultOwnerId={
             canManageParcels ? createParcelDefaultOwnerId : null
           }
-          onCancelCreateParcel={onCancelCreateParcel}
+          onCancelCreateParcel={() => {
+            setCreateParcelPreviewGeometry(null);
+            onCancelCreateParcel?.();
+          }}
+          onCreateGeometryPreview={setCreateParcelPreviewGeometry}
           onParcelCreated={async (newParcel) => {
+            setCreateParcelPreviewGeometry(null);
             // Ajoute immédiatement la nouvelle parcelle aux overrides pour l'afficher sur la carte
             // avant que le viewport ne se rafraîchisse
             if (newParcel?.id) {

@@ -1682,6 +1682,7 @@ export default function PortfolioMapShell({
   onDeleteParcel,
   editRequestKey = 0,
   viewportSummary = null,
+  createParcelPreviewGeometry = null,
   onInlineEditStateChange,
 }) {
   const [activeCommand, setActiveCommand] = useState(null);
@@ -1720,6 +1721,10 @@ export default function PortfolioMapShell({
   const { isMobile: isMobileCartography } = useCartographyViewport();
   const measurementSummary = useMemo(() => buildMeasurementSummary(activeFeature), [activeFeature]);
   const measurementDraftSummary = useMemo(() => buildMeasurementDraftSummary(measurementDraft), [measurementDraft]);
+  const createParcelPreviewRings = useMemo(
+    () => (createParcelPreviewGeometry ? geometryToRings(createParcelPreviewGeometry) : []),
+    [createParcelPreviewGeometry],
+  );
   const editMeasurementOverlay = useMemo(() => {
     const overlay = buildGeometryMeasurementOverlay(editGeometry, "edit");
     return Object.assign({}, overlay, {
@@ -1731,6 +1736,15 @@ export default function PortfolioMapShell({
   useEffect(() => {
     onInlineEditStateChange?.(inlineEditOpen);
   }, [inlineEditOpen, onInlineEditStateChange]);
+
+  useEffect(() => {
+    if (!map || !createParcelPreviewRings.length) return;
+
+    const bounds = L.latLngBounds(createParcelPreviewRings.flat());
+    if (bounds.isValid()) {
+      map.fitBounds(bounds.pad(0.18), { animate: true, maxZoom: 19 });
+    }
+  }, [map, createParcelPreviewRings]);
 
   useEffect(() => {
     editGeometryRef.current = editGeometry;
@@ -2295,6 +2309,27 @@ export default function PortfolioMapShell({
             visibleOperationalLayers={visibleExternalLayers}
             setLayerRuntime={layerState.setLayerRuntime}
           />
+
+          {createParcelPreviewRings.length ? (
+            <Polygon
+              key="create-parcel-preview"
+              positions={createParcelPreviewRings}
+              pane={MAP_PANES.edit}
+              pathOptions={{
+                color: "#FACC15",
+                fillColor: "#FACC15",
+                fillOpacity: 0.18,
+                opacity: 1,
+                weight: 4,
+                dashArray: "8 6",
+              }}
+              interactive={false}
+            >
+              <Tooltip direction="top" offset={[0, -6]} opacity={0.96} permanent>
+                Aperçu nouvelle parcelle
+              </Tooltip>
+            </Polygon>
+          ) : null}
 
           {parcelLayerVisible ? (() => {
             // On itere sur displayedFeatures + on garantit que activeFeature
