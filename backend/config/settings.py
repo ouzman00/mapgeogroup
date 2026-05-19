@@ -191,6 +191,7 @@ INSTALLED_APPS = [
     "notifications",
     "support",
     "client_actions",
+    "field_interventions",
     "dashboard",
     "imports",
     "maplayers",
