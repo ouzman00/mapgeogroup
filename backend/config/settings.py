@@ -368,9 +368,6 @@ CORS_ALLOWED_ORIGINS = env_list("DJANGO_CORS_ALLOWED_ORIGINS", "https://mapgeogr
 CORS_ALLOW_CREDENTIALS = env_bool("DJANGO_CORS_ALLOW_CREDENTIALS", True)
 
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS", "https://mapgeogroup.vercel.app")
-    "DJANGO_CSRF_TRUSTED_ORIGINS",
-    ",".join(cors_allowed_origins),
-)
 
 for origin in CSRF_TRUSTED_ORIGINS:
     if origin == "*" or origin.endswith("/"):
