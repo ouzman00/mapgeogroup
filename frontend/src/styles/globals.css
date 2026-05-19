@@ -2901,3 +2901,20 @@ html body .mapgeo-side-label.is-measure {
   cursor: default !important;
 }
 
+
+/* Manual parcel creation vertex handles. */
+.mapgeo-create-draft-vertex {
+  pointer-events: auto !important;
+  cursor: move !important;
+}
+
+.mapgeo-create-draft-vertex span {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  border: 3px solid #ffffff;
+  background: #facc15;
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.28), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+

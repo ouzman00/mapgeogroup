@@ -64,6 +64,13 @@ const EDIT_VERTEX_TOLERANCE_PX = 16;
 const POLYGON_MIN_ZOOM = 14;
 const CENTROID_RADIUS_BASE = 6;
 
+const createParcelDraftVertexIcon = L.divIcon({
+  className: "mapgeo-create-draft-vertex",
+  html: '<span></span>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
 const MAP_PANES = {
   parcels: "mapgeo-parcel-pane",
   labels: "mapgeo-parcel-label-pane",
@@ -1788,6 +1795,18 @@ export default function PortfolioMapShell({
     setCreateParcelDraftPoints((current) => current.slice(0, -1));
   }, []);
 
+  const updateCreateParcelDraftPoint = useCallback((index, nextPoint) => {
+    if (!Array.isArray(nextPoint) || nextPoint.length < 2) return;
+
+    setCreateParcelDraftPoints((current) => {
+      if (index < 0 || index >= current.length) return current;
+
+      return current.map((point, pointIndex) => (
+        pointIndex === index ? nextPoint : point
+      ));
+    });
+  }, []);
+
   useEffect(() => {
     if (!createParcelDrawingActive) {
       setCreateParcelDraftPoints([]);
@@ -2452,18 +2471,22 @@ export default function PortfolioMapShell({
                 />
               ) : null}
               {createParcelDraftPoints.map((point, index) => (
-                <CircleMarker
+                <Marker
                   key={`create-parcel-draft-point-${index}`}
-                  center={point}
+                  position={point}
                   pane={MAP_PANES.edit}
-                  radius={5}
-                  pathOptions={{
-                    color: "#FFFFFF",
-                    fillColor: "#FACC15",
-                    fillOpacity: 1,
-                    weight: 2,
+                  icon={createParcelDraftVertexIcon}
+                  draggable
+                  eventHandlers={{
+                    dragstart: () => {
+                      setCreateParcelDraftCursorPoint(null);
+                    },
+                    dragend: (event) => {
+                      const latlng = event.target?.getLatLng?.();
+                      if (!latlng) return;
+                      updateCreateParcelDraftPoint(index, [latlng.lat, latlng.lng]);
+                    },
                   }}
-                  interactive={false}
                 />
               ))}
               {createParcelDraftCursorPoint ? (
@@ -2768,52 +2791,6 @@ export default function PortfolioMapShell({
         <NorthArrow />
         <MapStatusBar cursorPosition={cursorPosition} coordinateSystem={coordinateSystem} features={displayedFeatures} />
         <ViewportSampleNotice summary={viewportSummary} />
-
-        {createParcelDrawingActive ? (
-          <div
-            className="mapgeo-create-draw-panel mapgeo-export-hidden pointer-events-auto absolute left-1/2 top-4 z-[960] w-[min(420px,calc(100%-2rem))] -translate-x-1/2 rounded-2xl border border-mapgeo-sand/35 bg-[#07111b]/92 p-3 text-white shadow-[0_18px_50px_rgba(0,0,0,0.32)] backdrop-blur-xl"
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-            onDoubleClick={(event) => event.stopPropagation()}
-          >
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-mapgeo-sand/70">Tracer une parcelle</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-white/65">
-              Clique sur la carte pour placer les sommets. Double-clique ou utilise Terminer pour valider.
-            </p>
-            <div className="mt-2 grid grid-cols-3 gap-1.5 text-[11px] font-bold">
-              <div className="rounded-xl border border-white/10 bg-white/[0.055] px-2 py-1.5">
-                <span className="block text-white/40">Distance</span>
-                <strong className="text-white">{createParcelDraftSummary.distanceLabel}</strong>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.055] px-2 py-1.5">
-                <span className="block text-white/40">Périmètre</span>
-                <strong className="text-white">{createParcelDraftSummary.perimeterLabel}</strong>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.055] px-2 py-1.5">
-                <span className="block text-white/40">Surface</span>
-                <strong className="text-white">{createParcelDraftSummary.surfaceLabel}</strong>
-              </div>
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={finishCreateParcelDrawing}
-                disabled={createParcelDraftPoints.length < 3}
-                className="rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2 text-xs font-extrabold text-mapgeo-ivory transition hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Terminer
-              </button>
-              <button
-                type="button"
-                onClick={cancelCreateParcelDrawing}
-                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10"
-              >
-                Annuler
-              </button>
-              <span className="text-[11px] font-bold text-white/45">{createParcelDraftPoints.length} sommet{createParcelDraftPoints.length > 1 ? "s" : ""}</span>
-            </div>
-          </div>
-        ) : null}
 
         {map ? <MiniMap parentMap={map} activeBaseLayer={activeBaseLayer} /> : null}
         <LegendPanel
