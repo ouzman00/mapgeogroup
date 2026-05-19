@@ -556,29 +556,7 @@ export default function ParcelQuickForm({
             </label>
           </div>
 
-          <div data-mapgeo-create-trace-primary className="mb-3 rounded-xl border border-mapgeo-sand/25 bg-mapgeo-sand/10 p-2.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handlePreviewGeometry}
-                disabled={!form.rawText.trim()}
-                className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-45`}
-              >
-                Tracer sur la carte
-              </button>
-              <button
-                type="button"
-                onClick={handleConvert}
-                disabled={!form.rawText.trim()}
-                className={`${btnSecondary} disabled:cursor-not-allowed disabled:opacity-45`}
-              >
-                ↺ Forcer la conversion
-              </button>
-            </div>
-            <p className={hintClass}>
-              Aperçu uniquement : la géométrie sera enregistrée lorsque vous cliquerez sur Créer.
-            </p>
-          </div>
+
 
           {/* Zone de saisie */}
           <textarea
@@ -602,6 +580,30 @@ export default function ParcelQuickForm({
           {/* Aide contextuelle + bouton convertir */}
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <p className={hintClass}>{formatHint}</p>
+
+            <div data-mapgeo-create-trace-primary className="mt-3 flex flex-col gap-2 rounded-xl border border-mapgeo-sand/25 bg-mapgeo-sand/10 p-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePreviewGeometry}
+                  disabled={!form.rawText.trim()}
+                  className={`${btnPrimary} disabled:cursor-not-allowed disabled:opacity-45`}
+                >
+                  Tracer sur la carte
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConvert}
+                  disabled={!form.rawText.trim()}
+                  className={`${btnSecondary} disabled:cursor-not-allowed disabled:opacity-45`}
+                >
+                  ↺ Forcer la conversion
+                </button>
+              </div>
+              <p className={hintClass}>
+                Aperçu uniquement : la géométrie sera enregistrée lorsque vous cliquerez sur Créer.
+              </p>
+            </div>
           </div>
         </div>
 
