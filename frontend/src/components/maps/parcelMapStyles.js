@@ -71,13 +71,13 @@ export const DEFAULT_PARCEL_STYLE = {
  * Avant, certains états montaient à 3.3 / 4 px, ce qui donnait des contours très inégaux.
  */
 // Contours epais : le style cadastre repose sur les bordures, pas sur le remplissage.
-const BASE_WEIGHT = 2.5;
-const WARNING_WEIGHT = 2.8;
-const HOVER_WEIGHT = 3.5;
-const ACTIVE_WEIGHT = 5;
-const EDITING_WEIGHT = 4.5;
-const LOCKED_WEIGHT = 2.4;
-const ERROR_WEIGHT = 4;
+const BASE_WEIGHT = 1.8;
+const WARNING_WEIGHT = 2.2;
+const HOVER_WEIGHT = 2.8;
+const ACTIVE_WEIGHT = 3.4;
+const EDITING_WEIGHT = 3.2;
+const LOCKED_WEIGHT = 1.8;
+const ERROR_WEIGHT = 3;
 
 
 const PROFESSIONAL_LEGEND_ITEMS = [

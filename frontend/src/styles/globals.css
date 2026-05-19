@@ -2976,3 +2976,26 @@ html body .mapgeo-side-label.is-measure {
   }
 }
 
+
+/* MapGeo cartography polish: softer parcel tooltips and less visual noise. */
+.mapgeo-parcel-tooltip {
+  border: 1px solid rgba(18, 59, 93, 0.12) !important;
+  border-radius: 12px !important;
+  padding: 6px 8px !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16) !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
+.mapgeo-parcel-tooltip strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mapgeo-parcel-tooltip span {
+  display: block;
+  margin-top: 2px;
+  opacity: 0.72;
+}
+
