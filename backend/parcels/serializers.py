@@ -195,6 +195,54 @@ class ParcelTimelineEventSerializer(serializers.ModelSerializer):
         ]
 
 
+CLIENT_TIMELINE_STATUS_LABELS = {
+    "planned": ("Dossier reçu", "Votre demande a été enregistrée par MAPGEO."),
+    "surveying": ("Levé en cours", "L’équipe terrain prépare ou réalise les opérations de levé."),
+    "processing": ("Traitement en cours", "Les données collectées sont en cours de traitement."),
+    "draft": ("Plan en préparation", "Un plan ou livrable est en cours de préparation."),
+    "ready": ("Dossier prêt", "Le dossier est prêt ou disponible pour consultation."),
+    "completed": ("Bornage réalisé", "Les opérations de bornage sont réalisées."),
+    "disputed": ("Litige signalé", "Un point nécessite une vérification ou un arbitrage."),
+    "to_verify": ("À vérifier", "Le dossier nécessite une vérification complémentaire."),
+}
+
+
+def create_client_timeline_event_for_status(parcel, *, previous_status=None):
+    if not parcel or not parcel.pk:
+        return None
+
+    status = parcel.status or "planned"
+    title, description = CLIENT_TIMELINE_STATUS_LABELS.get(
+        status,
+        ("Avancement mis à jour", "Le statut du dossier a été mis à jour."),
+    )
+
+    if previous_status and previous_status != status:
+        previous_label = dict(Parcel.STATUS_CHOICES).get(previous_status, previous_status)
+        current_label = dict(Parcel.STATUS_CHOICES).get(status, status)
+        description = f"Avancement du dossier : {previous_label} → {current_label}."
+
+    event_date = timezone.localdate()
+    progress = get_parcel_progress(parcel)
+
+    exists = ParcelTimelineEvent.objects.filter(
+        parcel=parcel,
+        event_date=event_date,
+        title=title,
+    ).exists()
+
+    if exists:
+        return None
+
+    return ParcelTimelineEvent.objects.create(
+        parcel=parcel,
+        title=title,
+        description=description,
+        event_date=event_date,
+        progress=progress,
+    )
+
+
 class ParcelGeometryVersionSerializer(serializers.ModelSerializer):
     modified_by_name = serializers.SerializerMethodField()
 
@@ -896,6 +944,9 @@ class ParcelCreateUpdateSerializer(serializers.ModelSerializer):
 
         self._sync_children(parcel, sides, timeline_events)
 
+        if timeline_events is None:
+            create_client_timeline_event_for_status(parcel)
+
         if parcel.geom:
             request = self.context.get("request")
             user = request.user if request else None
@@ -913,6 +964,7 @@ class ParcelCreateUpdateSerializer(serializers.ModelSerializer):
         sides = validated_data.pop("sides", None)
         timeline_events = validated_data.pop("timeline_events", None)
         reason = validated_data.pop("geometry_change_reason", None)
+        previous_status = instance.status
 
         before_geom = geos_to_geojson(instance.geom) if instance.geom else None
         geometry_before = json.dumps(before_geom, sort_keys=True) if before_geom else None
@@ -926,6 +978,9 @@ class ParcelCreateUpdateSerializer(serializers.ModelSerializer):
         parcel = super().update(instance, validated_data)
 
         self._sync_children(parcel, sides, timeline_events)
+
+        if timeline_events is None and previous_status != parcel.status:
+            create_client_timeline_event_for_status(parcel, previous_status=previous_status)
 
         geometry_after = (
             json.dumps(geos_to_geojson(parcel.geom), sort_keys=True)
