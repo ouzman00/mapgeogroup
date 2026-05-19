@@ -16,7 +16,7 @@ import {
   RefreshCcw,
   Search,
   Send,
-  Ticket,
+  Échange,
   Trash2,
   UploadCloud,
 } from "lucide-react";
@@ -87,10 +87,10 @@ function priorityLabel(priority) {
   return getContacter MAPGEOPriorityLabel(priority);
 }
 
-function ticketMatchesPeriod(ticket, period) {
+function échangeMatchesPeriod(échange, period) {
   if (!period) return true;
 
-  const sourceDate = ticket.last_reply_at || ticket.updated_at || ticket.created_at;
+  const sourceDate = échange.last_reply_at || échange.updated_at || échange.created_at;
   if (!sourceDate) return false;
 
   const date = new Date(sourceDate);
@@ -148,7 +148,7 @@ function clientAccountLabel(client = {}) {
   return orgCode ? `${accountName} · ${orgCode}` : accountName;
 }
 
-function buildTicketPayload(form, isInternalPortal) {
+function buildÉchangePayload(form, isInternalPortal) {
   const payload = {
     subject: form.subject.trim(),
     category: form.category || "Demande métier",
@@ -160,30 +160,30 @@ function buildTicketPayload(form, isInternalPortal) {
   return payload;
 }
 
-function normalizeTicket(ticket, index = 0) {
-  const status = normalizeStatus(ticket.status);
-  const priority = normalizePriority(ticket.priority);
-  const reference = ticket.reference || ticket.code || `SUP-${String(184 + index).padStart(3, "0")}`;
+function normalizeÉchange(échange, index = 0) {
+  const status = normalizeStatus(échange.status);
+  const priority = normalizePriority(échange.priority);
+  const reference = échange.reference || échange.code || `SUP-${String(184 + index).padStart(3, "0")}`;
 
   return {
-    ...ticket,
-    id: ticket.id || reference,
+    ...échange,
+    id: échange.id || reference,
     reference,
-    subject: ticket.subject || ticket.title || "Demande support",
-    client: ticket.client_name || ticket.user_name || ticket.organization_name || ticket.client?.name || ticket.user?.name || ticket.organization?.name || ticket.user_client_code || ticket.client || "Client",
-    clientCode: ticket.user_client_code || ticket.client_code || ticket.client?.code || ticket.user?.client_code || "",
-    organization: ticket.organization || ticket.organization_id || "",
-    organizationName: ticket.organization_name || ticket.organization?.name || ticket.client?.organization_name || "",
-    organizationCode: ticket.organization_code || ticket.organizationCode || ticket.organization?.code || ticket.client?.organization_code || ticket.client?.code || ticket.user?.organization_code || "",
-    parcel: ticket.parcel_reference || ticket.parcel_code || ticket.parcel || "—",
-    category: ticket.category_label || ticket.category || "Demande métier",
+    subject: échange.subject || échange.title || "Demande support",
+    client: échange.client_name || échange.user_name || échange.organization_name || échange.client?.name || échange.user?.name || échange.organization?.name || échange.user_client_code || échange.client || "Client",
+    clientCode: échange.user_client_code || échange.client_code || échange.client?.code || échange.user?.client_code || "",
+    organization: échange.organization || échange.organization_id || "",
+    organizationName: échange.organization_name || échange.organization?.name || échange.client?.organization_name || "",
+    organizationCode: échange.organization_code || échange.organizationCode || échange.organization?.code || échange.client?.organization_code || échange.client?.code || échange.user?.organization_code || "",
+    parcel: échange.parcel_reference || échange.parcel_code || échange.parcel || "—",
+    category: échange.category_label || échange.category || "Demande métier",
     priority,
     status,
-    lastReply: ticket.lastReply || ticket.last_reply_at_label || formatDate(ticket.last_reply_at || ticket.updated_at || ticket.created_at),
-    hasAttachment: Boolean(ticket.has_attachment || ticket.attachment_count || (ticket.messages || []).some((message) => message.attachment_url || message.attachment_name || message.attachment)),
-    attachmentCount: Number(ticket.attachment_count || 0),
-    href: ticket.href || "/support",
-    isMock: Boolean(ticket.isMock),
+    lastReply: échange.lastReply || échange.last_reply_at_label || formatDate(échange.last_reply_at || échange.updated_at || échange.created_at),
+    hasAttachment: Boolean(échange.has_attachment || échange.attachment_count || (échange.messages || []).some((message) => message.attachment_url || message.attachment_name || message.attachment)),
+    attachmentCount: Number(échange.attachment_count || 0),
+    href: échange.href || "/support",
+    isMock: Boolean(échange.isMock),
   };
 }
 
@@ -266,7 +266,7 @@ function FilterBar({ filters, setFilters, onReset, isInternalPortal, clients = [
               onChange={(event) => update("q", event.target.value)}
               placeholder={
                 isInternalPortal
-                  ? "Rechercher un ticket, client, parcelle..."
+                  ? "Rechercher un échange, client, parcelle..."
                   : "Rechercher une demande, parcelle..."
               }
               className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm outline-none focus:shadow-none"
@@ -387,8 +387,8 @@ function SelectField({ label, value, onChange, children, icon: Icon }) {
   );
 }
 
-function TicketsTable({
-  tickets,
+function ÉchangesTable({
+  échanges,
   loading,
   error,
   onClose,
@@ -396,23 +396,23 @@ function TicketsTable({
   isInternalPortal,
   canManageContacter MAPGEO,
   selectedIds,
-  deletingTicketId,
+  deletingÉchangeId,
   bulkDeleting,
   onToggleSelected,
   onToggleVisibleSelection,
   onDeleteSelected,
 }) {
-  const selectableTickets = canManageContacter MAPGEO ? tickets.filter((ticket) => ticket.id && !ticket.isMock) : [];
+  const selectableÉchanges = canManageContacter MAPGEO ? échanges.filter((échange) => échange.id && !échange.isMock) : [];
   const selectedCount = selectedIds?.size || 0;
-  const visibleSelected = selectableTickets.filter((ticket) => selectedIds?.has(ticket.id)).length;
-  const allVisibleSelected = selectableTickets.length > 0 && visibleSelected === selectableTickets.length;
+  const visibleSelected = selectableÉchanges.filter((échange) => selectedIds?.has(échange.id)).length;
+  const allVisibleSelected = selectableÉchanges.length > 0 && visibleSelected === selectableÉchanges.length;
 
   return (
     <section className="rounded-3xl border border-mapgeo-line bg-white shadow-soft">
       <div className="flex flex-col gap-3 border-b border-mapgeo-line p-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h3 className="text-2xl font-extrabold text-mapgeo-primary">
-            {isInternalPortal ? "Liste des tickets" : "Mes demandes"}
+            {isInternalPortal ? "Liste des échanges" : "Mes demandes"}
           </h3>
           <p className="mt-1 text-sm text-mapgeo-secondary/70">
             {isInternalPortal
@@ -428,8 +428,8 @@ function TicketsTable({
                 <input
                   type="checkbox"
                   checked={allVisibleSelected}
-                  disabled={!selectableTickets.length || bulkDeleting}
-                  onChange={() => onToggleVisibleSelection(selectableTickets, !allVisibleSelected)}
+                  disabled={!selectableÉchanges.length || bulkDeleting}
+                  onChange={() => onToggleVisibleSelection(selectableÉchanges, !allVisibleSelected)}
                 />
                 Tout sélectionner
               </label>
@@ -485,80 +485,80 @@ function TicketsTable({
             </thead>
 
             <tbody className="divide-y divide-mapgeo-line">
-              {tickets.map((ticket) => (
-                <tr key={ticket.id} className="transition hover:bg-mapgeo-ivory/40">
+              {échanges.map((échange) => (
+                <tr key={échange.id} className="transition hover:bg-mapgeo-ivory/40">
                   {canManageContacter MAPGEO ? (
                     <td className="px-5 py-4">
                       <label className="inline-flex h-6 w-6 items-center justify-center rounded-lg border border-mapgeo-line bg-white shadow-sm">
                         <input
                           type="checkbox"
-                          checked={selectedIds?.has(ticket.id) || false}
-                          disabled={!ticket.id || ticket.isMock || bulkDeleting || deletingTicketId === ticket.id}
-                          onChange={() => onToggleSelected(ticket.id)}
-                          aria-label={`Sélectionner ${ticket.reference}`}
+                          checked={selectedIds?.has(échange.id) || false}
+                          disabled={!échange.id || échange.isMock || bulkDeleting || deletingÉchangeId === échange.id}
+                          onChange={() => onToggleSelected(échange.id)}
+                          aria-label={`Sélectionner ${échange.reference}`}
                         />
                       </label>
                     </td>
                   ) : null}
-                  <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{ticket.reference}</td>
+                  <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{échange.reference}</td>
                   <td className="px-4 py-4 font-semibold text-mapgeo-primary">
                     <div className="flex items-center gap-2">
-                      <span>{ticket.subject}</span>
-                      {ticket.hasAttachment ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-mapgeo-line bg-mapgeo-ivory px-2 py-0.5 text-[10px] font-bold text-mapgeo-secondary" title={`${ticket.attachmentCount || 1} pièce(s) jointe(s)`}>
+                      <span>{échange.subject}</span>
+                      {échange.hasAttachment ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-mapgeo-line bg-mapgeo-ivory px-2 py-0.5 text-[10px] font-bold text-mapgeo-secondary" title={`${échange.attachmentCount || 1} pièce(s) jointe(s)`}>
                           <Paperclip size={12} /> PJ
                         </span>
                       ) : null}
                     </div>
                   </td>
 
-                  {isInternalPortal ? <td className="px-4 py-4 text-mapgeo-secondary">{ticket.client}</td> : null}
+                  {isInternalPortal ? <td className="px-4 py-4 text-mapgeo-secondary">{échange.client}</td> : null}
 
-                  <td className="px-4 py-4 text-mapgeo-secondary">{ticket.parcel}</td>
+                  <td className="px-4 py-4 text-mapgeo-secondary">{échange.parcel}</td>
 
                   <td className="px-4 py-4">
-                    <span className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide ${categoryClasses(ticket.category)}`}>
-                      {ticket.category}
+                    <span className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide ${categoryClasses(échange.category)}`}>
+                      {échange.category}
                     </span>
                   </td>
 
                   <td className="px-4 py-4">
-                    <span className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide ${priorityClasses(ticket.priority)}`}>
-                      {priorityLabel(ticket.priority)}
+                    <span className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide ${priorityClasses(échange.priority)}`}>
+                      {priorityLabel(échange.priority)}
                     </span>
                   </td>
 
                   <td className="px-4 py-4">
-                    <span className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide ${statusClasses(ticket.status)}`}>
-                      {statusLabel(ticket.status)}
+                    <span className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide ${statusClasses(échange.status)}`}>
+                      {statusLabel(échange.status)}
                     </span>
                   </td>
 
-                  <td className="px-4 py-4 text-mapgeo-secondary">{ticket.lastReply}</td>
+                  <td className="px-4 py-4 text-mapgeo-secondary">{échange.lastReply}</td>
 
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        to={`/support/${ticket.id}`}
+                        to={`/support/${échange.id}`}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-bold text-mapgeo-primary shadow-sm transition hover:bg-mapgeo-ivory"
                       >
                         Ouvrir <ExternalLink size={13} />
                       </Link>
 
-                      {ticket.status !== "resolved" && ticket.status !== "closed" ? (
+                      {échange.status !== "resolved" && échange.status !== "closed" ? (
                         <Link
-                          to={`/support/${ticket.id}`}
+                          to={`/support/${échange.id}`}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-bold text-mapgeo-primary shadow-sm transition hover:bg-mapgeo-sand/15"
                         >
                           Répondre <MessageCircle size={13} />
                         </Link>
                       ) : null}
 
-                      {canManageContacter MAPGEO && ticket.status !== "resolved" && ticket.status !== "closed" ? (
+                      {canManageContacter MAPGEO && échange.status !== "resolved" && échange.status !== "closed" ? (
                         <button
                           type="button"
-                          onClick={() => onClose(ticket)}
-                          disabled={bulkDeleting || deletingTicketId === ticket.id}
+                          onClick={() => onClose(échange)}
+                          disabled={bulkDeleting || deletingÉchangeId === échange.id}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-bold text-mapgeo-primary shadow-sm transition hover:bg-mapgeo-ivory disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Clôturer <CheckCircle2 size={13} />
@@ -568,8 +568,8 @@ function TicketsTable({
                       {canManageContacter MAPGEO ? (
                         <button
                           type="button"
-                          onClick={() => onDelete(ticket)}
-                          disabled={bulkDeleting || deletingTicketId === ticket.id}
+                          onClick={() => onDelete(échange)}
+                          disabled={bulkDeleting || deletingÉchangeId === échange.id}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 bg-white px-3 py-2 text-xs font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Trash2 size={13} /> Supprimer
@@ -583,9 +583,9 @@ function TicketsTable({
             </tbody>
           </table>
 
-          {tickets.length === 0 ? (
+          {échanges.length === 0 ? (
             <div className="p-6 text-center text-sm text-mapgeo-secondary">
-              Aucun ticket ne correspond aux filtres sélectionnés.
+              Aucun échange ne correspond aux filtres sélectionnés.
             </div>
           ) : null}
         </div>
@@ -594,7 +594,7 @@ function TicketsTable({
       {!loading && !error ? (
         <div className="flex justify-center border-t border-mapgeo-line px-6 py-5">
           <Link to="/support" className="inline-flex items-center gap-2 text-sm font-extrabold text-mapgeo-primary transition hover:gap-3">
-            {isInternalPortal ? "Voir tous les tickets" : "Voir toutes mes demandes"} <ChevronRight size={16} />
+            {isInternalPortal ? "Voir tous les échanges" : "Voir toutes mes demandes"} <ChevronRight size={16} />
           </Link>
         </div>
       ) : null}
@@ -602,14 +602,14 @@ function TicketsTable({
   );
 }
 
-function TicketForm({ form, setForm, clients, parcels, parcelQuery, setParcelQuery, parcelLoading, parcelError, submitting, onSubmit, onCancel, isInternalPortal, attachmentError = "", onAttachmentChange }) {
+function ÉchangeForm({ form, setForm, clients, parcels, parcelQuery, setParcelQuery, parcelLoading, parcelError, submitting, onSubmit, onCancel, isInternalPortal, attachmentError = "", onAttachmentChange }) {
   const update = (name, value) => setForm((current) => ({ ...current, [name]: value }));
 
   return (
-    <section id="new-ticket" className="rounded-3xl border border-mapgeo-line bg-white p-6 shadow-soft">
+    <section id="new-échange" className="rounded-3xl border border-mapgeo-line bg-white p-6 shadow-soft">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-mapgeo-sand/15 text-mapgeo-primary">
-          <Ticket size={20} />
+          <Échange size={20} />
         </div>
 
         <div>
@@ -729,7 +729,7 @@ function TicketForm({ form, setForm, clients, parcels, parcelQuery, setParcelQue
               disabled={submitting}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel transition hover:bg-mapgeo-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Send size={17} /> {submitting ? "Création..." : "Créer le ticket"}
+              <Send size={17} /> {submitting ? "Création..." : "Créer le échange"}
             </button>
           </div>
         </div>
@@ -782,7 +782,7 @@ function Contacter MAPGEOSummary({ metrics, user, onShowUrgent, onShowOpen, isIn
         </h3>
 
         <div className="mt-5 space-y-3 border-b border-white/10 pb-5">
-          <SummaryMetric icon={Ticket} label={isInternalPortal ? "Échanges ouverts" : "Demandes ouvertes"} value={formatNumber(metrics.open)} />
+          <SummaryMetric icon={Échange} label={isInternalPortal ? "Échanges ouverts" : "Demandes ouvertes"} value={formatNumber(metrics.open)} />
           <SummaryMetric icon={Clock3} label="En cours" value={formatNumber(metrics.inProgress)} />
           <SummaryMetric icon={AlertTriangle} label={isInternalPortal ? "Urgents" : "Priorité haute"} value={formatNumber(isInternalPortal ? metrics.urgent : metrics.high)} />
           <SummaryMetric icon={CheckCircle2} label="Résolus / clôturés" value={formatNumber(metrics.resolved)} />
@@ -805,14 +805,14 @@ function Contacter MAPGEOSummary({ metrics, user, onShowUrgent, onShowOpen, isIn
           <div className="mt-3 space-y-2">
             {isInternalPortal ? (
               <>
-                <QuickAction icon={AlertTriangle} label="Voir les tickets urgents" onClick={onShowUrgent} />
-                <QuickAction icon={MessageCircle} label="Répondre aux tickets ouverts" onClick={onShowOpen} />
+                <QuickAction icon={AlertTriangle} label="Voir les échanges urgents" onClick={onShowUrgent} />
+                <QuickAction icon={MessageCircle} label="Répondre aux échanges ouverts" onClick={onShowOpen} />
                 <QuickAction icon={History} label="Consulter l’historique des demandes" href="/support" />
               </>
             ) : (
               <>
-                <QuickAction icon={Ticket} label="Contacter MAPGEO ouvertes" onClick={onShowOpen} />
-                <QuickAction icon={MessageCircle} label="Créer une nouvelle demande" href="#new-ticket" />
+                <QuickAction icon={Échange} label="Contacter MAPGEO ouvertes" onClick={onShowOpen} />
+                <QuickAction icon={MessageCircle} label="Créer une nouvelle demande" href="#new-échange" />
                 <QuickAction icon={History} label="Consulter mon historique" href="/support" />
               </>
             )}
@@ -836,17 +836,17 @@ function Contacter MAPGEOSummary({ metrics, user, onShowUrgent, onShowOpen, isIn
 }
 
 
-function TicketDeleteDialog({ ticket, ticketCount = 1, loading, onCancel, onConfirm }) {
-  const isBulk = ticketCount > 1;
+function ÉchangeDeleteDialog({ échange, échangeCount = 1, loading, onCancel, onConfirm }) {
+  const isBulk = échangeCount > 1;
 
   return (
     <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-mapgeo-primary/40 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Confirmation de suppression">
       <div className="w-full max-w-lg rounded-3xl border border-mapgeo-line bg-white p-6 shadow-panel">
-        <h3 className="text-xl font-extrabold text-mapgeo-primary">{isBulk ? "Supprimer les tickets sélectionnés ?" : "Supprimer le ticket ?"}</h3>
+        <h3 className="text-xl font-extrabold text-mapgeo-primary">{isBulk ? "Supprimer les échanges sélectionnés ?" : "Supprimer le échange ?"}</h3>
         <p className="mt-3 text-sm leading-6 text-mapgeo-secondary">
           {isBulk
-            ? `${ticketCount} ticket(s) seront supprimé(s). Cette action est définitive.`
-            : `Le ticket ${ticket?.reference || "sélectionné"}${ticket?.subject ? ` — ${ticket.subject}` : ""} sera supprimé. Cette action est définitive.`}
+            ? `${échangeCount} échange(s) seront supprimé(s). Cette action est définitive.`
+            : `Le échange ${échange?.reference || "sélectionné"}${échange?.subject ? ` — ${échange.subject}` : ""} sera supprimé. Cette action est définitive.`}
         </p>
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
@@ -902,7 +902,7 @@ export default function Contacter MAPGEOPage() {
   const { user, isInternalPortal } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const canManageContacter MAPGEO = ["admin", "manager"].includes(user?.role);
-  const [tickets, setTickets] = useState([]);
+  const [échanges, setÉchanges] = useState([]);
   const [clients, setClients] = useState([]);
   const [filters, setFilters] = useState(() => ({
     ...EMPTY_FILTERS,
@@ -913,13 +913,13 @@ export default function Contacter MAPGEOPage() {
   const [form, setForm] = useState(EMPTY_TICKET_FORM);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [closingTicketId, setClosingTicketId] = useState(null);
-  const [deletingTicketId, setDeletingTicketId] = useState(null);
-  const [bulkDeletingTickets, setBulkDeletingTickets] = useState(false);
-  const [ticketToClose, setTicketToClose] = useState(null);
-  const [ticketToDelete, setTicketToDelete] = useState(null);
+  const [closingÉchangeId, setClosingÉchangeId] = useState(null);
+  const [deletingÉchangeId, setDeletingÉchangeId] = useState(null);
+  const [bulkDeletingÉchanges, setBulkDeletingÉchanges] = useState(false);
+  const [échangeToClose, setÉchangeToClose] = useState(null);
+  const [échangeToDelete, setÉchangeToDelete] = useState(null);
   const [pendingBulkDelete, setPendingBulkDelete] = useState(false);
-  const [selectedTicketIds, setSelectedTicketIds] = useState(new Set());
+  const [selectedÉchangeIds, setSelectedÉchangeIds] = useState(new Set());
   const [attachmentError, setAttachmentError] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -936,68 +936,68 @@ export default function Contacter MAPGEOPage() {
     debounceMs: 300,
   });
 
-  const normalizedTickets = useMemo(() => tickets.map(normalizeTicket), [tickets]);
+  const normalizedÉchanges = useMemo(() => échanges.map(normalizeÉchange), [échanges]);
 
-  const filteredTickets = useMemo(() => {
-    return normalizedTickets.filter((ticket) => {
+  const filteredÉchanges = useMemo(() => {
+    return normalizedÉchanges.filter((échange) => {
       const q = filters.q.trim().toLowerCase();
 
       const matchesQuery =
         !q ||
-        [ticket.reference, ticket.subject, ticket.client, ticket.parcel, ticket.category]
+        [échange.reference, échange.subject, échange.client, échange.parcel, échange.category]
           .filter(Boolean)
           .some((item) => String(item).toLowerCase().includes(q));
 
-      const matchesStatus = !filters.status || (filters.status === "resolved_or_closed" ? SUPPORT_RESOLVED_STATUSES.includes(ticket.status) : ticket.status === filters.status);
-      const matchesPriority = !filters.priority || ticket.priority === filters.priority;
-      const matchesCategory = !filters.category || ticket.category === filters.category;
+      const matchesStatus = !filters.status || (filters.status === "resolved_or_closed" ? SUPPORT_RESOLVED_STATUSES.includes(échange.status) : échange.status === filters.status);
+      const matchesPriority = !filters.priority || échange.priority === filters.priority;
+      const matchesCategory = !filters.category || échange.category === filters.category;
       const matchesClient = !isInternalPortal || !filters.organization_code || [
-        ticket.organizationCode,
-        ticket.clientCode,
-        ticket.user_client_code,
+        échange.organizationCode,
+        échange.clientCode,
+        échange.user_client_code,
       ].filter(Boolean).some((item) => String(item) === String(filters.organization_code));
-      const matchesParcel = !filters.parcel || String(ticket.parcel) === String(filters.parcel) || String(ticket.parcel_reference || "") === String(filters.parcel);
-      const matchesPeriod = ticketMatchesPeriod(ticket, filters.period);
+      const matchesParcel = !filters.parcel || String(échange.parcel) === String(filters.parcel) || String(échange.parcel_reference || "") === String(filters.parcel);
+      const matchesPeriod = échangeMatchesPeriod(échange, filters.period);
 
       return matchesQuery && matchesStatus && matchesPriority && matchesCategory && matchesClient && matchesParcel && matchesPeriod;
     });
-  }, [filters, normalizedTickets, isInternalPortal]);
+  }, [filters, normalizedÉchanges, isInternalPortal]);
 
-  const ticketParcelOptions = useMemo(() => {
+  const échangeParcelOptions = useMemo(() => {
     const unique = new Map();
-    normalizedTickets.forEach((ticket) => {
-      if (!ticket.parcel || ticket.parcel === "—") return;
-      unique.set(String(ticket.parcel), { id: String(ticket.parcel), reference: ticket.parcel });
+    normalizedÉchanges.forEach((échange) => {
+      if (!échange.parcel || échange.parcel === "—") return;
+      unique.set(String(échange.parcel), { id: String(échange.parcel), reference: échange.parcel });
     });
     return Array.from(unique.values());
-  }, [normalizedTickets]);
+  }, [normalizedÉchanges]);
 
   const metrics = useMemo(() => {
-    const open = filteredTickets.filter((ticket) => ticket.status === "open").length;
-    const inProgress = filteredTickets.filter((ticket) => ticket.status === "in_progress").length;
-    const urgent = filteredTickets.filter((ticket) => ticket.priority === "urgent").length;
-    const high = filteredTickets.filter((ticket) => ticket.priority === "high").length;
-    const resolved = filteredTickets.filter((ticket) => isResolvedOrClosed(ticket.status)).length;
+    const open = filteredÉchanges.filter((échange) => échange.status === "open").length;
+    const inProgress = filteredÉchanges.filter((échange) => échange.status === "in_progress").length;
+    const urgent = filteredÉchanges.filter((échange) => échange.priority === "urgent").length;
+    const high = filteredÉchanges.filter((échange) => échange.priority === "high").length;
+    const resolved = filteredÉchanges.filter((échange) => isResolvedOrClosed(échange.status)).length;
 
     return { open, inProgress, urgent, high, resolved };
-  }, [filteredTickets]);
+  }, [filteredÉchanges]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const requests = [supportService.getAllTickets({})];
+      const requests = [supportService.getAllÉchanges({})];
 
       if (isInternalPortal) {
         requests.push(fetchAllClients({ ordering: "name" }));
       }
 
-      const [ticketData, clientData] = await Promise.allSettled(requests);
+      const [échangeData, clientData] = await Promise.allSettled(requests);
 
-      if (ticketData.status === "fulfilled") {
-        const results = ticketData.value?.results || ticketData.value || [];
-        setTickets(Array.isArray(results) ? results : []);
+      if (échangeData.status === "fulfilled") {
+        const results = échangeData.value?.results || échangeData.value || [];
+        setÉchanges(Array.isArray(results) ? results : []);
       }
 
       if (isInternalPortal && clientData?.status === "fulfilled") {
@@ -1005,8 +1005,8 @@ export default function Contacter MAPGEOPage() {
         setClients(Array.isArray(results) ? results : []);
       }
 
-      if (ticketData.status === "rejected") {
-        setError(getErrorMessage(ticketData.reason, "Impossible de charger les tickets."));
+      if (échangeData.status === "rejected") {
+        setError(getErrorMessage(échangeData.reason, "Impossible de charger les échanges."));
       }
     } finally {
       setLoading(false);
@@ -1018,12 +1018,12 @@ export default function Contacter MAPGEOPage() {
   }, [loadData]);
 
   useEffect(() => {
-    const existingIds = new Set(tickets.map((ticket) => ticket.id).filter(Boolean));
-    setSelectedTicketIds((current) => {
+    const existingIds = new Set(échanges.map((échange) => échange.id).filter(Boolean));
+    setSelectedÉchangeIds((current) => {
       const next = new Set([...current].filter((id) => existingIds.has(id)));
       return next.size === current.size ? current : next;
     });
-  }, [tickets]);
+  }, [échanges]);
 
   useEffect(() => {
     const nextParams = new URLSearchParams();
@@ -1041,7 +1041,7 @@ export default function Contacter MAPGEOPage() {
     setForm((current) => ({ ...current, attachment: validationError ? null : file }));
   };
 
-  const handleCreateTicket = async (event) => {
+  const handleCreateÉchange = async (event) => {
     event.preventDefault();
     setSubmitting(true);
     setMessage("");
@@ -1054,7 +1054,7 @@ export default function Contacter MAPGEOPage() {
       }
 
       if (isInternalPortal && !form.client && !form.parcel) {
-        setError("Sélectionnez un client ou une parcelle liée avant de créer le ticket.");
+        setError("Sélectionnez un client ou une parcelle liée avant de créer le échange.");
         return;
       }
 
@@ -1065,7 +1065,7 @@ export default function Contacter MAPGEOPage() {
         return;
       }
 
-      const basePayload = buildTicketPayload(form, isInternalPortal);
+      const basePayload = buildÉchangePayload(form, isInternalPortal);
 
       let payload = basePayload;
       if (form.attachment) {
@@ -1076,51 +1076,51 @@ export default function Contacter MAPGEOPage() {
         payload.append("initial_attachment", form.attachment);
       }
 
-      await supportService.createTicket(payload);
+      await supportService.createÉchange(payload);
 
       setForm(EMPTY_TICKET_FORM);
       setAttachmentError("");
       setMessage(
         form.attachment
-          ? "Ticket créé avec succès. La pièce jointe a été transmise via une route sécurisée."
-          : "Ticket créé avec succès."
+          ? "Échange créé avec succès. La pièce jointe a été transmise via une route sécurisée."
+          : "Échange créé avec succès."
       );
       await loadData();
       refreshFormParcels();
     } catch (createError) {
-      setError(getErrorMessage(createError, "Impossible de créer le ticket."));
+      setError(getErrorMessage(createError, "Impossible de créer le échange."));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const requestCloseTicket = (ticket) => {
-    if (!canManageContacter MAPGEO || !ticket?.id) return;
-    setTicketToClose(ticket);
+  const requestCloseÉchange = (échange) => {
+    if (!canManageContacter MAPGEO || !échange?.id) return;
+    setÉchangeToClose(échange);
   };
 
-  const confirmCloseTicket = async () => {
-    if (!ticketToClose?.id) return;
+  const confirmCloseÉchange = async () => {
+    if (!échangeToClose?.id) return;
 
-    setClosingTicketId(ticketToClose.id);
+    setClosingÉchangeId(échangeToClose.id);
     setMessage("");
     setError("");
 
     try {
-      await supportService.closeTicket(ticketToClose.id);
-      setMessage(`Ticket ${ticketToClose.reference} clôturé.`);
-      setTicketToClose(null);
+      await supportService.closeÉchange(échangeToClose.id);
+      setMessage(`Échange ${échangeToClose.reference} clôturé.`);
+      setÉchangeToClose(null);
       await loadData();
     } catch (closeError) {
-      setError(getErrorMessage(closeError, "Impossible de clôturer le ticket."));
+      setError(getErrorMessage(closeError, "Impossible de clôturer le échange."));
     } finally {
-      setClosingTicketId(null);
+      setClosingÉchangeId(null);
     }
   };
 
-  const toggleSelectedTicket = (id) => {
+  const toggleSelectedÉchange = (id) => {
     if (!id || !canManageContacter MAPGEO) return;
-    setSelectedTicketIds((current) => {
+    setSelectedÉchangeIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -1128,9 +1128,9 @@ export default function Contacter MAPGEOPage() {
     });
   };
 
-  const toggleVisibleTickets = (items, shouldSelect) => {
+  const toggleVisibleÉchanges = (items, shouldSelect) => {
     if (!canManageContacter MAPGEO) return;
-    setSelectedTicketIds((current) => {
+    setSelectedÉchangeIds((current) => {
       const next = new Set(current);
       items.forEach((item) => {
         if (!item.id || item.isMock) return;
@@ -1141,60 +1141,60 @@ export default function Contacter MAPGEOPage() {
     });
   };
 
-  const requestDeleteTicket = (ticket) => {
-    if (!canManageContacter MAPGEO || !ticket?.id) return;
-    setTicketToDelete(ticket);
+  const requestDeleteÉchange = (échange) => {
+    if (!canManageContacter MAPGEO || !échange?.id) return;
+    setÉchangeToDelete(échange);
   };
 
-  const confirmDeleteTicket = async () => {
-    if (!ticketToDelete?.id || !canManageContacter MAPGEO) return;
+  const confirmDeleteÉchange = async () => {
+    if (!échangeToDelete?.id || !canManageContacter MAPGEO) return;
 
-    setDeletingTicketId(ticketToDelete.id);
+    setDeletingÉchangeId(échangeToDelete.id);
     setMessage("");
     setError("");
 
     try {
-      await supportService.deleteTicket(ticketToDelete.id);
-      setTickets((current) => current.filter((item) => item.id !== ticketToDelete.id));
-      setSelectedTicketIds((current) => {
+      await supportService.deleteÉchange(échangeToDelete.id);
+      setÉchanges((current) => current.filter((item) => item.id !== échangeToDelete.id));
+      setSelectedÉchangeIds((current) => {
         const next = new Set(current);
-        next.delete(ticketToDelete.id);
+        next.delete(échangeToDelete.id);
         return next;
       });
-      setMessage(`Ticket ${ticketToDelete.reference} supprimé.`);
-      setTicketToDelete(null);
+      setMessage(`Échange ${échangeToDelete.reference} supprimé.`);
+      setÉchangeToDelete(null);
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, "Impossible de supprimer le ticket."));
+      setError(getErrorMessage(deleteError, "Impossible de supprimer le échange."));
     } finally {
-      setDeletingTicketId(null);
+      setDeletingÉchangeId(null);
     }
   };
 
-  const requestDeleteSelectedTickets = () => {
-    if (!canManageContacter MAPGEO || selectedTicketIds.size === 0) return;
+  const requestDeleteSelectedÉchanges = () => {
+    if (!canManageContacter MAPGEO || selectedÉchangeIds.size === 0) return;
     setPendingBulkDelete(true);
   };
 
-  const confirmDeleteSelectedTickets = async () => {
-    if (!canManageContacter MAPGEO || selectedTicketIds.size === 0) return;
+  const confirmDeleteSelectedÉchanges = async () => {
+    if (!canManageContacter MAPGEO || selectedÉchangeIds.size === 0) return;
 
-    const ids = [...selectedTicketIds];
-    setBulkDeletingTickets(true);
+    const ids = [...selectedÉchangeIds];
+    setBulkDeletingÉchanges(true);
     setMessage("");
     setError("");
 
     try {
-      const response = await supportService.deleteTickets(ids);
+      const response = await supportService.deleteÉchanges(ids);
       const deletedIds = Array.isArray(response?.ids) ? response.ids : ids;
       const deletedSet = new Set(deletedIds);
-      setTickets((current) => current.filter((item) => !deletedSet.has(item.id)));
-      setSelectedTicketIds(new Set());
+      setÉchanges((current) => current.filter((item) => !deletedSet.has(item.id)));
+      setSelectedÉchangeIds(new Set());
       setPendingBulkDelete(false);
-      setMessage(`${response?.deleted ?? deletedIds.length} ticket(s) supprimé(s).`);
+      setMessage(`${response?.deleted ?? deletedIds.length} échange(s) supprimé(s).`);
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, "Impossible de supprimer les tickets sélectionnés."));
+      setError(getErrorMessage(deleteError, "Impossible de supprimer les échanges sélectionnés."));
     } finally {
-      setBulkDeletingTickets(false);
+      setBulkDeletingÉchanges(false);
     }
   };
 
@@ -1206,7 +1206,7 @@ export default function Contacter MAPGEOPage() {
       title={isInternalPortal ? "Contacter MAPGEO & accompagnement" : "Mes échanges avec MAPGEO"}
       subtitle={
         isInternalPortal
-          ? "Centralisez les demandes, suivez les tickets et facilitez l’accompagnement des équipes et clients."
+          ? "Centralisez les demandes, suivez les échanges et facilitez l’accompagnement des équipes et clients."
           : "Créez une demande, suivez son avancement et consultez les réponses de l’équipe MAPGEO."
       }
     >
@@ -1219,13 +1219,13 @@ export default function Contacter MAPGEOPage() {
 
             <p className="mt-2 max-w-2xl text-sm text-mapgeo-secondary/70 lg:hidden">
               {isInternalPortal
-                ? "Centralisez les demandes, suivez les tickets et facilitez l’accompagnement des équipes et clients."
+                ? "Centralisez les demandes, suivez les échanges et facilitez l’accompagnement des équipes et clients."
                 : "Créez une demande, suivez son avancement et consultez les réponses de l’équipe MAPGEO."}
             </p>
           </div>
 
           <a
-            href="#new-ticket"
+            href="#new-échange"
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel transition hover:bg-mapgeo-primary"
           >
             <Plus size={18} /> Nouvelle demande
@@ -1234,11 +1234,11 @@ export default function Contacter MAPGEOPage() {
 
         <section className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
           <KpiCard
-            icon={Ticket}
+            icon={Échange}
             label={isInternalPortal ? "Échanges ouverts" : "Demandes ouvertes"}
             value={formatNumber(metrics.open)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets ouverts" : "Contacter MAPGEO ouvertes"}
+            action={isInternalPortal ? "Voir les échanges ouverts" : "Contacter MAPGEO ouvertes"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "open" })}
             tone="blue"
           />
@@ -1258,7 +1258,7 @@ export default function Contacter MAPGEOPage() {
             label={isInternalPortal ? "Urgents" : "Priorité haute"}
             value={formatNumber(isInternalPortal ? metrics.urgent : metrics.high)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets urgents" : "Contacter MAPGEO importantes"}
+            action={isInternalPortal ? "Voir les échanges urgents" : "Contacter MAPGEO importantes"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, priority: isInternalPortal ? "urgent" : "high" })}
             tone="red"
           />
@@ -1268,13 +1268,13 @@ export default function Contacter MAPGEOPage() {
             label="Résolus / clôturés"
             value={formatNumber(metrics.resolved)}
             description={isInternalPortal ? "Sur la liste filtrée" : "Sur la liste filtrée"}
-            action={isInternalPortal ? "Voir les tickets résolus / clôturés" : "Contacter MAPGEO traitées"}
+            action={isInternalPortal ? "Voir les échanges résolus / clôturés" : "Contacter MAPGEO traitées"}
             onClick={() => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code, status: "resolved_or_closed" })}
             tone="green"
           />
         </section>
 
-        <FilterBar filters={filters} setFilters={setFilters} onReset={resetFilters} isInternalPortal={isInternalPortal} clients={clients} parcels={ticketParcelOptions} />
+        <FilterBar filters={filters} setFilters={setFilters} onReset={resetFilters} isInternalPortal={isInternalPortal} clients={clients} parcels={échangeParcelOptions} />
 
         {message ? (
           <div className="rounded-2xl border border-mapgeo-line bg-mapgeo-primary/6 px-4 py-3 text-sm font-medium text-mapgeo-primary">
@@ -1284,23 +1284,23 @@ export default function Contacter MAPGEOPage() {
 
         <section className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="space-y-6">
-            <TicketsTable
-              tickets={filteredTickets}
+            <ÉchangesTable
+              échanges={filteredÉchanges}
               loading={loading}
               error={error}
-              onClose={requestCloseTicket}
-              onDelete={requestDeleteTicket}
+              onClose={requestCloseÉchange}
+              onDelete={requestDeleteÉchange}
               isInternalPortal={isInternalPortal}
               canManageContacter MAPGEO={canManageContacter MAPGEO}
-              selectedIds={selectedTicketIds}
-              deletingTicketId={deletingTicketId}
-              bulkDeleting={bulkDeletingTickets}
-              onToggleSelected={toggleSelectedTicket}
-              onToggleVisibleSelection={toggleVisibleTickets}
-              onDeleteSelected={requestDeleteSelectedTickets}
+              selectedIds={selectedÉchangeIds}
+              deletingÉchangeId={deletingÉchangeId}
+              bulkDeleting={bulkDeletingÉchanges}
+              onToggleSelected={toggleSelectedÉchange}
+              onToggleVisibleSelection={toggleVisibleÉchanges}
+              onDeleteSelected={requestDeleteSelectedÉchanges}
             />
 
-            <TicketForm
+            <ÉchangeForm
               form={form}
               setForm={setForm}
               clients={
@@ -1319,7 +1319,7 @@ export default function Contacter MAPGEOPage() {
               parcelLoading={formParcelsLoading}
               parcelError={formParcelsError}
               submitting={submitting}
-              onSubmit={handleCreateTicket}
+              onSubmit={handleCreateÉchange}
               onCancel={() => {
                 setForm(EMPTY_TICKET_FORM);
                 setAttachmentError("");
@@ -1341,51 +1341,51 @@ export default function Contacter MAPGEOPage() {
           />
         </section>
 
-        {ticketToClose ? (
+        {échangeToClose ? (
           <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-mapgeo-primary/40 px-4 py-6 backdrop-blur-sm">
             <div className="w-full max-w-lg rounded-3xl border border-mapgeo-line bg-white p-6 shadow-panel">
-              <h3 className="text-xl font-extrabold text-mapgeo-primary">Clôturer le ticket</h3>
+              <h3 className="text-xl font-extrabold text-mapgeo-primary">Clôturer le échange</h3>
               <p className="mt-3 text-sm leading-6 text-mapgeo-secondary">
-                Confirmez la clôture du ticket <span className="font-bold text-mapgeo-primary">{ticketToClose.reference}</span>
-                {ticketToClose.subject ? ` — ${ticketToClose.subject}` : ""}. Le client sera notifié du changement de statut.
+                Confirmez la clôture du échange <span className="font-bold text-mapgeo-primary">{échangeToClose.reference}</span>
+                {échangeToClose.subject ? ` — ${échangeToClose.subject}` : ""}. Le client sera notifié du changement de statut.
               </p>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  onClick={() => setTicketToClose(null)}
-                  disabled={Boolean(closingTicketId)}
+                  onClick={() => setÉchangeToClose(null)}
+                  disabled={Boolean(closingÉchangeId)}
                   className="inline-flex items-center justify-center rounded-2xl border border-mapgeo-line bg-white px-5 py-3 text-sm font-bold text-mapgeo-primary transition hover:bg-mapgeo-ivory disabled:opacity-60"
                 >
                   Annuler
                 </button>
                 <button
                   type="button"
-                  onClick={confirmCloseTicket}
-                  disabled={Boolean(closingTicketId)}
+                  onClick={confirmCloseÉchange}
+                  disabled={Boolean(closingÉchangeId)}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mapgeo-primary px-5 py-3 text-sm font-extrabold text-white shadow-panel transition hover:bg-mapgeo-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <CheckCircle2 size={17} /> {closingTicketId ? "Clôture…" : "Clôturer"}
+                  <CheckCircle2 size={17} /> {closingÉchangeId ? "Clôture…" : "Clôturer"}
                 </button>
               </div>
             </div>
           </div>
         ) : null}
 
-        {ticketToDelete ? (
-          <TicketDeleteDialog
-            ticket={ticketToDelete}
-            loading={Boolean(deletingTicketId)}
-            onCancel={() => (deletingTicketId ? null : setTicketToDelete(null))}
-            onConfirm={confirmDeleteTicket}
+        {échangeToDelete ? (
+          <ÉchangeDeleteDialog
+            échange={échangeToDelete}
+            loading={Boolean(deletingÉchangeId)}
+            onCancel={() => (deletingÉchangeId ? null : setÉchangeToDelete(null))}
+            onConfirm={confirmDeleteÉchange}
           />
         ) : null}
 
         {pendingBulkDelete ? (
-          <TicketDeleteDialog
-            ticketCount={selectedTicketIds.size}
-            loading={bulkDeletingTickets}
-            onCancel={() => (bulkDeletingTickets ? null : setPendingBulkDelete(false))}
-            onConfirm={confirmDeleteSelectedTickets}
+          <ÉchangeDeleteDialog
+            échangeCount={selectedÉchangeIds.size}
+            loading={bulkDeletingÉchanges}
+            onCancel={() => (bulkDeletingÉchanges ? null : setPendingBulkDelete(false))}
+            onConfirm={confirmDeleteSelectedÉchanges}
           />
         ) : null}
       </div>

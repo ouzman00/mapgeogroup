@@ -136,10 +136,10 @@ async function loadRelatedData(selectedClient) {
   const organizationCode = selectedClient?.code;
   const ownerCode = selectedClient?.primary_user_client_code || selectedClient?.code;
 
-  const [parcelsPayload, documentsPayload, ticketsPayload] = await Promise.allSettled([
+  const [parcelsPayload, documentsPayload, échangesPayload] = await Promise.allSettled([
     parcelService.getAllParcels({ organization_id: organizationId, organization_code: organizationCode }),
     documentService.getAllDocuments({ organization_id: organizationId, organization_code: organizationCode }),
-    supportService.getAllTickets({ organization_id: organizationId, organization_code: organizationCode }),
+    supportService.getAllÉchanges({ organization_id: organizationId, organization_code: organizationCode }),
   ]);
 
   let parcels = parcelsPayload.status === "fulfilled" ? (parcelsPayload.value.results || []) : [];
@@ -157,7 +157,7 @@ async function loadRelatedData(selectedClient) {
   return {
     parcels,
     documents: documentsPayload.status === "fulfilled" ? (documentsPayload.value.results || []) : [],
-    tickets: ticketsPayload.status === "fulfilled" ? (ticketsPayload.value.results || []) : [],
+    échanges: échangesPayload.status === "fulfilled" ? (échangesPayload.value.results || []) : [],
   };
 }
 
@@ -262,7 +262,7 @@ export default function ClientDetailPage() {
   const [client, setClient] = useState(null);
   const [parcels, setParcels] = useState([]);
   const [documents, setDocuments] = useState([]);
-  const [tickets, setTickets] = useState([]);
+  const [échanges, setÉchanges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false);
@@ -285,14 +285,14 @@ export default function ClientDetailPage() {
         setClient(selected);
         setParcels(related.parcels);
         setDocuments(related.documents);
-        setTickets(related.tickets);
+        setÉchanges(related.échanges);
       } catch (loadError) {
         if (!active) return;
         setError(getErrorMessage(loadError, "Impossible de charger la fiche client."));
         setClient(null);
         setParcels([]);
         setDocuments([]);
-        setTickets([]);
+        setÉchanges([]);
       } finally {
         if (active) setLoading(false);
       }
@@ -365,16 +365,16 @@ export default function ClientDetailPage() {
   const cartoHref = buildHref("/parcelles/carto", { organization_code: clientFilterValue, organization_id: organizationId, returnTo });
 
   const draftDocuments = documents.filter((doc) => String(doc.status || "").toLowerCase().includes("draft") || String(doc.status || "").toLowerCase().includes("brouillon")).length;
-  const criticalTickets = tickets.filter((ticket) => ["high", "urgent", "critical", "haute", "critique"].includes(String(ticket.priority || "").toLowerCase())).length;
+  const criticalÉchanges = échanges.filter((échange) => ["high", "urgent", "critical", "haute", "critique"].includes(String(échange.priority || "").toLowerCase())).length;
   const parcelsToVerify = parcels.filter((parcel) => ["to_verify", "pending", "review", "en vérification"].includes(String(parcel.status || "").toLowerCase())).length;
-  const openTickets = tickets.filter((ticket) => !isResolvedOrClosed(ticket.status)).length;
+  const openÉchanges = échanges.filter((échange) => !isResolvedOrClosed(échange.status)).length;
 
   const portalLabel = portalAccessLabel(client);
   const accessActionLabel = getPortalAccessActionLabel(client);
 
   const clientAlerts = [
-    { label: `${draftDocuments} document(s) en brouillon`, href: documentsHref },
-    { label: `${criticalTickets} échange(s) prioritaire(s)`, href: supportHref },
+    { label: `${draftDocuments} livrable(s) en préparation`, href: documentsHref },
+    { label: `${criticalÉchanges} échange(s) prioritaire(s)`, href: supportHref },
     { label: `${parcelsToVerify} parcelle(s) à vérifier`, href: buildHref("/parcelles", { organization_code: clientFilterValue, status: "to_verify" }) },
     { label: `${accessActionLabel} · portail ${portalLabel.toLowerCase()}`, onClick: resetAccess },
   ];
@@ -416,7 +416,7 @@ export default function ClientDetailPage() {
             <section className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-4">
               <KpiCard icon={Map} label="Parcelles" value={formatNumber(parcels.length || client.parcels_count)} description="Portefeuille foncier" />
               <KpiCard icon={FileText} label="Documents" value={formatNumber(documents.length)} description="Plans et rapports liés" />
-              <KpiCard icon={MessageCircle} label="Échanges ouverts" value={formatNumber(openTickets)} description="Échanges MAPGEO" />
+              <KpiCard icon={MessageCircle} label="Échanges ouverts" value={formatNumber(openÉchanges)} description="Échanges MAPGEO" />
               <KpiCard icon={BriefcaseBusiness} label="Avancement moyen" value={`${avgProgress}%`} description="Progression portefeuille" />
             </section>
 
@@ -462,7 +462,7 @@ export default function ClientDetailPage() {
                   }) : null}
                 </DetailTable>
 
-                <DetailTable title="Plans, rapports et livrables liés" columns={["Document", "Type", "Avancement", "Visibilité", "Date", "Action"]} action={<Link to={documentsHref} className="text-sm font-bold text-mapgeo-primary">Bibliothèque des livrables</Link>} empty="Aucun livrable lié à ce client." colSpan={6}>
+                <DetailTable title="Plans, rapports et livrables liés" columns={["Document", "Type", "Avancement", "Visibilité", "Date", "Action"]} action={<Link to={documentsHref} className="text-sm font-bold text-mapgeo-primary">Bibliothèque des livrables des livrables</Link>} empty="Aucun livrable lié à ce client." colSpan={6}>
                   {documents.length ? documents.map((doc) => (
                     <tr key={doc.id || doc.title}>
                       <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{doc.title || doc.name || "Document"}</td>
@@ -470,20 +470,20 @@ export default function ClientDetailPage() {
                       <td className="px-5 py-4 text-mapgeo-secondary">{doc.status_label || doc.status || doc.statusLabel || "—"}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{getDocumentVisibilityLabel(doc)}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{formatDateLabel(doc.created_at || doc.date || doc.created)}</td>
-                      <td className="px-5 py-4">{doc.id ? <Link to={`/documents/${doc.id}`} className="text-sm font-bold text-mapgeo-primary">Prévisualiser</Link> : "—"}</td>
+                      <td className="px-5 py-4">{doc.id ? <Link to={`/documents/${doc.id}`} className="text-sm font-bold text-mapgeo-primary">Consulter</Link> : "—"}</td>
                     </tr>
                   )) : null}
                 </DetailTable>
 
-                <DetailTable title="Échanges MAPGEO liés" columns={["Référence", "Sujet", "Priorité", "Avancement", "Date", "Action"]} action={<Link to={supportHref} className="text-sm font-bold text-mapgeo-primary">Contacter MAPGEO</Link>} empty="Aucun ticket support lié à ce client." colSpan={6}>
-                  {tickets.length ? tickets.map((ticket) => (
-                    <tr key={ticket.id || ticket.reference}>
-                      <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{ticket.reference || `SUP-${ticket.id}`}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.subject || "—"}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.priority_label || getContacter MAPGEOPriorityLabel(ticket.priority)}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{ticket.status_label || getContacter MAPGEOStatusLabel(ticket.status)}</td>
-                      <td className="px-5 py-4 text-mapgeo-secondary">{formatDateLabel(ticket.updated_at || ticket.created_at || ticket.date || ticket.lastReply)}</td>
-                      <td className="px-5 py-4">{ticket.id ? <Link to={`/support/${ticket.id}`} className="text-sm font-bold text-mapgeo-primary">Ouvrir</Link> : "—"}</td>
+                <DetailTable title="Échanges MAPGEO liés" columns={["Référence", "Sujet", "Priorité", "Avancement", "Date", "Action"]} action={<Link to={supportHref} className="text-sm font-bold text-mapgeo-primary">Contacter MAPGEO</Link>} empty="Aucun échange MAPGEO lié à ce client." colSpan={6}>
+                  {échanges.length ? échanges.map((échange) => (
+                    <tr key={échange.id || échange.reference}>
+                      <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{échange.reference || `SUP-${échange.id}`}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{échange.subject || "—"}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{échange.priority_label || getContacter MAPGEOPriorityLabel(échange.priority)}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{échange.status_label || getContacter MAPGEOStatusLabel(échange.status)}</td>
+                      <td className="px-5 py-4 text-mapgeo-secondary">{formatDateLabel(échange.updated_at || échange.created_at || échange.date || échange.lastReply)}</td>
+                      <td className="px-5 py-4">{échange.id ? <Link to={`/support/${échange.id}`} className="text-sm font-bold text-mapgeo-primary">Ouvrir</Link> : "—"}</td>
                     </tr>
                   )) : null}
                 </DetailTable>
@@ -494,7 +494,7 @@ export default function ClientDetailPage() {
                 <div className="mt-5 space-y-3 border-b border-white/10 pb-5">
                   <InfoSummary icon={Clock3} label="Dernière activité" value={formatDateLabel(client.updated_at || client.created_at)} />
                   <InfoSummary icon={ShieldCheck} label="Portail" value={portalAccessLabel(client)} />
-                  <InfoSummary icon={BellRing} label="Alertes" value={`${draftDocuments + criticalTickets + parcelsToVerify} à traiter`} />
+                  <InfoSummary icon={BellRing} label="Alertes" value={`${draftDocuments + criticalÉchanges + parcelsToVerify} à traiter`} />
                 </div>
                 <div className="mt-5 space-y-3">
                   {clientAlerts.map((item) => {
