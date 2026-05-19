@@ -362,11 +362,11 @@ for origin in cors_allowed_origins:
             "DJANGO_CORS_ALLOWED_ORIGINS doit contenir des origines exactes sans wildcard ni slash final."
         )
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG and (cors_allow_all_requested or not cors_allowed_origins)
-CORS_ALLOWED_ORIGINS = [] if CORS_ALLOW_ALL_ORIGINS else cors_allowed_origins
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = env_list("DJANGO_CORS_ALLOWED_ORIGINS", "https://mapgeogroup.vercel.app")
 CORS_ALLOW_CREDENTIALS = env_bool("DJANGO_CORS_ALLOW_CREDENTIALS", True)
 
-CSRF_TRUSTED_ORIGINS = env_list(
+CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS", "https://mapgeogroup.vercel.app")
     "DJANGO_CSRF_TRUSTED_ORIGINS",
     ",".join(cors_allowed_origins),
 )
@@ -558,3 +558,9 @@ if not DEBUG:
 # Import CSV preview/confirm workflow
 IMPORT_PREVIEW_CONFIRM_REQUIRED = env_bool("IMPORT_PREVIEW_CONFIRM_REQUIRED", True)
 MAP_LAYER_TABLES_RAW = env("MAP_LAYER_TABLES", "")
+
+CORS_ALLOWED_ORIGIN_REGEXES = env_list(
+    "DJANGO_CORS_ALLOWED_ORIGIN_REGEXES",
+    r"^https://mapgeogroup-[a-z0-9-]+-mapgeogroup-s-projects\.vercel\.app$",
+)
+
