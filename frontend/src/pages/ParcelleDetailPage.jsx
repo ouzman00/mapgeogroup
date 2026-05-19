@@ -171,7 +171,7 @@ function ParcelHeader({ parcel, returnTo }) {
 
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-mapgeo-secondary/60">
-              Dossier parcellaire
+              Fiche parcellaire
             </p>
             <h2 className="mt-2 text-3xl font-extrabold text-mapgeo-primary">
               {parcel.reference || parcel.title_number || `Parcelle ${parcel.id}`}
@@ -242,10 +242,10 @@ function ParcelDocumentsSection({ documents = [] }) {
     return (
       <article className="rounded-3xl border border-mapgeo-line bg-white p-6 shadow-soft">
         <h3 className="flex items-center gap-2 text-xl font-extrabold text-mapgeo-primary">
-          <FileText size={19} /> Documents
+          <FileText size={19} /> Plans, rapports et livrables
         </h3>
         <p className="mt-3 text-sm leading-6 text-mapgeo-secondary/70">
-          Aucun document visible n’est rattaché à cette parcelle.
+          Aucun plan, rapport ou livrable visible n’est rattaché à cette parcelle.
         </p>
       </article>
     );
@@ -257,7 +257,7 @@ function ParcelDocumentsSection({ documents = [] }) {
         <FileText size={19} /> Plans, rapports et livrables liés
       </h3>
       <p className="mt-2 text-sm text-mapgeo-secondary/70">
-        {documents.length} document(s) visible(s) pour votre profil.
+        {documents.length} livrable(s) visible(s) pour votre profil.
       </p>
 
       <div className="mt-4 space-y-3">
@@ -267,9 +267,9 @@ function ParcelDocumentsSection({ documents = [] }) {
             to={`/documents/${doc.id}`}
             className="block rounded-2xl border border-mapgeo-line bg-mapgeo-ivory/60 px-4 py-3 transition hover:bg-white"
           >
-            <p className="text-sm font-extrabold text-mapgeo-primary">{doc.title || `Document ${doc.id}`}</p>
+            <p className="text-sm font-extrabold text-mapgeo-primary">{doc.title || `Livrable ${doc.id}`}</p>
             <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-mapgeo-secondary/55">
-              {doc.document_type || "Document"} · {doc.status || "—"} · version {doc.version || "v1"}
+              {doc.document_type || "Livrable"} · {doc.status || "—"} · version {doc.version || "v1"}
             </p>
           </Link>
         ))}
@@ -496,10 +496,10 @@ function ParcelDetailContent({ parcel, returnTo }) {
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <article className="rounded-3xl border border-mapgeo-line bg-white p-6 shadow-soft">
           <h3 className="text-2xl font-extrabold text-mapgeo-primary">
-            Informations de la parcelle
+            Fiche de la parcelle
           </h3>
           <p className="mt-1 text-sm text-mapgeo-secondary/70">
-            Seules les informations renseignées sont affichées afin de garder le dossier lisible.
+            Seules les informations utiles sont affichées afin de garder votre dossier lisible.
           </p>
 
           {hasDetails ? (
@@ -685,7 +685,7 @@ export default function ParcelleDetailPage() {
 
   return (
     <DashboardLayout
-      title="Dossier parcellaire"
+      title="Fiche parcellaire"
       subtitle="Consultez les informations administratives de la parcelle et ouvrez la cartographie dédiée si nécessaire."
     >
       {innerContent}
