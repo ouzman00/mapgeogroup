@@ -373,7 +373,7 @@ export default function ClientDetailPage() {
   const accessActionLabel = getPortalAccessActionLabel(client);
 
   const clientAlerts = [
-    { label: `${draftDocuments} document(s) en brouillon`, href: documentsHref },
+    { label: `${draftDocuments} livrable(s) en préparation`, href: documentsHref },
     { label: `${criticalTickets} échange(s) prioritaire(s)`, href: supportHref },
     { label: `${parcelsToVerify} parcelle(s) à vérifier`, href: buildHref("/parcelles", { organization_code: clientFilterValue, status: "to_verify" }) },
     { label: `${accessActionLabel} · portail ${portalLabel.toLowerCase()}`, onClick: resetAccess },
@@ -470,12 +470,12 @@ export default function ClientDetailPage() {
                       <td className="px-5 py-4 text-mapgeo-secondary">{doc.status_label || doc.status || doc.statusLabel || "—"}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{getDocumentVisibilityLabel(doc)}</td>
                       <td className="px-5 py-4 text-mapgeo-secondary">{formatDateLabel(doc.created_at || doc.date || doc.created)}</td>
-                      <td className="px-5 py-4">{doc.id ? <Link to={`/documents/${doc.id}`} className="text-sm font-bold text-mapgeo-primary">Prévisualiser</Link> : "—"}</td>
+                      <td className="px-5 py-4">{doc.id ? <Link to={`/documents/${doc.id}`} className="text-sm font-bold text-mapgeo-primary">Consulter</Link> : "—"}</td>
                     </tr>
                   )) : null}
                 </DetailTable>
 
-                <DetailTable title="Échanges MAPGEO liés" columns={["Référence", "Sujet", "Priorité", "Avancement", "Date", "Action"]} action={<Link to={supportHref} className="text-sm font-bold text-mapgeo-primary">Contacter MAPGEO</Link>} empty="Aucun ticket support lié à ce client." colSpan={6}>
+                <DetailTable title="Échanges MAPGEO liés" columns={["Référence", "Sujet", "Priorité", "Avancement", "Date", "Action"]} action={<Link to={supportHref} className="text-sm font-bold text-mapgeo-primary">Contacter MAPGEO</Link>} empty="Aucun échange MAPGEO lié à ce client." colSpan={6}>
                   {tickets.length ? tickets.map((ticket) => (
                     <tr key={ticket.id || ticket.reference}>
                       <td className="px-5 py-4 font-extrabold text-mapgeo-primary">{ticket.reference || `SUP-${ticket.id}`}</td>

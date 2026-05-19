@@ -318,8 +318,8 @@ function DocumentsTable({
           </h3>
           <p className="mt-1 text-sm text-mapgeo-secondary/70">
             {isInternalPortal
-              ? "Vue liste des livrables, versions, statuts et visibilités client."
-              : "Consultez les documents disponibles pour vos parcelles."}
+              ? "Vue liste des plans, rapports, versions et visibilités client."
+              : "Consultez les plans, rapports et livrables disponibles pour vos parcelles."}
           </p>
         </div>
 
@@ -539,11 +539,11 @@ function ConfirmDialog({ documentTitle, documentCount = 1, loading, onCancel, on
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-mapgeo-primary/35 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Confirmation de suppression">
       <div className="w-full max-w-md rounded-3xl border border-mapgeo-line bg-white p-6 shadow-panel">
         <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-mapgeo-secondary/70">Confirmation</p>
-        <h3 className="mt-2 text-2xl font-extrabold text-mapgeo-primary">{isBulk ? "Supprimer les documents sélectionnés ?" : "Supprimer ce document ?"}</h3>
+        <h3 className="mt-2 text-2xl font-extrabold text-mapgeo-primary">{isBulk ? "Supprimer les livrables sélectionnés ?" : "Supprimer ce livrable ?"}</h3>
         <p className="mt-3 text-sm leading-6 text-mapgeo-secondary/80">
           {isBulk
-            ? `${documentCount} document(s) seront supprimé(s) de la bibliothèque. Cette action est définitive.`
-            : `Le document « ${documentTitle || "Document"} » sera supprimé de la bibliothèque. Cette action est définitive.`}
+            ? `${documentCount} livrable(s) seront supprimé(s) de la bibliothèque. Cette action est définitive.`
+            : `Le livrable « ${documentTitle || "Document"} » sera supprimé de la bibliothèque des livrables. Cette action est définitive.`}
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <button type="button" onClick={onCancel} disabled={loading} className="rounded-2xl border border-mapgeo-line bg-white px-5 py-3 text-sm font-bold text-mapgeo-primary hover:bg-mapgeo-ivory disabled:opacity-50">
@@ -912,7 +912,7 @@ export default function DocumentsPage() {
           label: "Plans, rapports et livrables",
           value: formatNumber(total),
           description: "Sur la liste filtrée",
-          action: "Voir mes documents",
+          action: "Voir mes livrables",
           onClick: () => setFilters({ ...EMPTY_FILTERS, organization_code: filters.organization_code }),
           tone: "blue",
         },
@@ -1355,7 +1355,7 @@ export default function DocumentsPage() {
       subtitle={
         isInternalPortal
           ? "Centralisez les livrables liés aux parcelles et aux clients dans une bibliothèque claire et structurée."
-          : "Consultez les documents disponibles pour vos parcelles."
+          : "Consultez les plans, rapports et livrables disponibles pour vos parcelles."
       }
     >
       <div className="space-y-6">
@@ -1368,7 +1368,7 @@ export default function DocumentsPage() {
             <p className="mt-2 max-w-2xl text-sm text-mapgeo-secondary/70 lg:hidden">
               {isInternalPortal
                 ? "Centralisez les livrables liés aux parcelles et aux clients dans une bibliothèque claire et structurée."
-                : "Consultez les documents disponibles pour vos parcelles."}
+                : "Consultez les plans, rapports et livrables disponibles pour vos parcelles."}
             </p>
           </div>
 

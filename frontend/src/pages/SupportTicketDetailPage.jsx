@@ -52,7 +52,7 @@ function normalizeTicket(ticket) {
     ...ticket,
     id: ticket.id,
     reference: ticket.reference || ticket.code || `SUP-${ticket.id || "000"}`,
-    subject: ticket.subject || ticket.title || "Ticket support",
+    subject: ticket.subject || ticket.title || "Échange MAPGEO",
     client: ticket.client_name || ticket.user_name || ticket.organization_name || ticket.user_client_code || ticket.client || "—",
     parcel: ticket.parcel_reference || ticket.parcel || "—",
     parcel_id: ticket.parcel_id || (typeof ticket.parcel === "number" ? ticket.parcel : ""),
@@ -360,7 +360,7 @@ export default function SupportTicketDetailPage() {
             <nav className="text-sm font-semibold text-mapgeo-primary" aria-label="Fil d’Ariane">
               Accueil <span className="mx-1 text-mapgeo-secondary/40">/</span> Support <span className="mx-1 text-mapgeo-secondary/40">/</span> Détail ticket
             </nav>
-            <h1 className="mt-3 text-3xl font-extrabold text-mapgeo-primary">{ticket?.subject || "Ticket support"}</h1>
+            <h1 className="mt-3 text-3xl font-extrabold text-mapgeo-primary">{ticket?.subject || "Échange MAPGEO"}</h1>
             <p className="mt-2 text-sm text-mapgeo-secondary/70">{ticket?.reference || "—"}{ticket?.description ? ` · ${ticket.description}` : ""}</p>
           </div>
 
