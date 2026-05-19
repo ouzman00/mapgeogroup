@@ -251,12 +251,12 @@ export default function ParcelleCartoPage() {
   const { user, isInternalPortal } = useAuth();
   const { fetchOwners, owners } = useParcels();
   const locallyLoadedParcelIdRef = useRef(null);
+  const selectionRequestIdRef = useRef(0);
 
   const [activeParcel, setActiveParcel] = useState(null);
   const [portfolioParcels, setPortfolioParcels] = useState([]);
   const [portfolioOwnerName, setPortfolioOwnerName] = useState("");
   const [loading, setLoading] = useState(true);
-  const [loadingSelection, setLoadingSelection] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [showCreateDrawer, setShowCreateDrawer] = useState(false);
   const canManageParcels = canManageBackoffice(user, isInternalPortal);
@@ -447,31 +447,50 @@ export default function ParcelleCartoPage() {
   const handleSelectParcel = async (parcel) => {
     if (!parcel?.id || String(parcel.id) === String(activeParcel?.id)) return;
 
-    const optimisticParcel = portfolioParcels.find((item) => String(item.id) === String(parcel.id)) || parcel;
+    const requestId = selectionRequestIdRef.current + 1;
+    selectionRequestIdRef.current = requestId;
 
+    const optimisticParcel = portfolioParcels.find((item) => String(item.id) === String(parcel.id)) || parcel;
+    const optimisticId = String(optimisticParcel.id);
+
+    // Sélection immédiate : pas de voile de chargement.
     setActiveParcel(optimisticParcel);
-    setLoadingSelection(true);
     setFetchError("");
+    locallyLoadedParcelIdRef.current = optimisticId;
+    navigate(`/parcelles/${optimisticId}/carto`, { replace: true, state: { returnTo } });
 
     try {
-      const detail = await parcelService.getParcelById(parcel.id);
+      const detail = await parcelService.getParcelById(optimisticId);
+
+      // Si une autre parcelle a été sélectionnée entre-temps, on ignore cette ancienne réponse.
+      if (selectionRequestIdRef.current !== requestId) return;
+
       locallyLoadedParcelIdRef.current = String(detail.id);
       setActiveParcel(detail);
       setPortfolioOwnerName(detail.owner_name || detail.owner_client_code || portfolioOwnerName);
+
       setPortfolioParcels((current) => {
         const mergedById = new Map();
 
         [detail, ...current].forEach((item) => {
           if (!item?.id) return;
+
           const key = String(item.id);
           const existing = mergedById.get(key) || {};
-          mergedById.set(key, key === String(detail.id) ? { ...existing, ...item, ...detail } : { ...existing, ...item });
+
+          mergedById.set(
+            key,
+            key === String(detail.id)
+              ? { ...existing, ...item, ...detail }
+              : { ...existing, ...item },
+          );
         });
 
         return Array.from(mergedById.values());
       });
-      navigate(`/parcelles/${detail.id}/carto`, { replace: true, state: { returnTo } });
     } catch (error) {
+      if (selectionRequestIdRef.current !== requestId) return;
+
       if (isNotFoundError(error)) {
         setActiveParcel(null);
         setFetchError("Parcelle introuvable ou non accessible avec votre compte.");
@@ -479,8 +498,6 @@ export default function ParcelleCartoPage() {
       } else {
         setFetchError(getErrorMessage(error, "Impossible de charger cette parcelle."));
       }
-    } finally {
-      setLoadingSelection(false);
     }
   };
 
@@ -649,15 +666,7 @@ export default function ParcelleCartoPage() {
 
 
 
-            {loadingSelection ? (
-              <div className="absolute inset-0 z-[1200] grid place-items-center bg-[#07111b]/42 backdrop-blur-[2px]" aria-label="Chargement" role="status">
-                <div className="relative grid h-16 w-16 place-items-center">
-                  <span className="absolute h-16 w-16 animate-ping rounded-full bg-[#C7B299]/10" />
-                  <span className="absolute h-12 w-12 rounded-full border border-[#C7B299]/20" />
-                  <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-[#F7F5F2]/20 border-t-[#C7B299]" />
-                </div>
-              </div>
-            ) : null}
+
 
             {fetchError ? (
               <div className="absolute bottom-6 left-6 z-[1100] max-w-md rounded-2xl border border-[#C7B299]/35 bg-[#C7B299]/15 px-4 py-3 text-sm text-[#F7F5F2] shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur">
