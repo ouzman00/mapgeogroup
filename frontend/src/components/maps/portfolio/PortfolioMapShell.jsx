@@ -1691,6 +1691,7 @@ export default function PortfolioMapShell({
   const [activeCommand, setActiveCommand] = useState(null);
   const [measurementDraft, setMeasurementDraft] = useState({ mode: "distance", points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false });
   const [createParcelDraftPoints, setCreateParcelDraftPoints] = useState([]);
+  const [createParcelDraftCursorPoint, setCreateParcelDraftCursorPoint] = useState(null);
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
   const [deleteVertexMode, setDeleteVertexMode] = useState(false);
   const [userLocationEnabled, setUserLocationEnabled] = useState(false);
@@ -1729,26 +1730,68 @@ export default function PortfolioMapShell({
     () => (createParcelPreviewGeometry ? geometryToRings(createParcelPreviewGeometry) : []),
     [createParcelPreviewGeometry],
   );
-  const createParcelDraftGeometry = useMemo(
-    () => (createParcelDraftPoints.length >= 3 ? polygonGeometryFromLatLngRing(createParcelDraftPoints) : null),
-    [createParcelDraftPoints],
+  const createParcelDraftMeasurement = useMemo(
+    () => ({
+      mode: "surface",
+      points: createParcelDraftPoints,
+      cursorPoint: createParcelDraftCursorPoint,
+      snapPoint: null,
+      snapKind: null,
+      finished: false,
+    }),
+    [createParcelDraftPoints, createParcelDraftCursorPoint],
   );
+
+  const createParcelDraftPreviewPoints = useMemo(
+    () => getMeasurementPreviewPoints(createParcelDraftMeasurement),
+    [createParcelDraftMeasurement],
+  );
+
+  const createParcelDraftGeometry = useMemo(
+    () => (createParcelDraftPreviewPoints.length >= 3 ? polygonGeometryFromLatLngRing(createParcelDraftPreviewPoints) : null),
+    [createParcelDraftPreviewPoints],
+  );
+
+  const createParcelDraftSummary = useMemo(
+    () => buildMeasurementDraftSummary(createParcelDraftMeasurement),
+    [createParcelDraftMeasurement],
+  );
+
+  const createParcelDraftOverlay = useMemo(() => {
+    const overlay = buildMeasurementDraftOverlay(createParcelDraftMeasurement);
+
+    return Object.assign({}, overlay, {
+      sideMarkers: repositionSideMarkersOutsideInPixels(
+        overlay.sideMarkers,
+        map,
+        undefined,
+        { isMobile: isMobileCartography },
+      ),
+    });
+  }, [createParcelDraftMeasurement, map, mapZoom, isMobileCartography]);
 
   const finishCreateParcelDrawing = useCallback(() => {
     if (!createParcelDraftGeometry) return;
 
     onCreateGeometryDrawn?.(createParcelDraftGeometry);
     setCreateParcelDraftPoints([]);
+    setCreateParcelDraftCursorPoint(null);
   }, [createParcelDraftGeometry, onCreateGeometryDrawn]);
 
   const cancelCreateParcelDrawing = useCallback(() => {
     setCreateParcelDraftPoints([]);
+    setCreateParcelDraftCursorPoint(null);
     onCancelCreateGeometryDrawing?.();
   }, [onCancelCreateGeometryDrawing]);
+
+  const removeLastCreateParcelDraftPoint = useCallback(() => {
+    setCreateParcelDraftPoints((current) => current.slice(0, -1));
+  }, []);
 
   useEffect(() => {
     if (!createParcelDrawingActive) {
       setCreateParcelDraftPoints([]);
+      setCreateParcelDraftCursorPoint(null);
     }
   }, [createParcelDrawingActive]);
 
@@ -2284,6 +2327,11 @@ export default function PortfolioMapShell({
             onMouseMove={(point) => {
               setCursorPosition(point);
 
+              if (createParcelDrawingActive) {
+                setCreateParcelDraftCursorPoint(point || null);
+                return;
+              }
+
               if (showMeasurements) {
                 // Mobile : le toucher écran ne doit ni créer, ni déplacer, ni prévisualiser un point.
                 if (isMobileCartography) return;
@@ -2306,6 +2354,7 @@ export default function PortfolioMapShell({
                 if (!point) return;
                 setActiveCommand(null);
                 setIdentifyState(null);
+                setCreateParcelDraftCursorPoint(null);
                 setCreateParcelDraftPoints((current) => [...current, point]);
                 return;
               }
@@ -2368,10 +2417,10 @@ export default function PortfolioMapShell({
 
           {createParcelDrawingActive ? (
             <>
-              {createParcelDraftPoints.length >= 2 ? (
+              {createParcelDraftPreviewPoints.length >= 2 ? (
                 <Polyline
                   key="create-parcel-draft-line"
-                  positions={createParcelDraftPoints}
+                  positions={createParcelDraftPreviewPoints}
                   pane={MAP_PANES.edit}
                   pathOptions={{
                     color: "#FACC15",
@@ -2382,10 +2431,10 @@ export default function PortfolioMapShell({
                   interactive={false}
                 />
               ) : null}
-              {createParcelDraftPoints.length >= 3 ? (
+              {createParcelDraftPreviewPoints.length >= 3 ? (
                 <Polygon
                   key="create-parcel-draft"
-                  positions={createParcelDraftPoints}
+                  positions={createParcelDraftPreviewPoints}
                   pane={MAP_PANES.edit}
                   pathOptions={{
                     color: "#FACC15",
@@ -2413,6 +2462,47 @@ export default function PortfolioMapShell({
                   interactive={false}
                 />
               ))}
+              {createParcelDraftCursorPoint ? (
+                <CircleMarker
+                  key="create-parcel-draft-cursor"
+                  center={createParcelDraftCursorPoint}
+                  pane={MAP_PANES.edit}
+                  radius={4}
+                  pathOptions={{
+                    color: "#FACC15",
+                    fillColor: "#07111b",
+                    fillOpacity: 0.9,
+                    opacity: 1,
+                    weight: 2,
+                    dashArray: "3 3",
+                  }}
+                  interactive={false}
+                />
+              ) : null}
+              {createParcelDraftOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
+                <Marker
+                  key={`create-draft-side-${item.id}`}
+                  position={item.point}
+                  pane={MAP_PANES.measure}
+                  icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
+                  interactive={false}
+                />
+              ))}
+              {createParcelDraftOverlay.areaMarker ? (
+                <CircleMarker
+                  key="create-draft-area-label"
+                  center={createParcelDraftOverlay.areaMarker.point}
+                  pane={MAP_PANES.measure}
+                  radius={1}
+                  pathOptions={{ opacity: 0, fillOpacity: 0 }}
+                  interactive={false}
+                >
+                  <Tooltip direction="center" permanent opacity={0.96} className="mapgeo-parcel-tooltip">
+                    <strong>{createParcelDraftOverlay.areaMarker.label}</strong>
+                    <span>{createParcelDraftOverlay.areaMarker.subtitle}</span>
+                  </Tooltip>
+                </CircleMarker>
+              ) : null}
             </>
           ) : null}
 
@@ -2686,6 +2776,20 @@ export default function PortfolioMapShell({
             <p className="mt-1 text-xs font-semibold leading-5 text-white/65">
               Clique sur la carte pour placer les sommets. Double-clique ou utilise Terminer pour valider.
             </p>
+            <div className="mt-2 grid grid-cols-3 gap-1.5 text-[11px] font-bold">
+              <div className="rounded-xl border border-white/10 bg-white/[0.055] px-2 py-1.5">
+                <span className="block text-white/40">Distance</span>
+                <strong className="text-white">{createParcelDraftSummary.distanceLabel}</strong>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.055] px-2 py-1.5">
+                <span className="block text-white/40">Périmètre</span>
+                <strong className="text-white">{createParcelDraftSummary.perimeterLabel}</strong>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.055] px-2 py-1.5">
+                <span className="block text-white/40">Surface</span>
+                <strong className="text-white">{createParcelDraftSummary.surfaceLabel}</strong>
+              </div>
+            </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
