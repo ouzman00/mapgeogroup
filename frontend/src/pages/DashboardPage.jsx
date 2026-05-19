@@ -958,16 +958,16 @@ export default function DashboardPage() {
 
         <section className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
           {isClientPortal ? (
-          <ClientActionsPanel
-            title="Actions attendues pour faire avancer mes dossiers"
-            actions={clientActions}
-            loading={clientActionsLoading}
-            error={clientActionsError}
-            onComplete={completeClientAction}
-          />
-        ) : null}
+            <ClientActionsPanel
+              title="Actions attendues pour faire avancer mes dossiers"
+              actions={clientActions}
+              loading={clientActionsLoading}
+              error={clientActionsError}
+              onComplete={completeClientAction}
+            />
+          ) : null}
 
-        <PortfolioTable
+          <PortfolioTable
             rows={portfolioRows}
             loading={loading || parcelsLoading}
             error={error || parcelsError}
