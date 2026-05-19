@@ -407,7 +407,7 @@ function PortfolioTable({ rows, loading, error, isClientPortal, isInternalPortal
 
       {!loading && !error ? (
         <div className="overflow-x-auto">
-          <table className="mapgeo-table min-w-[760px] w-full text-left text-sm">
+          <table className={`mapgeo-table w-full text-left text-sm ${isInternalPortal ? "min-w-[760px]" : "min-w-[560px]"}`}>
             <thead>
               <tr className="border-b border-mapgeo-line bg-mapgeo-ivory/70 text-xs font-bold uppercase tracking-[0.10em] text-mapgeo-secondary/70">
                 {isInternalPortal ? <th className="px-5 py-4">Client</th> : null}
