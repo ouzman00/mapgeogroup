@@ -1,0 +1,13 @@
+# Scripts de fix locaux (jamais committes)
+fix-*.py
+add-*.py
+
+# Sauvegardes locales
+backups/
+*.dump
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
