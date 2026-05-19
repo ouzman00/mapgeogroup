@@ -475,8 +475,8 @@ function DocumentsTable({
                         <Link
                           to={`/documents/${doc.id}`}
                           className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-mapgeo-line bg-white text-mapgeo-primary transition hover:bg-mapgeo-ivory"
-                          title="Prévisualiser"
-                          aria-label="Prévisualiser"
+                          title="Consulter"
+                          aria-label="Consulter"
                         >
                           <Eye size={16} />
                         </Link>
@@ -1351,7 +1351,7 @@ export default function DocumentsPage() {
 
   return (
     <DashboardLayout
-      title={isInternalPortal ? "Bibliothèque des livrables documentaire" : "Plans, rapports et livrables"}
+      title={isInternalPortal ? "Bibliothèque des livrables des livrables documentaire" : "Plans, rapports et livrables"}
       subtitle={
         isInternalPortal
           ? "Centralisez les livrables liés aux parcelles et aux clients dans une bibliothèque claire et structurée."
