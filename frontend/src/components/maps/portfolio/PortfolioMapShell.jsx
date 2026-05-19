@@ -351,19 +351,57 @@ function isMobileCartographyViewportSafe() {
   }
 }
 
-function getSideMarkerPixelOptions(map) {
+function getSideMarkerPixelOptions(map, isMobileOverride = null) {
   const zoom = typeof map?.getZoom === "function" ? map.getZoom() : 18;
-  const mobile = isMobileCartographyViewportSafe();
+  const mobile = typeof isMobileOverride === "boolean" ? isMobileOverride : isMobileCartographyViewportSafe();
 
   return {
     zoom,
-    offsetPixels: mobile ? 22 : 20,
+    // Offset volontairement identique desktop/mobile : les dimensions restent
+    // à distance constante de la géométrie, seuls les seuils de lisibilité changent.
+    offsetPixels: 20,
     minSegmentPixels: mobile ? 44 : 34,
     minZoom: mobile ? 17 : 15,
   };
 }
 
-function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
+function useCartographyViewport() {
+  const [isMobile, setIsMobile] = useState(() => isMobileCartographyViewportSafe());
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const mediaQueries = [
+      window.matchMedia?.("(max-width: 767px)"),
+      window.matchMedia?.("(pointer: coarse)"),
+      window.matchMedia?.("(hover: none)"),
+    ].filter(Boolean);
+
+    const refresh = () => {
+      setIsMobile(isMobileCartographyViewportSafe());
+    };
+
+    refresh();
+    window.addEventListener("resize", refresh, { passive: true });
+    window.addEventListener("orientationchange", refresh, { passive: true });
+
+    mediaQueries.forEach((query) => {
+      query.addEventListener?.("change", refresh);
+    });
+
+    return () => {
+      window.removeEventListener("resize", refresh);
+      window.removeEventListener("orientationchange", refresh);
+      mediaQueries.forEach((query) => {
+        query.removeEventListener?.("change", refresh);
+      });
+    };
+  }, []);
+
+  return { isMobile };
+}
+
+function repositionSideMarkersOutsideInPixels(markers, map, pixels, viewportOptions = {}) {
   if (!Array.isArray(markers) || markers.length === 0) return [];
 
   if (
@@ -375,7 +413,7 @@ function repositionSideMarkersOutsideInPixels(markers, map, pixels) {
     return markers.map((marker) => ({ ...marker, visible: true }));
   }
 
-  const options = getSideMarkerPixelOptions(map);
+  const options = getSideMarkerPixelOptions(map, viewportOptions.isMobile);
   const offsetPixels = Number.isFinite(pixels) ? pixels : options.offsetPixels;
 
   return markers.map((marker) => {
@@ -1999,13 +2037,14 @@ export default function PortfolioMapShell({
   const editHistoryIndexRef = useRef(-1);
   const measurementClickTimerRef = useRef(null);
   const lastMeasurementPanAtRef = useRef(0);
+  const { isMobile: isMobileCartography } = useCartographyViewport();
   const measurementSummary = useMemo(() => buildMeasurementSummary(activeFeature), [activeFeature]);
   const editMeasurementOverlay = useMemo(() => {
     const overlay = buildGeometryMeasurementOverlay(editGeometry, "edit");
     return Object.assign({}, overlay, {
-      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map),
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, undefined, { isMobile: isMobileCartography }),
     });
-  }, [editGeometry, map, mapZoom]);
+  }, [editGeometry, map, mapZoom, isMobileCartography]);
   const editValidation = useMemo(() => (inlineEditOpen ? validateParcelGeometry(editGeometry, activeFeature?.parcel || {}) : null), [activeFeature, editGeometry, inlineEditOpen]);
 
   useEffect(() => {
@@ -2018,15 +2057,15 @@ export default function PortfolioMapShell({
   const selectedMeasurementOverlay = useMemo(() => {
     const overlay = buildGeometryMeasurementOverlay(activeFeature?.parcel?.geometry, "measure");
     return Object.assign({}, overlay, {
-      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map),
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, undefined, { isMobile: isMobileCartography }),
     });
-  }, [activeFeature, map, mapZoom]);
+  }, [activeFeature, map, mapZoom, isMobileCartography]);
   const measurementDraftOverlay = useMemo(() => {
     const overlay = buildMeasurementDraftOverlay(measurementDraft);
     return Object.assign({}, overlay, {
-      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map),
+      sideMarkers: repositionSideMarkersOutsideInPixels(overlay.sideMarkers, map, undefined, { isMobile: isMobileCartography }),
     });
-  }, [measurementDraft, map, mapZoom]);
+  }, [measurementDraft, map, mapZoom, isMobileCartography]);
   const labelFeatures = useMemo(() => {
     const isValidFeature = (feature) =>
       feature?.rings?.length > 0 &&
@@ -2099,7 +2138,7 @@ export default function PortfolioMapShell({
   // Mobile: preview line follows the center reticle without adding points by touch.
   useEffect(() => {
     if (!map || !showMeasurements) return undefined;
-    if (!isMobileCartographyViewport()) return undefined;
+    if (!isMobileCartography) return undefined;
 
     let frame = null;
     let lastMovePreviewAt = 0;
@@ -2167,7 +2206,7 @@ export default function PortfolioMapShell({
       map.off("moveend", forceSync);
       map.off("zoomend", forceSync);
     };
-  }, [map, showMeasurements, setMeasurementDraft]);
+  }, [map, showMeasurements, setMeasurementDraft, isMobileCartography]);
 
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
     const draftPoints = options.measurementPoints || measurementDraft.points || [];
@@ -2514,7 +2553,7 @@ export default function PortfolioMapShell({
 
               if (showMeasurements) {
                 // Mobile : le toucher écran ne doit ni créer, ni déplacer, ni prévisualiser un point.
-                if (isMobileCartographyViewport()) return;
+                if (isMobileCartography) return;
 
                 if (!point) {
                   setMeasurementDraft((current) => (current?.finished ? current : { ...current, cursorPoint: null, snapPoint: null, snapKind: null }));

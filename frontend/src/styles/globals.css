@@ -2873,38 +2873,4 @@ html body .mapgeo-side-label.is-measure {
   }
 }
 
-/* === CARTO LEGEND FIX - parcelles et scroll === */
-html body .mapgeo-legend-panel {
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  max-height: min(62vh, 520px) !important;
-}
-
-html body .mapgeo-legend-scroll {
-  min-height: 0 !important;
-  flex: 1 1 auto !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  overscroll-behavior: contain !important;
-  -webkit-overflow-scrolling: touch !important;
-  scrollbar-width: thin !important;
-}
-
-html body .mapgeo-parcel-sublegend {
-  background: transparent !important;
-}
-
-@media (max-width: 767px) {
-  html body .mapgeo-legend-panel {
-    max-height: min(58dvh, 420px) !important;
-    overflow: hidden !important;
-  }
-
-  html body .mapgeo-legend-scroll {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding-right: 4px !important;
-  }
-}
 

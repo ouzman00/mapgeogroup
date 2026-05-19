@@ -1,4 +1,4 @@
-﻿import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react";
+import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getAvailableLegendItems } from "../parcelMapStyles";
 import mapLayerService from "../../../services/mapLayerService";
@@ -429,7 +429,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
   return (
     <div
-      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] max-h-[46%] overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/88 p-2.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[252px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
+      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] flex max-h-[min(520px,70vh)] min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/88 p-2.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[252px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
@@ -454,7 +454,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
         </button>
       ) : null}
 
-      <div className="mapgeo-legend-scroll mt-2 space-y-1 pr-1">
+      <div className="mapgeo-legend-scroll mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
         {legendLayers.length ? (
           legendLayers.map((layer) => <LegendToggleRow key={layer.id} layer={layer} features={features} onToggleLayer={onToggleLayer} />)
         ) : (
@@ -465,7 +465,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       </div>
 
       {totalCount ? (
-        <p className="mt-2 border-t border-white/10 pt-1.5 text-[10px] font-medium leading-4 text-white/40">
+        <p className="mt-2 shrink-0 border-t border-white/10 pt-1.5 text-[10px] font-medium leading-4 text-white/40">
           Couches visibles.
         </p>
       ) : null}

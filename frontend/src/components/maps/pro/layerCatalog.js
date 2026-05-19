@@ -225,7 +225,9 @@ export function buildLayerCatalog(sigLayers = []) {
         owner: "MAPGEO",
         licence: "Interne",
       },
-      legend: [{ label: "Parcelle", symbol: "polygon", color: "#123B5D", fillColor: "rgba(199,178,153,0.35)" }],
+      // Le parent "Parcelles" est un groupe logique : pas de couleur générique.
+      // Les sous-légendes colorées sont calculées dans LegendPanel via getAvailableLegendItems(features).
+      legend: [],
     },
   ];
 
