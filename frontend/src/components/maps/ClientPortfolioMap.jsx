@@ -11,9 +11,13 @@ import { lngLatToSenegalProjected } from "../../utils/parcelGeometry";
 function simplifyToleranceForZoom(zoom) {
   const numericZoom = Number(zoom);
   if (!Number.isFinite(numericZoom)) return 0;
-  if (numericZoom < 10) return 50;
-  if (numericZoom < 12) return 25;
-  if (numericZoom < 14) return 10;
+
+  // Parcellaire : privilégier la stabilité visuelle.
+  // Une simplification forte change la forme au zoom et donne l'impression
+  // que les parcelles se décollent du fond de carte.
+  if (numericZoom < 9) return 8;
+  if (numericZoom < 11) return 4;
+  if (numericZoom < 13) return 2;
   return 0;
 }
 

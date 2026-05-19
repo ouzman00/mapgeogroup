@@ -61,7 +61,7 @@ const EDIT_VERTEX_TOLERANCE_PX = 16;
 // Seuil de zoom pour basculer en mode "cluster de centroides".
 // En dessous, on remplace les polygones par des cercles colores par statut.
 // Au-dessus, on retombe en rendu polygone classique.
-const POLYGON_MIN_ZOOM = 12;
+const POLYGON_MIN_ZOOM = 9;
 const CENTROID_RADIUS_BASE = 6;
 
 const createParcelDraftVertexIcon = L.divIcon({
@@ -2480,6 +2480,7 @@ export default function PortfolioMapShell({
                   key="create-parcel-draft"
                   positions={createParcelDraftPreviewPoints}
                   pane={MAP_PANES.edit}
+                  smoothFactor={0}
                   pathOptions={{
                     color: "#FACC15",
                     fillColor: "#FACC15",
@@ -2571,6 +2572,7 @@ export default function PortfolioMapShell({
               key="create-parcel-preview"
               positions={createParcelPreviewRings}
               pane={MAP_PANES.edit}
+              smoothFactor={0}
               pathOptions={{
                 color: "#FACC15",
                 fillColor: "#FACC15",
@@ -2670,6 +2672,7 @@ export default function PortfolioMapShell({
                 key={getFeatureRenderKey(feature, "polygon")}
                 positions={feature.positions}
                 pane={MAP_PANES.parcels}
+                smoothFactor={0}
                 pathOptions={getParcelPathOptions(feature.parcel, renderOptions)}
                 eventHandlers={{
                   click: (event) => handleParcelLayerClick(feature, event),
