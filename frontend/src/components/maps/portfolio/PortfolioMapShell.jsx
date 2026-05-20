@@ -1065,11 +1065,20 @@ function escapeMapTooltipValue(value) {
     .replace(/'/g, "&#39;");
 }
 
+function isLatLngPair(value) {
+  return (
+    Array.isArray(value) &&
+    value.length >= 2 &&
+    Number.isFinite(Number(value[0])) &&
+    Number.isFinite(Number(value[1]))
+  );
+}
+
 function closeGeoJsonRing(points) {
   if (!Array.isArray(points) || points.length < 3) return null;
 
   const ring = points
-    .filter((point) => Array.isArray(point) && point.length >= 2)
+    .filter(isLatLngPair)
     .map((point) => [Number(point[1]), Number(point[0])])
     .filter((point) => Number.isFinite(point[0]) && Number.isFinite(point[1]));
 
@@ -1085,14 +1094,45 @@ function closeGeoJsonRing(points) {
   return ring;
 }
 
-function portfolioPolygonFeature(feature) {
-  if (!feature?.rings?.length) return null;
-
-  const coordinates = feature.rings
+function latLngPolygonToGeoJsonCoordinates(polygon) {
+  return (Array.isArray(polygon) ? polygon : [])
     .map(closeGeoJsonRing)
     .filter(Boolean);
+}
 
-  if (!coordinates.length) return null;
+function positionsToGeoJsonGeometry(positions) {
+  if (!Array.isArray(positions) || !positions.length) return null;
+
+  // Cas simple : un anneau [lat,lng][]
+  if (isLatLngPair(positions[0])) {
+    const coordinates = latLngPolygonToGeoJsonCoordinates([positions]);
+    return coordinates.length ? { type: "Polygon", coordinates } : null;
+  }
+
+  // Cas Polygon Leaflet : [ring, hole, ...]
+  if (isLatLngPair(positions[0]?.[0])) {
+    const coordinates = latLngPolygonToGeoJsonCoordinates(positions);
+    return coordinates.length ? { type: "Polygon", coordinates } : null;
+  }
+
+  // Cas MultiPolygon Leaflet : [[ring, hole, ...], [ring, ...]]
+  const polygons = positions
+    .map(latLngPolygonToGeoJsonCoordinates)
+    .filter((polygon) => polygon.length > 0);
+
+  if (!polygons.length) return null;
+
+  if (polygons.length === 1) {
+    return { type: "Polygon", coordinates: polygons[0] };
+  }
+
+  return { type: "MultiPolygon", coordinates: polygons };
+}
+
+function portfolioPolygonFeature(feature) {
+  const geometry = positionsToGeoJsonGeometry(feature?.positions) || positionsToGeoJsonGeometry(feature?.rings);
+
+  if (!geometry) return null;
 
   return {
     type: "Feature",
@@ -1101,10 +1141,7 @@ function portfolioPolygonFeature(feature) {
       __mapgeoFeatureId: String(feature.id),
       __mapgeoKind: "polygon",
     },
-    geometry: {
-      type: "Polygon",
-      coordinates,
-    },
+    geometry,
   };
 }
 
@@ -1239,6 +1276,7 @@ function PortfolioParcelSigLayer({
   const handlersRef = useRef({ onFeatureClick, onFeatureDoubleClick, onFeatureHover });
 
   const activeFeatureId = String(activeFeature?.id ?? "");
+  const editHiddenFeatureId = inlineEditOpen ? activeFeatureId : "";
   const zoomMode = mapZoom < POLYGON_MIN_ZOOM
     ? "centroids"
     : Math.floor(mapZoom) < PARCEL_HINT_POINT_MAX_ZOOM
@@ -1260,6 +1298,11 @@ function PortfolioParcelSigLayer({
   styleStateRef.current = { activeFeatureId, hoveredFeatureId };
   handlersRef.current = { onFeatureClick, onFeatureDoubleClick, onFeatureHover };
 
+  const featureCollectionKey = useMemo(
+    () => `${zoomMode}|${editHiddenFeatureId}|${renderableFeatures.map((feature) => getFeatureRenderKey(feature, "sig")).join(";")}`,
+    [editHiddenFeatureId, renderableFeatures, zoomMode],
+  );
+
   const featureCollection = useMemo(() => {
     const geoJsonFeatures = [];
 
@@ -1270,7 +1313,7 @@ function PortfolioParcelSigLayer({
       });
     } else {
       renderableFeatures.forEach((feature) => {
-        if (inlineEditOpen && String(feature.id) === activeFeatureId) return;
+        if (editHiddenFeatureId && String(feature.id) === editHiddenFeatureId) return;
 
         const polygonFeature = portfolioPolygonFeature(feature);
         if (polygonFeature) geoJsonFeatures.push(polygonFeature);
@@ -1290,7 +1333,7 @@ function PortfolioParcelSigLayer({
       type: "FeatureCollection",
       features: geoJsonFeatures,
     };
-  }, [activeFeatureId, inlineEditOpen, renderableFeatures, zoomMode]);
+  }, [featureCollectionKey]);
 
   useEffect(() => {
     if (!map || !featureCollection.features.length) return undefined;
@@ -2431,6 +2474,16 @@ export default function PortfolioMapShell({
     return withGeometry;
   }, [displayedFeatures, viewMode, activeFeature]);
 
+  const parcelSigFeatures = useMemo(() => {
+    const isSameFeature = (left, right) => String(left?.id) === String(right?.id);
+
+    if (!activeFeature) return displayedFeatures;
+
+    const alreadyPresent = displayedFeatures.some((feature) => isSameFeature(feature, activeFeature));
+
+    return alreadyPresent ? displayedFeatures : [activeFeature, ...displayedFeatures];
+  }, [activeFeature, displayedFeatures]);
+
   useEffect(() => {
     setMeasurementDraft((current) => ({ ...current, points: [], cursorPoint: null, snapPoint: null, snapKind: null, finished: false }));
   }, [activeFeature?.id]);
@@ -3049,11 +3102,7 @@ export default function PortfolioMapShell({
 
           {parcelLayerVisible ? (
             <PortfolioParcelSigLayer
-              features={
-                activeFeature && !displayedFeatures.some((feature) => String(feature.id) === String(activeFeature.id))
-                  ? [activeFeature, ...displayedFeatures]
-                  : displayedFeatures
-              }
+              features={parcelSigFeatures}
               activeFeature={activeFeature}
               hoveredFeatureId={hoveredFeatureId}
               inlineEditOpen={inlineEditOpen}
