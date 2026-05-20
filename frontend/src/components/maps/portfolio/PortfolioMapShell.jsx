@@ -1,6 +1,6 @@
 import L from "leaflet";
 import proj4 from "proj4";
-import { CircleMarker, MapContainer, Marker, Polygon, Polyline, ScaleControl, Tooltip, useMap } from "react-leaflet";
+import { CircleMarker, GeoJSON, MapContainer, Marker, Polygon, Polyline, ScaleControl, Tooltip, useMap } from "react-leaflet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
@@ -1053,6 +1053,138 @@ function getFeatureRenderKey(feature, prefix = "feature") {
     .join("|");
 
   return `${prefix}-${feature?.id || "parcel"}-${revision}-${ringSignature}`;
+}
+
+function escapeMapTooltipValue(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function portfolioFeatureToGeoJsonFeature(feature) {
+  if (!feature?.parcel || !feature?.rings?.length) return null;
+
+  const geoJsonFeature = parcelToGeoJsonFeature(feature.parcel);
+  if (!geoJsonFeature?.geometry) return null;
+
+  return {
+    ...geoJsonFeature,
+    id: feature.id ?? geoJsonFeature.id,
+    properties: {
+      ...(geoJsonFeature.properties || {}),
+      __mapgeoFeatureId: String(feature.id),
+    },
+  };
+}
+
+function portfolioFeaturesToGeoJsonFeatureCollection(features = []) {
+  return {
+    type: "FeatureCollection",
+    features: (Array.isArray(features) ? features : [])
+      .map(portfolioFeatureToGeoJsonFeature)
+      .filter(Boolean),
+  };
+}
+
+function PortfolioParcelGeoJsonLayer({
+  features,
+  activeFeature,
+  hoveredFeatureId,
+  inlineEditOpen,
+  onFeatureClick,
+  onFeatureDoubleClick,
+  onFeatureHover,
+}) {
+  const activeFeatureId = String(activeFeature?.id ?? "");
+
+  const renderableFeatures = useMemo(
+    () => (Array.isArray(features) ? features : []).filter((feature) => {
+      if (!feature?.rings?.length) return false;
+      if (inlineEditOpen && String(feature.id) === activeFeatureId) return false;
+      return true;
+    }),
+    [features, inlineEditOpen, activeFeatureId],
+  );
+
+  const featureLookup = useMemo(() => {
+    const lookup = new Map();
+    renderableFeatures.forEach((feature) => lookup.set(String(feature.id), feature));
+    return lookup;
+  }, [renderableFeatures]);
+
+  const data = useMemo(
+    () => portfolioFeaturesToGeoJsonFeatureCollection(renderableFeatures),
+    [renderableFeatures],
+  );
+
+  const layerKey = useMemo(
+    () => data.features
+      .map((feature) => {
+        const portfolioFeature = featureLookup.get(String(feature.properties?.__mapgeoFeatureId));
+        return getFeatureRenderKey(portfolioFeature, "geojson-polygon");
+      })
+      .join(";") || "empty",
+    [data, featureLookup],
+  );
+
+  const style = useCallback((geoJsonFeature) => {
+    const feature = featureLookup.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
+    if (!feature) return { opacity: 0, fillOpacity: 0, interactive: false };
+
+    const isActive = String(feature.id) === activeFeatureId;
+    const hovered = String(feature.id) === String(hoveredFeatureId);
+
+    return {
+      ...getParcelPathOptions(feature.parcel, {
+        active: isActive,
+        hovered,
+        hasDocuments: Array.isArray(feature.documents) && feature.documents.length > 0,
+        geometryError: Boolean(feature.geometryWarning),
+      }),
+      pane: MAP_PANES.parcels,
+    };
+  }, [activeFeatureId, featureLookup, hoveredFeatureId]);
+
+  const onEachFeature = useCallback((geoJsonFeature, layer) => {
+    const feature = featureLookup.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
+    if (!feature) return;
+
+    layer.options.interactive = true;
+    layer.options.bubblingMouseEvents = true;
+
+    layer.on({
+      click: (event) => onFeatureClick?.(feature, event),
+      dblclick: (event) => onFeatureDoubleClick?.(feature, event),
+      mouseover: () => onFeatureHover?.(feature.id),
+      mouseout: () => onFeatureHover?.(null),
+    });
+
+    layer.bindTooltip(
+      `<strong>${escapeMapTooltipValue(feature.parcel?.reference || "Parcelle")}</strong><span>${escapeMapTooltipValue(feature.statusLabel || "")}</span>`,
+      {
+        direction: "top",
+        offset: [0, -4],
+        opacity: 0.96,
+        className: "mapgeo-parcel-tooltip",
+      },
+    );
+  }, [featureLookup, onFeatureClick, onFeatureDoubleClick, onFeatureHover]);
+
+  if (!data.features.length) return null;
+
+  return (
+    <GeoJSON
+      key={`${layerKey}-${activeFeatureId}-${hoveredFeatureId || ""}-${inlineEditOpen ? "editing" : "view"}`}
+      data={data}
+      style={style}
+      onEachFeature={onEachFeature}
+      pane={MAP_PANES.parcels}
+      interactive
+    />
+  );
 }
 
 function getSnapKindLabel(kind) {
@@ -2667,28 +2799,27 @@ export default function PortfolioMapShell({
               );
             }
 
-            return (
-              <Polygon
-                key={getFeatureRenderKey(feature, "polygon")}
-                positions={feature.positions}
-                pane={MAP_PANES.parcels}
-                smoothFactor={0}
-                pathOptions={getParcelPathOptions(feature.parcel, renderOptions)}
-                eventHandlers={{
-                  click: (event) => handleParcelLayerClick(feature, event),
-                  dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
-                  mouseover: () => setHoveredFeatureId(feature.id),
-                  mouseout: () => setHoveredFeatureId(null),
-                }}
-              >
-                <Tooltip direction="top" offset={[0, -4]} opacity={0.96} className="mapgeo-parcel-tooltip">
-                  <strong>{feature.parcel.reference}</strong>
-                  <span>{feature.statusLabel}</span>
-                </Tooltip>
-              </Polygon>
-            );
+            // Les polygones de parcelles sont rendus plus bas dans une couche GeoJSON groupée,
+            // comme les couches PostGIS/WFS importées, pour améliorer l'ancrage visuel au fond de carte.
+            return null;
           });
           })() : null}
+
+          {parcelLayerVisible && mapZoom >= POLYGON_MIN_ZOOM ? (
+            <PortfolioParcelGeoJsonLayer
+              features={
+                activeFeature && !displayedFeatures.some((feature) => String(feature.id) === String(activeFeature.id))
+                  ? [activeFeature, ...displayedFeatures]
+                  : displayedFeatures
+              }
+              activeFeature={activeFeature}
+              hoveredFeatureId={hoveredFeatureId}
+              inlineEditOpen={inlineEditOpen}
+              onFeatureClick={handleParcelLayerClick}
+              onFeatureDoubleClick={handleParcelLayerDoubleClick}
+              onFeatureHover={setHoveredFeatureId}
+            />
+          ) : null}
 
           {parcelLayerVisible && Math.floor(mapZoom) >= POLYGON_MIN_ZOOM && Math.floor(mapZoom) < PARCEL_HINT_POINT_MAX_ZOOM
             ? displayedFeatures
