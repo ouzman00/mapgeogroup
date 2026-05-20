@@ -498,8 +498,6 @@ textarea:focus {
   animation: mapgeo-panel-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.leaflet-zoom-animated,
-.leaflet-interactive,
 .mapgeo-parcel-badge,
 .mapgeo-side-label,
 .mapgeo-vertex-icon {
@@ -531,8 +529,6 @@ textarea:focus {
   .mapgeo-action-button,
   .mapgeo-popover-enter,
   .mapgeo-panel-enter,
-  .leaflet-zoom-animated,
-  .leaflet-interactive,
   .mapgeo-parcel-badge,
   .mapgeo-side-label,
   .mapgeo-vertex-icon {
@@ -2403,27 +2399,20 @@ main > .mapgeo-carto-workspace,
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter:
-    drop-shadow(0 0 1.6px rgba(247, 245, 242, 0.86))
-    drop-shadow(0 0 3px rgba(7, 17, 27, 0.34));
+  filter: none !important;
+  transition: none !important;
 }
 
 .mapgeo-parcel-path.is-active {
-  filter:
-    drop-shadow(0 0 2px rgba(247, 245, 242, 0.96))
-    drop-shadow(0 0 5px rgba(18, 59, 93, 0.42));
+  filter: none !important;
 }
 
 .mapgeo-parcel-path.is-editing {
-  filter:
-    drop-shadow(0 0 2px rgba(219, 234, 254, 0.98))
-    drop-shadow(0 0 6px rgba(37, 99, 235, 0.34));
+  filter: none !important;
 }
 
 .mapgeo-parcel-path.has-geometry-error {
-  filter:
-    drop-shadow(0 0 2px rgba(254, 226, 226, 0.95))
-    drop-shadow(0 0 6px rgba(220, 38, 38, 0.35));
+  filter: none !important;
 }
 
 .mapgeo-parcel-badge-shell {
