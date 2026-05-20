@@ -34,10 +34,11 @@ function ParcelListCard({ feature, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl border p-4 text-left transition ${
+      aria-current={active ? "true" : undefined}
+      className={`w-full rounded-2xl border p-4 text-left transition-[background-color,border-color,box-shadow] duration-300 ease-out ${
         active
-          ? "border-mapgeo-sand/75 bg-mapgeo-sand/20 text-white shadow-soft"
-          : "border-white/10 bg-white/[0.045] text-white hover:border-white/20 hover:bg-white/[0.075]"
+          ? "border-mapgeo-sand/55 bg-mapgeo-sand/[0.13] text-white shadow-[0_14px_34px_rgba(199,178,153,0.12)]"
+          : "border-white/10 bg-white/[0.045] text-white shadow-none hover:border-white/20 hover:bg-white/[0.075] hover:shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
