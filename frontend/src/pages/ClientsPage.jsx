@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
-import { activateUser, createClient, deactivateUser, fetchAllClients, resetClientAccess, updateClient } from "../services/clientService";
+import { activateUser, createClient, deactivateUser, deleteClient, fetchAllClients, resetClientAccess, updateClient } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import {
   getPortalAccessActionLabel,
@@ -362,7 +362,7 @@ function SelectField({ label, icon: Icon, value, onChange, children }) {
 
 const CLIENTS_PAGE_SIZE = 20;
 
-function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onResetAccess }) {
+function ClientsTable({ clients, loading, actionSaving, onDeleteClient, onDelete, onResetAccess }) {
   const [page, setPage] = useState(1);
 
   // Reset page when clients list changes (filter applied)
@@ -463,10 +463,11 @@ function ClientsTable({ clients, loading, actionSaving, onEdit, onDelete, onRese
                       </Link>
                       <button
                         type="button"
-                        onClick={() => onEdit(client)}
-                        className="rounded-xl border border-mapgeo-line bg-white px-3 py-2 text-xs font-bold text-mapgeo-primary shadow-sm transition hover:bg-mapgeo-ivory"
+                        onClick={() => onDeleteClient(client)}
+                        disabled={actionSaving}
+                        className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        Modifier la fiche
+                        Supprimer le client
                       </button>
                       <button
                         type="button"
@@ -911,26 +912,6 @@ export default function ClientsPage() {
     setError("");
   }
 
-  function startEdit(client) {
-    setEditingClient(client);
-    setSuccess("");
-    setError("");
-    setForm({
-      ...emptyForm,
-      name: client.name || "",
-      code: client.code || "",
-      identity_number: client.metadata?.identity_number || client.identity_number || "",
-      metadata: client.metadata || {},
-      status: client.status || "active",
-      email: client.email || "",
-      phone: client.phone || "",
-      address: client.address || "",
-      first_name: client.contact_name || "",
-      type: client.metadata?.type || client.type || "entreprise",
-      portalAccess: isPortalAccessEnabled(client),
-    });
-  }
-
   function resetForm() {
     setEditingClient(null);
     setForm(emptyForm);
@@ -1035,6 +1016,18 @@ export default function ClientsPage() {
     });
   }
 
+  function requestDeleteClient(client) {
+    setError("");
+    setSuccess("");
+    setPendingAction({
+      type: "delete",
+      client,
+      title: "Supprimer ce client ?",
+      message: `Le client ${client.name} sera supprimé définitivement. Cette action est irréversible. Les clients contenant des parcelles ou des couches cartographiques ne peuvent pas être supprimés.`,
+      confirmLabel: "Supprimer le client",
+    });
+  }
+
   function requestResetAccess(client) {
     setError("");
     setSuccess("");
@@ -1076,6 +1069,13 @@ export default function ClientsPage() {
         if (editingClient?.id === client.id) resetForm();
       }
 
+      if (type === "delete") {
+        await deleteClient(client.id);
+        await loadClients();
+        setSuccess(`Client ${client.name} supprimé.`);
+        if (editingClient?.id === client.id) resetForm();
+      }
+
       if (type === "reset-access") {
         if (shouldDisableClient(client)) {
           await updateClient(client.id, { status: "active" });
@@ -1095,7 +1095,7 @@ export default function ClientsPage() {
 
       setPendingAction(null);
     } catch (err) {
-      setError(getErrorMessage(err, type === "reset-access" ? "Réinitialisation d’accès impossible." : "Désactivation impossible."));
+      setError(getErrorMessage(err, type === "reset-access" ? "Réinitialisation d’accès impossible." : type === "delete" ? "Suppression impossible." : "Désactivation impossible."));
     } finally {
       setActionSaving(false);
     }
@@ -1147,7 +1147,7 @@ export default function ClientsPage() {
             clients={filteredClients}
             loading={loading}
             actionSaving={actionSaving}
-            onEdit={startEdit}
+            onDeleteClient={requestDeleteClient}
             onDelete={requestDeactivateClient}
             onResetAccess={requestResetAccess}
           />
