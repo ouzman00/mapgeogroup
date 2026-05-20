@@ -62,7 +62,7 @@ const EDIT_VERTEX_TOLERANCE_PX = 16;
 // En dessous, on remplace les polygones par des cercles colores par statut.
 // Au-dessus, on retombe en rendu polygone classique.
 const POLYGON_MIN_ZOOM = 9;
-const PARCEL_HINT_POINT_MAX_ZOOM = 9;
+const PARCEL_HINT_POINT_MAX_ZOOM = 15;
 const CENTROID_RADIUS_BASE = 6;
 
 const createParcelDraftVertexIcon = L.divIcon({
@@ -2691,7 +2691,7 @@ export default function PortfolioMapShell({
           });
           })() : null}
 
-          {parcelLayerVisible && mapZoom >= POLYGON_MIN_ZOOM && mapZoom < PARCEL_HINT_POINT_MAX_ZOOM
+          {parcelLayerVisible && Math.floor(mapZoom) >= POLYGON_MIN_ZOOM && Math.floor(mapZoom) < PARCEL_HINT_POINT_MAX_ZOOM
             ? displayedFeatures
                 .filter((feature) => feature?.center && feature?.rings?.length)
                 .map((feature) => {
