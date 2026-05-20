@@ -57,9 +57,7 @@ function getMoveOptions(requestReason) {
   }
 
   return {
-    animate: true,
-    duration: 0.45,
-    easeLinearity: 0.35,
+    animate: false,
   };
 }
 
