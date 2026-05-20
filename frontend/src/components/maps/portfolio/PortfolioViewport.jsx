@@ -179,6 +179,7 @@ export function PortfolioViewport({
         map.fitBounds(bounds, {
           padding: mode === "portfolio" ? [48, 48] : [86, 86],
           maxZoom,
+          animate: false,
           ...moveOptions,
         });
 
