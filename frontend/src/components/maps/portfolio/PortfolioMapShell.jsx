@@ -1322,6 +1322,193 @@ function PortfolioParcelSigLayer({
   return null;
 }
 
+
+function geoJsonLineFromLatLngPoints(points, kind = "draft-line") {
+  const coordinates = (Array.isArray(points) ? points : [])
+    .filter((point) => Array.isArray(point) && point.length >= 2)
+    .map((point) => [Number(point[1]), Number(point[0])])
+    .filter((point) => Number.isFinite(point[0]) && Number.isFinite(point[1]));
+
+  if (coordinates.length < 2) return null;
+
+  return {
+    type: "Feature",
+    properties: { __mapgeoKind: kind },
+    geometry: {
+      type: "LineString",
+      coordinates,
+    },
+  };
+}
+
+function geoJsonPolygonFromLatLngRings(rings, kind = "draft-polygon") {
+  const coordinates = (Array.isArray(rings) ? rings : [])
+    .map(closeGeoJsonRing)
+    .filter(Boolean);
+
+  if (!coordinates.length) return null;
+
+  return {
+    type: "Feature",
+    properties: { __mapgeoKind: kind },
+    geometry: {
+      type: "Polygon",
+      coordinates,
+    },
+  };
+}
+
+function geoJsonPointFromLatLng(point, kind = "draft-cursor") {
+  if (!Array.isArray(point) || point.length < 2) return null;
+
+  const lat = Number(point[0]);
+  const lng = Number(point[1]);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  return {
+    type: "Feature",
+    properties: { __mapgeoKind: kind },
+    geometry: {
+      type: "Point",
+      coordinates: [lng, lat],
+    },
+  };
+}
+
+function PortfolioCreateParcelDraftSigLayer({ previewPoints, cursorPoint }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return undefined;
+
+    const features = [];
+
+    const lineFeature = geoJsonLineFromLatLngPoints(previewPoints, "draft-line");
+    if (lineFeature) features.push(lineFeature);
+
+    if (Array.isArray(previewPoints) && previewPoints.length >= 3) {
+      const polygonFeature = geoJsonPolygonFromLatLngRings([previewPoints], "draft-polygon");
+      if (polygonFeature) features.push(polygonFeature);
+    }
+
+    const cursorFeature = geoJsonPointFromLatLng(cursorPoint, "draft-cursor");
+    if (cursorFeature) features.push(cursorFeature);
+
+    if (!features.length) return undefined;
+
+    const layer = L.geoJSON(
+      {
+        type: "FeatureCollection",
+        features,
+      },
+      {
+        pane: MAP_PANES.edit,
+        interactive: false,
+
+        style: (feature) => {
+          const kind = feature?.properties?.__mapgeoKind;
+
+          if (kind === "draft-polygon") {
+            return {
+              color: "#FACC15",
+              fillColor: "#FACC15",
+              fillOpacity: 0.12,
+              opacity: 1,
+              weight: 3,
+              dashArray: "8 6",
+              lineJoin: "round",
+              lineCap: "round",
+              interactive: false,
+            };
+          }
+
+          return {
+            color: "#FACC15",
+            opacity: 1,
+            weight: 4,
+            dashArray: "8 6",
+            lineJoin: "round",
+            lineCap: "round",
+            interactive: false,
+          };
+        },
+
+        pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+          pane: MAP_PANES.edit,
+          radius: 4,
+          color: "#FACC15",
+          fillColor: "#07111b",
+          fillOpacity: 0.9,
+          opacity: 1,
+          weight: 2,
+          dashArray: "3 3",
+          interactive: false,
+        }),
+      },
+    );
+
+    layer.addTo(map);
+
+    return () => {
+      layer.remove();
+    };
+  }, [map, previewPoints, cursorPoint]);
+
+  return null;
+}
+
+function PortfolioCreateParcelPreviewSigLayer({ rings }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !Array.isArray(rings) || !rings.length) return undefined;
+
+    const polygonFeature = geoJsonPolygonFromLatLngRings(rings, "create-preview");
+    if (!polygonFeature) return undefined;
+
+    const layer = L.geoJSON(
+      {
+        type: "FeatureCollection",
+        features: [polygonFeature],
+      },
+      {
+        pane: MAP_PANES.edit,
+        interactive: false,
+
+        style: () => ({
+          color: "#FACC15",
+          fillColor: "#FACC15",
+          fillOpacity: 0.18,
+          opacity: 1,
+          weight: 4,
+          dashArray: "8 6",
+          lineJoin: "round",
+          lineCap: "round",
+          interactive: false,
+        }),
+
+        onEachFeature: (_, leafletLayer) => {
+          leafletLayer.bindTooltip("Aperçu nouvelle parcelle", {
+            direction: "top",
+            offset: [0, -6],
+            opacity: 0.96,
+            permanent: true,
+          });
+        },
+      },
+    );
+
+    layer.addTo(map);
+
+    return () => {
+      layer.remove();
+    };
+  }, [map, rings]);
+
+  return null;
+}
+
 function getSnapKindLabel(kind) {
   if (kind === "measurement") return "point de mesure";
   if (kind === "vertex") return "sommet";
@@ -2728,37 +2915,10 @@ export default function PortfolioMapShell({
 
           {createParcelDrawingActive ? (
             <>
-              {createParcelDraftPreviewPoints.length >= 2 ? (
-                <Polyline
-                  key="create-parcel-draft-line"
-                  positions={createParcelDraftPreviewPoints}
-                  pane={MAP_PANES.edit}
-                  pathOptions={{
-                    color: "#FACC15",
-                    opacity: 1,
-                    weight: 4,
-                    dashArray: "8 6",
-                  }}
-                  interactive={false}
-                />
-              ) : null}
-              {createParcelDraftPreviewPoints.length >= 3 ? (
-                <Polygon
-                  key="create-parcel-draft"
-                  positions={createParcelDraftPreviewPoints}
-                  pane={MAP_PANES.edit}
-                  smoothFactor={0}
-                  pathOptions={{
-                    color: "#FACC15",
-                    fillColor: "#FACC15",
-                    fillOpacity: 0.12,
-                    opacity: 1,
-                    weight: 3,
-                    dashArray: "8 6",
-                  }}
-                  interactive={false}
-                />
-              ) : null}
+              <PortfolioCreateParcelDraftSigLayer
+                previewPoints={createParcelDraftPreviewPoints}
+                cursorPoint={createParcelDraftCursorPoint}
+              />
               {createParcelDraftPoints.map((point, index) => (
                 <Marker
                   key={`create-parcel-draft-point-${index}`}
@@ -2790,23 +2950,7 @@ export default function PortfolioMapShell({
                   }}
                 />
               ))}
-              {createParcelDraftCursorPoint ? (
-                <CircleMarker
-                  key="create-parcel-draft-cursor"
-                  center={createParcelDraftCursorPoint}
-                  pane={MAP_PANES.edit}
-                  radius={4}
-                  pathOptions={{
-                    color: "#FACC15",
-                    fillColor: "#07111b",
-                    fillOpacity: 0.9,
-                    opacity: 1,
-                    weight: 2,
-                    dashArray: "3 3",
-                  }}
-                  interactive={false}
-                />
-              ) : null}
+
               {createParcelDraftOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
                 <Marker
                   key={`create-draft-side-${item.id}`}
@@ -2835,25 +2979,7 @@ export default function PortfolioMapShell({
           ) : null}
 
           {createParcelPreviewRings.length ? (
-            <Polygon
-              key="create-parcel-preview"
-              positions={createParcelPreviewRings}
-              pane={MAP_PANES.edit}
-              smoothFactor={0}
-              pathOptions={{
-                color: "#FACC15",
-                fillColor: "#FACC15",
-                fillOpacity: 0.18,
-                opacity: 1,
-                weight: 4,
-                dashArray: "8 6",
-              }}
-              interactive={false}
-            >
-              <Tooltip direction="top" offset={[0, -6]} opacity={0.96} permanent>
-                Aperçu nouvelle parcelle
-              </Tooltip>
-            </Polygon>
+            <PortfolioCreateParcelPreviewSigLayer rings={createParcelPreviewRings} />
           ) : null}
 
           {parcelLayerVisible ? (
