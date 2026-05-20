@@ -1130,6 +1130,98 @@ function portfolioPointFeature(feature, kind) {
   };
 }
 
+function getPortfolioParcelPointStyle(kind, feature, state) {
+  const isActive = String(feature?.id) === String(state.activeFeatureId);
+  const hovered = String(feature?.id) === String(state.hoveredFeatureId);
+
+  const symbology = getParcelSymbology(feature?.parcel, {
+    active: isActive,
+    hovered,
+    hasDocuments: Array.isArray(feature?.documents) && feature.documents.length > 0,
+    geometryError: Boolean(feature?.geometryWarning),
+  });
+
+  if (kind === "hint-centroid") {
+    return {
+      radius: isActive ? 6.2 : hovered ? 5.4 : 4.2,
+      options: {
+        pane: MAP_PANES.labels,
+        color: isActive
+          ? "rgba(255,255,255,0.72)"
+          : hovered
+            ? symbology.color || "#123B5D"
+            : "rgba(18,59,93,0.42)",
+        fillColor: symbology.fillColor || symbology.color || "#FACC15",
+        fillOpacity: isActive ? 0.96 : hovered ? 0.9 : 0.84,
+        opacity: isActive ? 1 : hovered ? 0.96 : 0.92,
+        weight: isActive ? 1.4 : hovered ? 1.7 : 1.1,
+        interactive: true,
+        bubblingMouseEvents: true,
+      },
+    };
+  }
+
+  if (isActive) {
+    return {
+      radius: 8,
+      options: {
+        pane: MAP_PANES.parcels,
+        color: symbology.color || "#123B5D",
+        fillColor: symbology.fillColor || symbology.color,
+        fillOpacity: 0.92,
+        opacity: 0.96,
+        weight: 2.2,
+        interactive: true,
+        bubblingMouseEvents: true,
+      },
+    };
+  }
+
+  return {
+    radius: hovered ? CENTROID_RADIUS_BASE + 3 : CENTROID_RADIUS_BASE,
+    options: {
+      pane: MAP_PANES.parcels,
+      color: symbology.color,
+      fillColor: symbology.fillColor,
+      fillOpacity: 0.85,
+      opacity: 1,
+      weight: 2,
+      interactive: true,
+      bubblingMouseEvents: true,
+    },
+  };
+}
+
+function applyPortfolioParcelLayerStyle(leafletLayer, geoJsonFeature, feature, state) {
+  const kind = geoJsonFeature?.properties?.__mapgeoKind;
+
+  if (kind === "polygon") {
+    if (!leafletLayer?.setStyle || !feature) return;
+
+    const isActive = String(feature.id) === String(state.activeFeatureId);
+    const hovered = String(feature.id) === String(state.hoveredFeatureId);
+
+    leafletLayer.setStyle(getParcelPathOptions(feature.parcel, {
+      active: isActive,
+      hovered,
+      hasDocuments: Array.isArray(feature.documents) && feature.documents.length > 0,
+      geometryError: Boolean(feature.geometryWarning),
+    }));
+
+    return;
+  }
+
+  if (!leafletLayer?.setStyle || !feature) return;
+
+  const pointStyle = getPortfolioParcelPointStyle(kind, feature, state);
+
+  if (typeof leafletLayer.setRadius === "function") {
+    leafletLayer.setRadius(pointStyle.radius);
+  }
+
+  leafletLayer.setStyle(pointStyle.options);
+}
+
 function PortfolioParcelSigLayer({
   features,
   activeFeature,
@@ -1141,29 +1233,39 @@ function PortfolioParcelSigLayer({
   onFeatureHover,
 }) {
   const map = useMap();
+  const layerRef = useRef(null);
+  const featureLookupRef = useRef(new Map());
+  const styleStateRef = useRef({ activeFeatureId: "", hoveredFeatureId: "" });
+  const handlersRef = useRef({ onFeatureClick, onFeatureDoubleClick, onFeatureHover });
+
   const activeFeatureId = String(activeFeature?.id ?? "");
+  const zoomMode = mapZoom < POLYGON_MIN_ZOOM
+    ? "centroids"
+    : Math.floor(mapZoom) < PARCEL_HINT_POINT_MAX_ZOOM
+      ? "polygons-and-hints"
+      : "polygons";
 
   const renderableFeatures = useMemo(
     () => (Array.isArray(features) ? features : []).filter((feature) => feature?.rings?.length || feature?.center),
     [features],
   );
 
-  useEffect(() => {
-    if (!map || !renderableFeatures.length) return undefined;
+  const featureLookup = useMemo(() => {
+    const lookup = new Map();
+    renderableFeatures.forEach((feature) => lookup.set(String(feature.id), feature));
+    return lookup;
+  }, [renderableFeatures]);
 
-    const featureLookup = new Map();
+  featureLookupRef.current = featureLookup;
+  styleStateRef.current = { activeFeatureId, hoveredFeatureId };
+  handlersRef.current = { onFeatureClick, onFeatureDoubleClick, onFeatureHover };
 
-    renderableFeatures.forEach((feature) => {
-      featureLookup.set(String(feature.id), feature);
-    });
-
+  const featureCollection = useMemo(() => {
     const geoJsonFeatures = [];
 
-    if (mapZoom < POLYGON_MIN_ZOOM) {
+    if (zoomMode === "centroids") {
       renderableFeatures.forEach((feature) => {
-        const isActive = String(feature.id) === activeFeatureId;
-        const pointFeature = portfolioPointFeature(feature, isActive ? "active-centroid" : "centroid");
-
+        const pointFeature = portfolioPointFeature(feature, "centroid");
         if (pointFeature) geoJsonFeatures.push(pointFeature);
       });
     } else {
@@ -1171,153 +1273,116 @@ function PortfolioParcelSigLayer({
         if (inlineEditOpen && String(feature.id) === activeFeatureId) return;
 
         const polygonFeature = portfolioPolygonFeature(feature);
-
         if (polygonFeature) geoJsonFeatures.push(polygonFeature);
       });
 
-      if (Math.floor(mapZoom) < PARCEL_HINT_POINT_MAX_ZOOM) {
+      if (zoomMode === "polygons-and-hints") {
         renderableFeatures.forEach((feature) => {
           if (!feature?.rings?.length) return;
 
           const pointFeature = portfolioPointFeature(feature, "hint-centroid");
-
           if (pointFeature) geoJsonFeatures.push(pointFeature);
         });
       }
     }
 
-    if (!geoJsonFeatures.length) return undefined;
+    return {
+      type: "FeatureCollection",
+      features: geoJsonFeatures,
+    };
+  }, [activeFeatureId, inlineEditOpen, renderableFeatures, zoomMode]);
 
-    const layer = L.geoJSON(
-      {
-        type: "FeatureCollection",
-        features: geoJsonFeatures,
+  useEffect(() => {
+    if (!map || !featureCollection.features.length) return undefined;
+
+    const layer = L.geoJSON(featureCollection, {
+      pane: MAP_PANES.parcels,
+
+      style: (geoJsonFeature) => {
+        const feature = featureLookupRef.current.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
+        const kind = geoJsonFeature?.properties?.__mapgeoKind;
+
+        if (kind !== "polygon" || !feature) return {};
+
+        const state = styleStateRef.current;
+        const isActive = String(feature.id) === String(state.activeFeatureId);
+        const hovered = String(feature.id) === String(state.hoveredFeatureId);
+
+        return getParcelPathOptions(feature.parcel, {
+          active: isActive,
+          hovered,
+          hasDocuments: Array.isArray(feature.documents) && feature.documents.length > 0,
+          geometryError: Boolean(feature.geometryWarning),
+        });
       },
-      {
-        pane: MAP_PANES.parcels,
 
-        style: (geoJsonFeature) => {
-          if (geoJsonFeature?.properties?.__mapgeoKind !== "polygon") return {};
+      pointToLayer: (geoJsonFeature, latlng) => {
+        const feature = featureLookupRef.current.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
+        const pointStyle = getPortfolioParcelPointStyle(
+          geoJsonFeature?.properties?.__mapgeoKind,
+          feature,
+          styleStateRef.current,
+        );
 
-          const feature = featureLookup.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
+        return L.circleMarker(latlng, pointStyle.options).setRadius(pointStyle.radius);
+      },
 
-          if (!feature) {
-            return { opacity: 0, fillOpacity: 0, interactive: false };
-          }
+      onEachFeature: (geoJsonFeature, leafletLayer) => {
+        const featureId = String(geoJsonFeature?.properties?.__mapgeoFeatureId);
+        const kind = geoJsonFeature?.properties?.__mapgeoKind;
 
-          const isActive = String(feature.id) === activeFeatureId;
-          const hovered = String(feature.id) === String(hoveredFeatureId);
+        leafletLayer.on({
+          click: (event) => {
+            const feature = featureLookupRef.current.get(featureId);
+            if (feature) handlersRef.current.onFeatureClick?.(feature, event, feature.center);
+          },
+          dblclick: (event) => {
+            const feature = featureLookupRef.current.get(featureId);
+            if (feature) handlersRef.current.onFeatureDoubleClick?.(feature, event);
+          },
+          mouseover: () => {
+            const feature = featureLookupRef.current.get(featureId);
+            if (feature) handlersRef.current.onFeatureHover?.(feature.id);
+          },
+          mouseout: () => handlersRef.current.onFeatureHover?.(null),
+        });
 
-          return getParcelPathOptions(feature.parcel, {
-            active: isActive,
-            hovered,
-            hasDocuments: Array.isArray(feature.documents) && feature.documents.length > 0,
-            geometryError: Boolean(feature.geometryWarning),
-          });
-        },
-
-        pointToLayer: (geoJsonFeature, latlng) => {
-          const kind = geoJsonFeature?.properties?.__mapgeoKind;
-          const feature = featureLookup.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
-
-          const isActive = String(feature?.id) === activeFeatureId;
-          const hovered = String(feature?.id) === String(hoveredFeatureId);
-
-          const symbology = getParcelSymbology(feature?.parcel, {
-            active: isActive,
-            hovered,
-            hasDocuments: Array.isArray(feature?.documents) && feature.documents.length > 0,
-            geometryError: Boolean(feature?.geometryWarning),
-          });
-
-          if (kind === "hint-centroid") {
-            return L.circleMarker(latlng, {
-              pane: MAP_PANES.labels,
-              radius: isActive ? 6.2 : hovered ? 5.4 : 4.2,
-              color: isActive
-                ? "rgba(255,255,255,0.72)"
-                : hovered
-                  ? symbology.color || "#123B5D"
-                  : "rgba(18,59,93,0.42)",
-              fillColor: symbology.fillColor || symbology.color || "#FACC15",
-              fillOpacity: isActive ? 0.96 : hovered ? 0.9 : 0.84,
-              opacity: isActive ? 1 : hovered ? 0.96 : 0.92,
-              weight: isActive ? 1.4 : hovered ? 1.7 : 1.1,
-              interactive: true,
-              bubblingMouseEvents: true,
-            });
-          }
-
-          if (kind === "active-centroid") {
-            return L.circleMarker(latlng, {
-              pane: MAP_PANES.parcels,
-              radius: 8,
-              color: symbology.color || "#123B5D",
-              fillColor: symbology.fillColor || symbology.color,
-              fillOpacity: 0.92,
+        if (kind !== "hint-centroid") {
+          const feature = featureLookupRef.current.get(featureId);
+          leafletLayer.bindTooltip(
+            `<strong>${escapeMapTooltipValue(feature?.parcel?.reference || "Parcelle")}</strong><span>${escapeMapTooltipValue(feature?.statusLabel || "")}</span>`,
+            {
+              direction: "top",
+              offset: [0, -4],
               opacity: 0.96,
-              weight: 2.2,
-              interactive: true,
-              bubblingMouseEvents: true,
-            });
-          }
-
-          return L.circleMarker(latlng, {
-            pane: MAP_PANES.parcels,
-            radius: hovered ? CENTROID_RADIUS_BASE + 3 : CENTROID_RADIUS_BASE,
-            color: symbology.color,
-            fillColor: symbology.fillColor,
-            fillOpacity: 0.85,
-            opacity: 1,
-            weight: 2,
-            interactive: true,
-            bubblingMouseEvents: true,
-          });
-        },
-
-        onEachFeature: (geoJsonFeature, leafletLayer) => {
-          const feature = featureLookup.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
-
-          if (!feature) return;
-
-          leafletLayer.on({
-            click: (event) => onFeatureClick?.(feature, event, feature.center),
-            dblclick: (event) => onFeatureDoubleClick?.(feature, event),
-            mouseover: () => onFeatureHover?.(feature.id),
-            mouseout: () => onFeatureHover?.(null),
-          });
-
-          if (geoJsonFeature?.properties?.__mapgeoKind !== "hint-centroid") {
-            leafletLayer.bindTooltip(
-              `<strong>${escapeMapTooltipValue(feature.parcel?.reference || "Parcelle")}</strong><span>${escapeMapTooltipValue(feature.statusLabel || "")}</span>`,
-              {
-                direction: "top",
-                offset: [0, -4],
-                opacity: 0.96,
-                className: "mapgeo-parcel-tooltip",
-              },
-            );
-          }
-        },
+              className: "mapgeo-parcel-tooltip",
+            },
+          );
+        }
       },
-    );
+    });
 
+    layerRef.current = layer;
     layer.addTo(map);
 
     return () => {
+      layerRef.current = null;
       layer.remove();
     };
-  }, [
-    map,
-    renderableFeatures,
-    activeFeatureId,
-    hoveredFeatureId,
-    inlineEditOpen,
-    mapZoom,
-    onFeatureClick,
-    onFeatureDoubleClick,
-    onFeatureHover,
-  ]);
+  }, [featureCollection, map]);
+
+  useEffect(() => {
+    const layer = layerRef.current;
+    if (!layer) return;
+
+    const state = styleStateRef.current;
+
+    layer.eachLayer((leafletLayer) => {
+      const geoJsonFeature = leafletLayer.feature;
+      const feature = featureLookupRef.current.get(String(geoJsonFeature?.properties?.__mapgeoFeatureId));
+      applyPortfolioParcelLayerStyle(leafletLayer, geoJsonFeature, feature, state);
+    });
+  }, [activeFeatureId, hoveredFeatureId]);
 
   return null;
 }
