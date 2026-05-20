@@ -2716,8 +2716,8 @@ export default function PortfolioMapShell({
                             ? symbology.color || "#123B5D"
                             : "rgba(18,59,93,0.42)",
                         fillColor: symbology.fillColor || symbology.color || "#FACC15",
-                        fillOpacity: isActive ? 0.88 : hovered ? 0.78 : 0.68,
-                        opacity: isActive ? 0.94 : hovered ? 0.84 : 0.76,
+                        fillOpacity: isActive ? 0.96 : hovered ? 0.9 : 0.84,
+                        opacity: isActive ? 1 : hovered ? 0.96 : 0.92,
                         weight: isActive ? 1.4 : hovered ? 1.7 : 1.1,
                       }}
                       eventHandlers={{
