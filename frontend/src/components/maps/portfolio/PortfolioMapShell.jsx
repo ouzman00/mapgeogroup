@@ -2712,14 +2712,14 @@ export default function PortfolioMapShell({
                       radius={isActive ? 7 : hovered ? 6 : 4.5}
                       pathOptions={{
                         color: isActive
-                          ? "rgba(255,255,255,0.62)"
+                          ? "rgba(255,255,255,0.7)"
                           : hovered
-                            ? symbology.color || "#123B5D"
-                            : "rgba(18,59,93,0.36)",
+                            ? "#F7F5F2"
+                            : symbology.color || "#123B5D",
                         fillColor: symbology.fillColor || symbology.color || "#FACC15",
-                        fillOpacity: isActive ? 0.78 : hovered ? 0.7 : 0.54,
-                        opacity: isActive ? 0.86 : hovered ? 0.76 : 0.56,
-                        weight: isActive ? 1.8 : hovered ? 1.5 : 1,
+                        fillOpacity: isActive ? 0.92 : hovered ? 0.86 : 0.82,
+                        opacity: isActive ? 0.94 : 0.95,
+                        weight: isActive ? 2.1 : hovered ? 2 : 2,
                       }}
                       eventHandlers={{
                         click: (event) => handleParcelLayerClick(feature, event, feature.center),
