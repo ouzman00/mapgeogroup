@@ -2709,17 +2709,17 @@ export default function PortfolioMapShell({
                       key={`parcel-centroid-hint-${feature.id}`}
                       center={feature.center}
                       pane={MAP_PANES.labels}
-                      radius={isActive ? 7 : hovered ? 6 : 4.5}
+                      radius={isActive ? 5.6 : hovered ? 5 : 3.8}
                       pathOptions={{
                         color: isActive
-                          ? "rgba(255,255,255,0.7)"
+                          ? "rgba(18,59,93,0.78)"
                           : hovered
-                            ? "#F7F5F2"
-                            : symbology.color || "#123B5D",
+                            ? symbology.color || "#123B5D"
+                            : "rgba(18,59,93,0.38)",
                         fillColor: symbology.fillColor || symbology.color || "#FACC15",
-                        fillOpacity: isActive ? 0.92 : hovered ? 0.86 : 0.82,
-                        opacity: isActive ? 0.94 : 0.95,
-                        weight: isActive ? 2.1 : hovered ? 2 : 2,
+                        fillOpacity: isActive ? 0.78 : hovered ? 0.68 : 0.48,
+                        opacity: isActive ? 0.86 : hovered ? 0.72 : 0.5,
+                        weight: isActive ? 1.6 : hovered ? 1.3 : 0.9,
                       }}
                       eventHandlers={{
                         click: (event) => handleParcelLayerClick(feature, event, feature.center),
