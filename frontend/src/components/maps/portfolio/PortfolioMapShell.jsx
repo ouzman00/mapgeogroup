@@ -62,7 +62,7 @@ const EDIT_VERTEX_TOLERANCE_PX = 16;
 // En dessous, on remplace les polygones par des cercles colores par statut.
 // Au-dessus, on retombe en rendu polygone classique.
 const POLYGON_MIN_ZOOM = 9;
-const PARCEL_HINT_POINT_MAX_ZOOM = 18;
+const PARCEL_HINT_POINT_MAX_ZOOM = 15;
 const CENTROID_RADIUS_BASE = 6;
 
 const createParcelDraftVertexIcon = L.divIcon({
@@ -2709,17 +2709,17 @@ export default function PortfolioMapShell({
                       key={`parcel-centroid-hint-${feature.id}`}
                       center={feature.center}
                       pane={MAP_PANES.labels}
-                      radius={isActive ? 6.2 : hovered ? 5.4 : 4.2}
+                      radius={isActive ? 5.2 : hovered ? 4.6 : 3.6}
                       pathOptions={{
                         color: isActive
-                          ? "rgba(255,255,255,0.72)"
+                          ? "rgba(18,59,93,0.72)"
                           : hovered
                             ? symbology.color || "#123B5D"
-                            : "rgba(18,59,93,0.45)",
+                            : "rgba(18,59,93,0.38)",
                         fillColor: symbology.fillColor || symbology.color || "#FACC15",
-                        fillOpacity: isActive ? 0.88 : hovered ? 0.78 : 0.68,
-                        opacity: isActive ? 0.94 : hovered ? 0.84 : 0.76,
-                        weight: isActive ? 2 : hovered ? 1.7 : 1.25,
+                        fillOpacity: isActive ? 0.78 : hovered ? 0.68 : 0.54,
+                        opacity: isActive ? 0.86 : hovered ? 0.76 : 0.58,
+                        weight: isActive ? 1.6 : hovered ? 1.3 : 1,
                       }}
                       eventHandlers={{
                         click: (event) => handleParcelLayerClick(feature, event, feature.center),
