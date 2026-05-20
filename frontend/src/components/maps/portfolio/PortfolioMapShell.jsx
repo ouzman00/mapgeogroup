@@ -2614,8 +2614,8 @@ export default function PortfolioMapShell({
               geometryError: Boolean(feature.geometryWarning),
             };
 
-            // Parcelle active a TRES bas zoom : marqueur distinctif (anneau + halo)
-            // pour qu elle reste reperable meme depuis une vue regionale.
+            // Parcelle active à très bas zoom : point distinctif discret,
+            // sans anneau blanc agressif sur le fond satellite.
             if (mapZoom < POLYGON_MIN_ZOOM && isActive && feature.center) {
               const symbology = getParcelSymbology(feature.parcel, renderOptions);
               return (
@@ -2623,13 +2623,13 @@ export default function PortfolioMapShell({
                   key={getFeatureRenderKey(feature, "active-marker")}
                   center={feature.center}
                   pane={MAP_PANES.parcels}
-                  radius={9}
+                  radius={8}
                   pathOptions={{
-                    color: "#FFFFFF",
+                    color: symbology.color || "#123B5D",
                     fillColor: symbology.fillColor || symbology.color,
-                    fillOpacity: 1,
-                    opacity: 1,
-                    weight: 4,
+                    fillOpacity: 0.92,
+                    opacity: 0.96,
+                    weight: 2.2,
                   }}
                   eventHandlers={{
                     click: (event) => handleParcelLayerClick(feature, event, feature.center),
