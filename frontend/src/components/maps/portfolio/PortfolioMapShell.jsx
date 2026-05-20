@@ -2711,11 +2711,11 @@ export default function PortfolioMapShell({
                       pane={MAP_PANES.labels}
                       radius={isActive ? 7 : hovered ? 6 : 4.5}
                       pathOptions={{
-                        color: "#FFFFFF",
+                        color: isActive ? "#FFFFFF" : (hovered ? "#F7F5F2" : symbology.color || "#123B5D"),
                         fillColor: symbology.fillColor || symbology.color || "#FACC15",
-                        fillOpacity: isActive ? 0.95 : 0.82,
-                        opacity: 0.95,
-                        weight: isActive ? 3 : 2,
+                        fillOpacity: isActive ? 0.95 : hovered ? 0.86 : 0.72,
+                        opacity: isActive ? 1 : 0.82,
+                        weight: isActive ? 3 : hovered ? 2 : 1.4,
                       }}
                       eventHandlers={{
                         click: (event) => handleParcelLayerClick(feature, event, feature.center),
