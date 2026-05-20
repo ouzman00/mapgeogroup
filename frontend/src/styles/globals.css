@@ -2988,12 +2988,8 @@ html body .mapgeo-side-label.is-measure {
   opacity: 0.72;
 }
 
-/* Zoom carte sans effet visuel : pas de fade ni transition sur les tuiles Leaflet. */
-.mapgeo-portfolio-shell .leaflet-tile,
-.mapgeo-portfolio-shell .leaflet-zoom-animated {
-  transition: none !important;
-}
-
+/* Zoom cartographique plus doux : on garde l'animation de zoom Leaflet,
+   mais on évite le fondu des tuiles qui donne un effet de clignotement. */
 .mapgeo-portfolio-shell .leaflet-fade-anim .leaflet-tile {
   transition: none !important;
   opacity: 1 !important;
