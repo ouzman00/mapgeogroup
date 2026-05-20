@@ -379,8 +379,8 @@ function getSideMarkerPixelOptions(map, isMobileOverride = null) {
     // Offset volontairement identique desktop/mobile : les dimensions restent
     // à distance constante de la géométrie, seuls les seuils de lisibilité changent.
     offsetPixels: 20,
-    minSegmentPixels: mobile ? 44 : 34,
-    minZoom: mobile ? 17 : 15,
+    minSegmentPixels: mobile ? 22 : 18,
+    minZoom: mobile ? 14 : 13,
   };
 }
 
