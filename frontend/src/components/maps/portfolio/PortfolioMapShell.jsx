@@ -62,7 +62,6 @@ const EDIT_VERTEX_TOLERANCE_PX = 16;
 // En dessous, on remplace les polygones par des cercles colores par statut.
 // Au-dessus, on retombe en rendu polygone classique.
 const POLYGON_MIN_ZOOM = 9;
-const PARCEL_HINT_POINT_MAX_ZOOM = 12;
 const CENTROID_RADIUS_BASE = 6;
 
 const createParcelDraftVertexIcon = L.divIcon({
@@ -2691,48 +2690,7 @@ export default function PortfolioMapShell({
           });
           })() : null}
 
-          {parcelLayerVisible && mapZoom >= POLYGON_MIN_ZOOM && mapZoom < PARCEL_HINT_POINT_MAX_ZOOM
-            ? displayedFeatures
-                .filter((feature) => feature?.center && feature?.rings?.length)
-                .map((feature) => {
-                  const isActive = String(feature.id) === String(activeFeature?.id);
-                  const hovered = String(feature.id) === String(hoveredFeatureId);
-                  const symbology = getParcelSymbology(feature.parcel, {
-                    active: isActive,
-                    hovered,
-                    hasDocuments: Array.isArray(feature.documents) && feature.documents.length > 0,
-                    geometryError: Boolean(feature.geometryWarning),
-                  });
-
-                  return (
-                    <CircleMarker
-                      key={`parcel-centroid-hint-${feature.id}`}
-                      center={feature.center}
-                      pane={MAP_PANES.labels}
-                      radius={isActive ? 5.2 : hovered ? 4.6 : 3.6}
-                      pathOptions={{
-                        color: isActive
-                          ? "rgba(18,59,93,0.72)"
-                          : hovered
-                            ? symbology.color || "#123B5D"
-                            : "rgba(18,59,93,0.38)",
-                        fillColor: symbology.fillColor || symbology.color || "#FACC15",
-                        fillOpacity: isActive ? 0.78 : hovered ? 0.68 : 0.54,
-                        opacity: isActive ? 0.86 : hovered ? 0.76 : 0.58,
-                        weight: isActive ? 1.6 : hovered ? 1.3 : 1,
-                      }}
-                      eventHandlers={{
-                        click: (event) => handleParcelLayerClick(feature, event, feature.center),
-                        dblclick: (event) => handleParcelLayerDoubleClick(feature, event),
-                        mouseover: () => setHoveredFeatureId(feature.id),
-                        mouseout: () => setHoveredFeatureId(null),
-                      }}
-                    />
-                  );
-                })
-            : null}
-
-{labelsAreVisible
+          {labelsAreVisible
             ? labelFeatures.map((feature) => (
                 <Marker
                   key={getFeatureRenderKey(feature, "label")}
