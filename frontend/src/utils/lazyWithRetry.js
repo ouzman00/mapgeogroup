@@ -69,6 +69,11 @@ export function installChunkLoadGuards() {
 
   window.__MAPGEO_CHUNK_GUARDS__ = true;
 
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault?.();
+    reloadForFreshBuild("vite-preload-error");
+  });
+
   window.addEventListener(
     "error",
     (event) => {
