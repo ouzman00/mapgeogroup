@@ -114,9 +114,17 @@ const parcelService = {
     return normalizeGeoJsonParcelListResponse(response.data, normalizeListResponse);
   },
 
-  async getParcelById(id, params = {}) {
+  async getParcelById(id, options = {}) {
     if (!id) throw new Error("Identifiant de parcelle manquant.");
-    const response = await getDeduped(`/parcels/${id}/`, { params });
+
+    const hasRequestOptions =
+      Object.prototype.hasOwnProperty.call(options, "params") ||
+      Object.prototype.hasOwnProperty.call(options, "signal");
+
+    const params = hasRequestOptions ? options.params || {} : options;
+    const signal = hasRequestOptions ? options.signal : undefined;
+
+    const response = await getDeduped(`/parcels/${id}/`, { params, signal });
     return normalizeParcelFromGeoJson(response.data);
   },
 
