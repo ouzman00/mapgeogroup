@@ -213,16 +213,9 @@ function layerStatus(layer = {}) {
 
   if (!visible) return { tone: "muted", label: "Masquée sur cette carte — cliquez pour réactiver" };
   if (layer?.error) return { tone: "error", label: layer.error };
-  if (layer?.loading) return { tone: "loading", label: "Préparation…" };
-  if (layer?.zoomVisible === false) return { tone: "warning", label: "Active, mais hors niveau de zoom" };
 
-  if (Number.isFinite(Number(layer?.featureCount))) {
-    return {
-      tone: "ok",
-      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargé${Number(layer.featureCount) > 1 ? "s" : ""}`,
-    };
-  }
-
+  // La légende décrit l'état fonctionnel de la couche.
+  // Elle ne doit pas suivre les chargements de viewport déclenchés par zoom, dézoom ou déplacement.
   return { tone: "ok", label: "Active" };
 }
 
