@@ -152,7 +152,6 @@ export default function FloatingMapToolbar({
             <div className={`mapgeo-inline-tools ${toolsOpen ? "is-visible" : "is-hidden"} flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden pr-1 sm:max-w-[calc(100vw-10rem)] md:max-w-[calc(100vw-13rem)]`} aria-label="Outils de la carte">
               <ToolbarButton active={showLabels} icon={Tags} label="Libellés" forceLabel className={compactToolButtonClass} title="Libellés" onClick={() => { setActiveCommand("tools"); setShowLabels?.((current) => !current); }} />
               <ToolbarButton active={activeCommand === "base"} icon={MapIcon} label="Fond de carte" forceLabel className={compactToolButtonClass} title="Fond de carte" onClick={() => {
-                    setShowLegend(false);
                     setShowMeasurements(false);
                     setShowVertices(false);
                     setActiveCommand((current) => (current === "base" ? "tools" : "base"));
@@ -207,7 +206,7 @@ export default function FloatingMapToolbar({
                   onStopEdit?.();
                   setShowMeasurements(false);
                   setShowVertices(false);
-                  setActiveCommand((current) => (current === "export" ? null : "export"));
+                  setActiveCommand((current) => (current === "export" ? "tools" : "export"));
                 }} />
             </div>
           </>
