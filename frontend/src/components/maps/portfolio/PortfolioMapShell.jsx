@@ -2125,13 +2125,14 @@ export default function PortfolioMapShell({
 
   if (showMeasurements) {
     clearPendingMeasurementClick();
+    finishMeasurementDraft();
     return;
   }
 
   // Double-clic = sélection uniquement.
   // L'édition géométrique doit s'ouvrir uniquement via le bouton dédié.
   onFeatureSelection(feature);
-}, [clearPendingMeasurementClick, inlineEditOpen, onFeatureSelection, showMeasurements]);
+}, [clearPendingMeasurementClick, finishMeasurementDraft, inlineEditOpen, onFeatureSelection, showMeasurements]);
 
 
     useEffect(() => {
