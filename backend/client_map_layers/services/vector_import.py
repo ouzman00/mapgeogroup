@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from django.contrib.gis.geos import GEOSGeometry, Polygon
+from django.contrib.gis.db.models.functions import AsGeoJSON
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
@@ -77,24 +78,30 @@ def build_db_geojson(layer: ClientMapLayer, *, bbox: tuple[float, float, float, 
     globaux coûteux : count complet, résumé attributaire et types géométriques
     sont déjà stockés dans layer.metadata au moment de l'import.
     """
-    queryset = layer.features.all().only("id", "source_feature_id", "geometry", "properties").order_by("id")
+    queryset = layer.features.all().order_by("id")
     if bbox:
         west, south, east, north = bbox
         bbox_geom = Polygon.from_bbox((west, south, east, north))
         bbox_geom.srid = 4326
         queryset = queryset.filter(geometry__intersects=bbox_geom)
 
-    limit = max(0, min(int(limit or 2500), 20000))
-    rows = list(queryset[:limit])
+    limit = max(0, min(int(limit or 2500), 3000))
+    rows = list(
+        queryset
+        .annotate(geometry_json=AsGeoJSON("geometry"))
+        .values("id", "source_feature_id", "geometry_json", "properties")[:limit]
+    )
     features: list[dict[str, Any]] = []
     positions: list[list[float]] = []
 
     for row in rows:
-        geometry = json.loads(row.geometry.geojson)
-        properties = row.properties if isinstance(row.properties, dict) else {}
+        geometry = json.loads(row.get("geometry_json") or "null")
+        if not geometry:
+            continue
+        properties = row.get("properties") if isinstance(row.get("properties"), dict) else {}
         feature: dict[str, Any] = {
             "type": "Feature",
-            "id": row.source_feature_id or row.id,
+            "id": row.get("source_feature_id") or row.get("id"),
             "geometry": geometry,
             "properties": properties,
         }

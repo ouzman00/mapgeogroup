@@ -558,7 +558,7 @@ class ClientMapLayerGeoJsonView(APIView):
             raise Http404(display_message_for(layer) or "Couche vectorielle non disponible")
 
         bbox = parse_wgs84_bbox(request.query_params.get("bbox"))
-        limit = parse_positive_int(request.query_params.get("limit"), default=2500, maximum=20000)
+        limit = parse_positive_int(request.query_params.get("limit"), default=500, maximum=3000)
         try:
             if is_database_layer(layer):
                 normalized = build_db_geojson(layer, bbox=bbox, limit=limit)
