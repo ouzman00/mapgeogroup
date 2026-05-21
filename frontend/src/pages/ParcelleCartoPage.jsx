@@ -255,6 +255,7 @@ export default function ParcelleCartoPage() {
   const loadPortfolioRequestIdRef = useRef(0);
   const loadPortfolioAbortRef = useRef(null);
   const selectionRequestIdRef = useRef(0);
+  const selectionAbortRef = useRef(null);
 
   const [activeParcel, setActiveParcel] = useState(null);
   const [portfolioParcels, setPortfolioParcels] = useState([]);
@@ -433,7 +434,7 @@ export default function ParcelleCartoPage() {
           return;
         }
 
-        const detail = await parcelService.getParcelById(id);
+        const detail = await parcelService.getParcelById(id, { signal: controller.signal });
         if (!isLatestRequest()) return;
 
         parcelDetailsCacheRef.current.set(String(detail.id), detail);
@@ -494,6 +495,13 @@ export default function ParcelleCartoPage() {
     const requestId = selectionRequestIdRef.current + 1;
     selectionRequestIdRef.current = requestId;
 
+    if (selectionAbortRef.current) {
+      selectionAbortRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    selectionAbortRef.current = controller;
+
     const optimisticParcel = portfolioParcels.find((item) => String(item.id) === String(parcel.id)) || parcel;
     const optimisticId = String(optimisticParcel.id);
 
@@ -504,10 +512,10 @@ export default function ParcelleCartoPage() {
     navigate(`/parcelles/${optimisticId}/carto`, { replace: true, state: { returnTo } });
 
     try {
-      const detail = await parcelService.getParcelById(optimisticId);
+      const detail = await parcelService.getParcelById(optimisticId, { signal: controller.signal });
 
       // Si une autre parcelle a été sélectionnée entre-temps, on ignore cette ancienne réponse.
-      if (selectionRequestIdRef.current !== requestId) return;
+      if (selectionRequestIdRef.current !== requestId || controller.signal.aborted) return;
 
       parcelDetailsCacheRef.current.set(String(detail.id), detail);
       setActiveParcel(detail);
@@ -533,7 +541,15 @@ export default function ParcelleCartoPage() {
         return Array.from(mergedById.values());
       });
     } catch (error) {
-      if (selectionRequestIdRef.current !== requestId) return;
+      if (
+        selectionRequestIdRef.current !== requestId ||
+        controller.signal.aborted ||
+        error?.code === "ERR_CANCELED" ||
+        error?.name === "CanceledError" ||
+        error?.name === "AbortError"
+      ) {
+        return;
+      }
 
       if (isNotFoundError(error)) {
         setActiveParcel(null);
@@ -541,6 +557,10 @@ export default function ParcelleCartoPage() {
         navigate("/parcelles/carto", { replace: true, state: { returnTo } });
       } else {
         setFetchError(getErrorMessage(error, "Impossible de charger cette parcelle."));
+      }
+    } finally {
+      if (selectionAbortRef.current === controller) {
+        selectionAbortRef.current = null;
       }
     }
   };
