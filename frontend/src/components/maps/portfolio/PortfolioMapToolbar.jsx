@@ -142,10 +142,6 @@ export default function FloatingMapToolbar({
     <div {...overlayEventProps} className={`mapgeo-toolbar-container ${toolbarStateClass} mapgeo-export-hidden absolute left-3 right-3 top-3 z-[970] max-w-[calc(100%-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:max-w-[calc(100%-2rem)]`}>
       <div className={`mapgeo-toolbar-shell ${toolbarStateClass} flex w-full max-w-full items-center gap-1 overflow-hidden rounded-[18px] border border-white/10 bg-[#07111b]/70 p-1.5 text-white shadow-[0_20px_64px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:w-fit sm:min-w-0`}>
         <ToolbarButton active={showLegend} icon={Layers3} label="Légende" forceLabel className={commonButtonClass} onClick={() => {
-            setActiveCommand("tools");
-            onStopEdit?.();
-            setShowMeasurements(false);
-            setShowVertices(false);
             setShowLegend((current) => !current);
           }} />
         <ToolbarArrowButton open={toolsOpen} onClick={toggleTools} />
@@ -186,7 +182,6 @@ export default function FloatingMapToolbar({
               ) : null}
               <ToolbarButton active={showMeasurements} icon={Ruler} label="Mesures" forceLabel className={compactToolButtonClass} title="Mesures" onClick={() => {
                   onStopEdit?.();
-                  setShowLegend(false);
                   setShowVertices(false);
                   setActiveCommand("tools");
                   setShowMeasurements((current) => !current);
@@ -210,7 +205,6 @@ export default function FloatingMapToolbar({
               />
               <ToolbarButton active={activeCommand === "export"} icon={FileDown} label="Exporter" forceLabel className={compactToolButtonClass} title="Exporter" onClick={() => {
                   onStopEdit?.();
-                  setShowLegend(false);
                   setShowMeasurements(false);
                   setShowVertices(false);
                   setActiveCommand((current) => (current === "export" ? null : "export"));
