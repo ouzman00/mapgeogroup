@@ -67,7 +67,7 @@ function LegendImage({ item, muted = false, compact = true }) {
         }
       })
       .catch((error) => {
-        console.warn("Impossible de charger la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©gende WMS publiÃƒÂ©e par le serveur.", error);
+        console.warn("Impossible de charger la lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©gende WMS publiÃƒÆ’Ã‚Â©e par le serveur.", error);
 
         if (active) {
           setSrc("");
@@ -87,14 +87,14 @@ function LegendImage({ item, muted = false, compact = true }) {
     if (compact) {
       return (
         <span className={`inline-flex max-w-[140px] shrink-0 overflow-hidden rounded bg-white/95 p-1 shadow-sm ${muted ? "opacity-40" : "opacity-100"}`}>
-          <img src={src} alt={item?.label || "LÃƒÂ©gende WMS"} className="max-h-5 max-w-[52px] object-contain" loading="lazy" />
+          <img src={src} alt={item?.label || "LÃƒÆ’Ã‚Â©gende WMS"} className="max-h-5 max-w-[52px] object-contain" loading="lazy" />
         </span>
       );
     }
 
     return (
       <span className={`block w-full overflow-auto rounded-lg border border-white/15 bg-white p-2 shadow-inner ${muted ? "opacity-50" : "opacity-100"}`}>
-        <img src={src} alt={item?.label || "LÃƒÂ©gende WMS"} className="block h-auto max-h-8 max-w-full object-contain" loading="lazy" />
+        <img src={src} alt={item?.label || "LÃƒÆ’Ã‚Â©gende WMS"} className="block h-auto max-h-8 max-w-full object-contain" loading="lazy" />
       </span>
     );
   }
@@ -207,19 +207,19 @@ function layerStatus(layer = {}) {
   if (layer?.available === false || !isReady(layer)) {
     return {
       tone: "disabled",
-      label: layer.displayMessage || layer.display_message || "Couche non prÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªte ou non compatible",
+      label: layer.displayMessage || layer.display_message || "Couche non prÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªte ou non compatible",
     };
   }
 
-  if (!visible) return { tone: "muted", label: "MasquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e sur cette carte ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â cliquez pour rÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©activer" };
+  if (!visible) return { tone: "muted", label: "MasquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e sur cette carte ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â cliquez pour rÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©activer" };
   if (layer?.error) return { tone: "error", label: layer.error };
-  if (layer?.loading) return { tone: "loading", label: "PrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©parationÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦" };
+  if (layer?.loading) return { tone: "loading", label: "PrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©parationÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦" };
   if (layer?.zoomVisible === false) return { tone: "warning", label: "Active, mais hors niveau de zoom" };
 
   if (Number.isFinite(Number(layer?.featureCount))) {
     return {
       tone: "ok",
-      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©${Number(layer.featureCount) > 1 ? "s" : ""}`,
+      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©${Number(layer.featureCount) > 1 ? "s" : ""}`,
     };
   }
 
@@ -255,7 +255,7 @@ function legendItems(layer, features = []) {
       ? publishedLegend
       : [
           {
-            label: layer?.name || "LÃƒÂ©gende WMS",
+            label: layer?.name || "LÃƒÆ’Ã‚Â©gende WMS",
             symbol: "wms-legend",
             imageEndpoint: layer?.sourceLayerId ? `/map-layers/${layer.sourceLayerId}/legend/` : "",
           },
@@ -276,7 +276,7 @@ function legendItems(layer, features = []) {
 
   return [
     {
-      label: layer?.name || "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â°lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ment cartographique",
+      label: layer?.name || "ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ment cartographique",
       symbol: isTileLike ? "image" : geometryType === "line" ? "line" : geometryType === "point" ? "point" : "polygon",
       color: layer?.color || style.strokeColor || style.color || "#FBBF24",
       strokeColor: layer?.color || style.strokeColor || style.color || "#FBBF24",
@@ -364,7 +364,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
       </div>
 
       {showItemDetails ? (
-        <div className={`mt-0.5 max-h-[42px] space-y-0.5 overflow-y-auto border-t border-white/10 pt-0.5 pr-0.5 ${isParcelsLayer ? "mapgeo-parcel-sublegend" : ""}`}>
+        <div className={`mt-0.5 max-h-[34px] space-y-0.5 overflow-y-scroll border-t border-white/10 pt-0.5 pr-1 ${isParcelsLayer ? "mapgeo-parcel-sublegend" : ""}`}>
           {items.map((item) => {
             const isImageLegend = isLegendImageItem(item);
             const itemKey = `${layer.id}-${item.id || item.label || item.url || item.imageUrl || item.imageEndpoint || "legend"}`;
@@ -373,7 +373,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
               return (
                 <div key={itemKey} className="rounded border border-white/10 bg-black/10 p-1">
                   <div className="mb-0.5 truncate text-[7px] font-bold text-white/70">
-                    {item.label || "LÃƒÂ©gende publiÃƒÂ©e par le serveur WMS"}
+                    {item.label || "LÃƒÆ’Ã‚Â©gende publiÃƒÆ’Ã‚Â©e par le serveur WMS"}
                   </div>
                   <LegendSymbol item={item} compact={false} />
                 </div>
@@ -429,7 +429,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
   return (
     <div
-      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 right-3 z-[945] flex h-[168px] max-h-[168px] min-h-0 w-[156px] flex-col overflow-hidden rounded-md border border-white/10 bg-[#07111b]/88 p-1 text-white shadow-[0_8px_20px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[156px] lg:bottom-[112px]"
+      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 right-3 z-[945] flex h-[135px] max-h-[135px] min-h-0 w-[220px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#07111b]/88 p-1.5 text-white shadow-[0_8px_20px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[220px] lg:bottom-[178px]"
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
@@ -437,7 +437,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       onContextMenu={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-1">
-        <h3 className="text-xs font-bold tracking-tight text-white">LÃƒÂ©gende</h3>
+        <h3 className="text-xs font-bold tracking-tight text-white">LÃƒÆ’Ã‚Â©gende</h3>
 
         <span className="rounded border border-white/10 bg-white/[0.045] px-1 py-0 text-[7px] font-bold text-white/65">
           {visibleCount}/{totalCount}
@@ -450,25 +450,21 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
           onClick={showHiddenLayers}
           className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded border border-mapgeo-sand/20 bg-mapgeo-sand/10 px-1 py-0.5 text-[7px] font-bold text-mapgeo-sand transition hover:bg-mapgeo-sand/15"
         >
-          <RotateCcw size={9} /> RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©afficher {hiddenCount} couche{hiddenCount > 1 ? "s" : ""} masquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e{hiddenCount > 1 ? "s" : ""}
+          <RotateCcw size={9} /> RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©afficher {hiddenCount} couche{hiddenCount > 1 ? "s" : ""} masquÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e{hiddenCount > 1 ? "s" : ""}
         </button>
       ) : null}
 
-      <div className="mapgeo-legend-scroll mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden overscroll-contain pr-0.5 text-[7px] [scrollbar-gutter:stable]">
+      <div className="mapgeo-legend-scroll mt-1 min-h-0 max-h-[86px] flex-1 space-y-0.5 overflow-y-scroll overflow-x-hidden overscroll-contain pr-1 text-[8px] [scrollbar-gutter:stable]">
         {legendLayers.length ? (
           legendLayers.map((layer) => <LegendToggleRow key={layer.id} layer={layer} features={features} onToggleLayer={onToggleLayer} />)
         ) : (
           <div className="rounded-lg border border-white/10 bg-white/[0.05] p-3 text-sm font-semibold leading-6 text-white/60">
-            Aucune couche nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢est disponible pour cette carte.
+            Aucune couche nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢est disponible pour cette carte.
           </div>
         )}
       </div>
 
-      {totalCount ? (
-        <p className="hidden">
-          Couches visibles.
-        </p>
-      ) : null}
+      {null}
     </div>
   );
 }
