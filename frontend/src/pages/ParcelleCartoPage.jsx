@@ -361,9 +361,10 @@ export default function ParcelleCartoPage() {
     refreshLayers();
     window.addEventListener("mapgeo:layers:refresh", refreshLayers);
 
-    const intervalId = (!isInternalPortal || selectedOrganizationCode || selectedOrganizationId)
-      ? window.setInterval(refreshLayers, PRIVATE_LAYER_REFRESH_INTERVAL_MS)
-      : null;
+    // Les couches sont chargées au montage et rafraîchies via l'événement
+    // mapgeo:layers:refresh après création/modification/suppression.
+    // On évite un polling automatique qui recharge inutilement la légende et la carte.
+    const intervalId = null;
 
     return () => {
       signal.cancelled = true;

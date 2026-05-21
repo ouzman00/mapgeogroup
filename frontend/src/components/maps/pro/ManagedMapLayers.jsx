@@ -11,6 +11,20 @@ const MANAGED_LAYER_PANES = {
   communeLabels: "mapgeo-communes-label-pane",
 };
 
+const GEOJSON_BBOX_CACHE = new Map();
+const GEOJSON_BBOX_CACHE_MAX = 120;
+
+function rememberGeoJsonPayload(key, value) {
+  if (!key || !value) return;
+  if (GEOJSON_BBOX_CACHE.has(key)) GEOJSON_BBOX_CACHE.delete(key);
+  GEOJSON_BBOX_CACHE.set(key, value);
+
+  while (GEOJSON_BBOX_CACHE.size > GEOJSON_BBOX_CACHE_MAX) {
+    const oldestKey = GEOJSON_BBOX_CACHE.keys().next().value;
+    GEOJSON_BBOX_CACHE.delete(oldestKey);
+  }
+}
+
 function isCommuneLayer(layer) {
   const id = String(layer?.id || "").toLowerCase();
   const name = String(layer?.name || "").toLowerCase();
@@ -469,7 +483,7 @@ function bboxFromMap(map) {
   const bounds = map.getBounds();
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast();
-  return [sw.lng, sw.lat, ne.lng, ne.lat].map((value) => Number(value).toFixed(6)).join(",");
+  return [sw.lng, sw.lat, ne.lng, ne.lat].map((value) => Number(value).toFixed(4)).join(",");
 }
 
 function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
@@ -513,6 +527,14 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
     if (requestKey === lastRequestKeyRef.current) return;
     lastRequestKeyRef.current = requestKey;
 
+    const cachedPayload = GEOJSON_BBOX_CACHE.get(requestKey);
+    if (cachedPayload) {
+      const featureCount = Array.isArray(cachedPayload?.features) ? cachedPayload.features.length : 0;
+      setData(cachedPayload);
+      setLayerRuntime(currentLayer.id, { loading: false, error: "", featureCount });
+      return;
+    }
+
     if (timerRef.current) window.clearTimeout(timerRef.current);
 
     timerRef.current = window.setTimeout(async () => {
@@ -530,7 +552,9 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
         if (requestSeq !== requestSeqRef.current) return;
 
         const featureCount = Array.isArray(payload?.features) ? payload.features.length : 0;
-        setData({ ...payload, __requestKey: requestKey });
+        const nextData = { ...payload, __requestKey: requestKey };
+        rememberGeoJsonPayload(requestKey, nextData);
+        setData(nextData);
         setLayerRuntime(currentLayer.id, { loading: false, error: "", featureCount });
       } catch (error) {
         if (requestSeq !== requestSeqRef.current) return;
