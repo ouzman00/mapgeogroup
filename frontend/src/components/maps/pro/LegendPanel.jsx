@@ -67,7 +67,7 @@ function LegendImage({ item, muted = false, compact = true }) {
         }
       })
       .catch((error) => {
-        console.warn("Impossible de charger la lÃƒÆ’Ã‚Â©gende WMS publiée par le serveur.", error);
+        console.warn("Impossible de charger la lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©gende WMS publiÃ©e par le serveur.", error);
 
         if (active) {
           setSrc("");
@@ -87,14 +87,14 @@ function LegendImage({ item, muted = false, compact = true }) {
     if (compact) {
       return (
         <span className={`inline-flex max-w-[140px] shrink-0 overflow-hidden rounded bg-white/95 p-1 shadow-sm ${muted ? "opacity-40" : "opacity-100"}`}>
-          <img src={src} alt={item?.label || "Légende WMS"} className="max-h-6 max-w-[64px] object-contain" loading="lazy" />
+          <img src={src} alt={item?.label || "LÃ©gende WMS"} className="max-h-6 max-w-[64px] object-contain" loading="lazy" />
         </span>
       );
     }
 
     return (
       <span className={`block w-full overflow-auto rounded-lg border border-white/15 bg-white p-2 shadow-inner ${muted ? "opacity-50" : "opacity-100"}`}>
-        <img src={src} alt={item?.label || "Légende WMS"} className="block h-auto max-h-10 max-w-full object-contain" loading="lazy" />
+        <img src={src} alt={item?.label || "LÃ©gende WMS"} className="block h-auto max-h-10 max-w-full object-contain" loading="lazy" />
       </span>
     );
   }
@@ -207,19 +207,19 @@ function layerStatus(layer = {}) {
   if (layer?.available === false || !isReady(layer)) {
     return {
       tone: "disabled",
-      label: layer.displayMessage || layer.display_message || "Couche non prÃƒÆ’Ã‚Âªte ou non compatible",
+      label: layer.displayMessage || layer.display_message || "Couche non prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªte ou non compatible",
     };
   }
 
-  if (!visible) return { tone: "muted", label: "MasquÃƒÆ’Ã‚Â©e sur cette carte ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cliquez pour rÃƒÆ’Ã‚Â©activer" };
+  if (!visible) return { tone: "muted", label: "MasquÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©e sur cette carte ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â cliquez pour rÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©activer" };
   if (layer?.error) return { tone: "error", label: layer.error };
-  if (layer?.loading) return { tone: "loading", label: "PrÃƒÆ’Ã‚Â©parationÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" };
+  if (layer?.loading) return { tone: "loading", label: "PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©parationÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦" };
   if (layer?.zoomVisible === false) return { tone: "warning", label: "Active, mais hors niveau de zoom" };
 
   if (Number.isFinite(Number(layer?.featureCount))) {
     return {
       tone: "ok",
-      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargÃƒÆ’Ã‚Â©${Number(layer.featureCount) > 1 ? "s" : ""}`,
+      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©${Number(layer.featureCount) > 1 ? "s" : ""}`,
     };
   }
 
@@ -255,7 +255,7 @@ function legendItems(layer, features = []) {
       ? publishedLegend
       : [
           {
-            label: layer?.name || "Légende WMS",
+            label: layer?.name || "LÃ©gende WMS",
             symbol: "wms-legend",
             imageEndpoint: layer?.sourceLayerId ? `/map-layers/${layer.sourceLayerId}/legend/` : "",
           },
@@ -276,7 +276,7 @@ function legendItems(layer, features = []) {
 
   return [
     {
-      label: layer?.name || "ÃƒÆ’Ã¢â‚¬Â°lÃƒÆ’Ã‚Â©ment cartographique",
+      label: layer?.name || "ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©ment cartographique",
       symbol: isTileLike ? "image" : geometryType === "line" ? "line" : geometryType === "point" ? "point" : "polygon",
       color: layer?.color || style.strokeColor || style.color || "#FBBF24",
       strokeColor: layer?.color || style.strokeColor || style.color || "#FBBF24",
@@ -373,7 +373,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
               return (
                 <div key={itemKey} className="rounded-lg border border-white/10 bg-black/10 p-2">
                   <div className="mb-1.5 truncate text-[12px] font-bold text-white/75">
-                    {item.label || "Légende publiée par le serveur WMS"}
+                    {item.label || "LÃ©gende publiÃ©e par le serveur WMS"}
                   </div>
                   <LegendSymbol item={item} compact={false} />
                 </div>
@@ -437,7 +437,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       onContextMenu={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-xs font-bold tracking-tight text-white">Légende</h3>
+        <h3 className="text-xs font-bold tracking-tight text-white">LÃ©gende</h3>
 
         <span className="rounded-lg border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[8px] font-bold text-white/70">
           {visibleCount}/{totalCount}
@@ -450,7 +450,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
           onClick={showHiddenLayers}
           className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-mapgeo-sand/25 bg-mapgeo-sand/10 px-2.5 py-1.5 text-[8px] font-bold text-mapgeo-sand transition hover:bg-mapgeo-sand/15"
         >
-          <RotateCcw size={14} /> RÃƒÆ’Ã‚Â©afficher {hiddenCount} couche{hiddenCount > 1 ? "s" : ""} masquÃƒÆ’Ã‚Â©e{hiddenCount > 1 ? "s" : ""}
+          <RotateCcw size={14} /> RÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©afficher {hiddenCount} couche{hiddenCount > 1 ? "s" : ""} masquÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©e{hiddenCount > 1 ? "s" : ""}
         </button>
       ) : null}
 
@@ -459,7 +459,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
           legendLayers.map((layer) => <LegendToggleRow key={layer.id} layer={layer} features={features} onToggleLayer={onToggleLayer} />)
         ) : (
           <div className="rounded-lg border border-white/10 bg-white/[0.05] p-3 text-sm font-semibold leading-6 text-white/60">
-            Aucune couche nÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢est disponible pour cette carte.
+            Aucune couche nÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢est disponible pour cette carte.
           </div>
         )}
       </div>
