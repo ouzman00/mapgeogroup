@@ -1,18 +1,30 @@
 import { useEffect, useState } from "react";
 
-function isMobileCartographyViewportSafe() {
-  if (typeof window === "undefined") return false;
+function readCartographyViewportState() {
+  if (typeof window === "undefined") {
+    return {
+      isMobileMap: false,
+      isTouchDevice: false,
+    };
+  }
 
-  return (
-    window.matchMedia?.("(max-width: 767px)")?.matches ||
+  const isMobileMap =
+    window.matchMedia?.("(max-width: 767px)")?.matches || window.innerWidth < 768;
+
+  const isTouchDevice = Boolean(
     window.matchMedia?.("(pointer: coarse)")?.matches ||
-    window.matchMedia?.("(hover: none)")?.matches ||
-    window.innerWidth < 768
+      window.matchMedia?.("(hover: none)")?.matches ||
+      window.navigator?.maxTouchPoints > 0,
   );
+
+  return {
+    isMobileMap,
+    isTouchDevice,
+  };
 }
 
 export default function useCartographyViewport() {
-  const [isMobile, setIsMobile] = useState(() => isMobileCartographyViewportSafe());
+  const [viewportState, setViewportState] = useState(() => readCartographyViewportState());
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -24,7 +36,7 @@ export default function useCartographyViewport() {
     ].filter(Boolean);
 
     const refresh = () => {
-      setIsMobile(isMobileCartographyViewportSafe());
+      setViewportState(readCartographyViewportState());
     };
 
     refresh();
@@ -44,5 +56,9 @@ export default function useCartographyViewport() {
     };
   }, []);
 
-  return { isMobile };
+  return {
+    isMobile: viewportState.isMobileMap,
+    isMobileMap: viewportState.isMobileMap,
+    isTouchDevice: viewportState.isTouchDevice,
+  };
 }
