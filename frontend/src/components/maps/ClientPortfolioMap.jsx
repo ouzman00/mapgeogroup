@@ -3,10 +3,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useProfessionalLayers from "./pro/useProfessionalLayers";
 import PortfolioSidebar from "./portfolio/PortfolioSidebar";
 import PortfolioMapShell from "./portfolio/PortfolioMapShell";
-import PortfolioInspector from "./portfolio/PortfolioInspector";
 import usePortfolioFeatures from "./portfolio/usePortfolioFeatures";
 import parcelService from "../../services/parcelService";
 import { lngLatToSenegalProjected } from "../../utils/parcelGeometry";
+
+const PortfolioInspector = lazy(() => import("./portfolio/PortfolioInspector"));
 
 const PrintMapDialog = lazy(() => import("./pro/PrintMapDialog"));
 
