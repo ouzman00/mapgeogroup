@@ -69,10 +69,22 @@ import {
   stripMeasurementClosingPoint,
   toLayerPoint,
 } from "./utils/measurementGeometry";
+import {
+  collectGeometryFromLayerGroup,
+  eachGeomanResultLayer,
+  findNearestEditableSegment,
+  getEditableRings,
+  isGeomanCutShape,
+  isNearExistingVertex,
+  refreshGeomanLayerEdition,
+  removeNearestEditableVertex,
+  safeDisableGeomanModes,
+  scheduleGeomanVertexHandlesRefresh,
+} from "./utils/geomanEditing";
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragstart pm:markerdrag pm:markerdragend pm:dragstart pm:drag pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
 const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
-const SNAP_TOLERANCE_PX = 24; // AugmentÃ© de 18 Ã  24px pour plus de confort
+const SNAP_TOLERANCE_PX = 24; // AugmentÃƒÆ’Ã‚Â© de 18 ÃƒÆ’Ã‚Â  24px pour plus de confort
 const EDIT_VERTEX_TOLERANCE_PX = 16;
 
 // Seuil de zoom pour basculer en mode "cluster de centroides".
@@ -123,23 +135,7 @@ const MEASURE_STYLE = {
   vertexFill: "#FFF7E6",
 };
 
-function safeDisableGeomanModes(map) {
-  if (!map?.pm) return;
-  // disableGlobalDragMode itere sur toutes les couches et plante si
-  // une couche n a pas de .pm (tile layers internes). On enveloppe en try.
-  try {
-    if (map.pm.globalDragModeEnabled?.()) {
-      map.pm.disableGlobalDragMode();
-    }
-  } catch (err) {
-    // Ignorer : etat instable, sans consequence pour l app
-  }
-  try { map.pm.disableDraw?.(); } catch {}
-  try { map.pm.disableGlobalEditMode?.(); } catch {}
-  try { map.pm.disableGlobalRemovalMode?.(); } catch {}
-  try { map.pm.disableGlobalCutMode?.(); } catch {}
-  try { map.pm.removeControls?.(); } catch {}
-}
+
 
 function isMobileCartographyViewport() {
   if (typeof window === "undefined") return false;
@@ -196,9 +192,9 @@ function MapPaneController() {
       pane.style.pointerEvents = pointerEvents;
     });
 
-    // Les poignÃ©es de sommets Geoman sont rendues dans le markerPane Leaflet natif.
-    // Le pane d'Ã©dition MapGeo est au-dessus des polygones standards ; on remonte donc
-    // markerPane au-dessus de l'Ã©dition pour garder les sommets drag-and-drop.
+    // Les poignÃƒÆ’Ã‚Â©es de sommets Geoman sont rendues dans le markerPane Leaflet natif.
+    // Le pane d'ÃƒÆ’Ã‚Â©dition MapGeo est au-dessus des polygones standards ; on remonte donc
+    // markerPane au-dessus de l'ÃƒÆ’Ã‚Â©dition pour garder les sommets drag-and-drop.
     const markerPane = map.getPane("markerPane");
     if (markerPane) {
       markerPane.style.zIndex = "760";
@@ -207,99 +203,6 @@ function MapPaneController() {
   }, [map]);
 
   return null;
-}
-
-function getEditableRings(layer) {
-  const latlngs = layer?.getLatLngs?.() || [];
-  if (!Array.isArray(latlngs) || !latlngs.length) return [];
-  if (latlngs[0] instanceof L.LatLng) return [latlngs];
-  if (Array.isArray(latlngs[0]) && latlngs[0][0] instanceof L.LatLng) return latlngs;
-  if (Array.isArray(latlngs[0]) && Array.isArray(latlngs[0][0]) && latlngs[0][0][0] instanceof L.LatLng) return latlngs.flat();
-  return [];
-}
-
-function findNearestEditableSegment(map, layer, latlng) {
-  if (!map || !latlng) return null;
-  const target = map.latLngToLayerPoint(latlng);
-  let best = null;
-
-  getEditableRings(layer).forEach((ring) => {
-    if (!Array.isArray(ring) || ring.length < 2) return;
-    const segmentCount = ring.length >= 3 ? ring.length : ring.length - 1;
-    for (let index = 0; index < segmentCount; index += 1) {
-      const start = map.latLngToLayerPoint(ring[index]);
-      const end = map.latLngToLayerPoint(ring[(index + 1) % ring.length]);
-      const closest = closestPointOnSegment(target, start, end);
-      if (!best || closest.distance < best.distance) {
-        best = { distance: closest.distance, ring, insertIndex: index + 1 };
-      }
-    }
-  });
-
-  return best && best.distance <= EDIT_VERTEX_TOLERANCE_PX ? best : null;
-}
-
-function isNearExistingVertex(map, ring, latlng, tolerance = 10) {
-  if (!map || !latlng || !Array.isArray(ring)) return false;
-  const target = map.latLngToLayerPoint(latlng);
-  return ring.some((vertex) => pixelDistance(target, map.latLngToLayerPoint(vertex)) <= tolerance);
-}
-
-function removeNearestEditableVertex(map, layer, latlng) {
-  if (!map || !latlng) return { removed: false };
-  const target = map.latLngToLayerPoint(latlng);
-  let best = null;
-
-  getEditableRings(layer).forEach((ring) => {
-    if (!Array.isArray(ring) || ring.length <= 3) return;
-    ring.forEach((vertex, index) => {
-      const distance = pixelDistance(target, map.latLngToLayerPoint(vertex));
-      if (!best || distance < best.distance) best = { distance, ring, index };
-    });
-  });
-
-  if (!best || best.distance > EDIT_VERTEX_TOLERANCE_PX || best.ring.length <= 3) return { removed: false };
-  best.ring.splice(best.index, 1);
-  layer.setLatLngs(layer.getLatLngs());
-  layer.redraw?.();
-  return { removed: true };
-}
-
-function refreshGeomanLayerEdition(layer, editOptions) {
-  layer.pm?.disable?.();
-  layer.pm?.enable?.(editOptions);
-}
-
-function ensureGeomanVertexHandlesInteractive(map) {
-  const container = map?.getContainer?.();
-  if (!container) return;
-
-  const markerPane = map.getPane?.("markerPane");
-  if (markerPane) {
-    markerPane.style.zIndex = "860";
-    markerPane.style.pointerEvents = "auto";
-  }
-
-  container
-    .querySelectorAll(".leaflet-pm-marker, .leaflet-pm-draggable")
-    .forEach((element) => {
-      element.classList.add("mapgeo-geoman-edit-handle");
-      element.style.pointerEvents = "auto";
-      element.style.touchAction = "none";
-      element.style.zIndex = "10000";
-    });
-}
-
-function scheduleGeomanVertexHandlesRefresh(map) {
-  if (typeof requestAnimationFrame !== "function") {
-    ensureGeomanVertexHandlesInteractive(map);
-    return;
-  }
-
-  requestAnimationFrame(() => {
-    ensureGeomanVertexHandlesInteractive(map);
-    requestAnimationFrame(() => ensureGeomanVertexHandlesInteractive(map));
-  });
 }
 
 function keepBoundsVisibleWithoutZoom(map, bounds) {
@@ -325,22 +228,6 @@ function eachGeomanResultLayer(input, callback) {
     return;
   }
   callback(input);
-}
-
-function collectGeometryFromLayerGroup(group) {
-  const polygonCoordinates = [];
-  group.eachLayer((layer) => {
-    if (layer?.__mapgeoIgnoreGeometry || !(layer instanceof L.Polygon) || layer instanceof L.Rectangle || isGeomanCutShape(layer)) return;
-    const feature = layer.toGeoJSON?.();
-    if (feature?.geometry?.type === "Polygon") polygonCoordinates.push(feature.geometry.coordinates);
-    if (feature?.geometry?.type === "MultiPolygon") polygonCoordinates.push(...feature.geometry.coordinates);
-  });
-  return polygonCoordinates.length
-    ? normalizeToMultiPolygon(
-        { type: "MultiPolygon", coordinates: polygonCoordinates },
-        { sourceCrs: WGS84_GEOGRAPHIC_CRS },
-      )
-    : null;
 }
 
 function UserLocationLayer({ enabled, onError, onDisable }) {
@@ -464,8 +351,8 @@ function MapControlStack({ map, locationEnabled, onToggleLocation, onLocationErr
   return (
     <div {...overlayEventProps} className="mapgeo-map-control-stack mapgeo-export-hidden mapgeo-popover-enter absolute right-3 top-[112px] z-[920] overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/80 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-xl sm:left-5 sm:right-auto sm:top-1/2 sm:-translate-y-1/2">
       <button type="button" disabled={disabled} onClick={() => map?.zoomIn(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom avant" aria-label="Zoom avant"><Plus size={20} /></button>
-      <button type="button" disabled={disabled} onClick={() => map?.zoomOut(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom arriÃ¨re" aria-label="Zoom arriÃ¨re"><Minus size={20} /></button>
-      <button type="button" disabled={disabled} onClick={locateUser} className={`${locationButtonClass} mapgeo-location-button`} title={locationEnabled ? "DÃ©sactiver la localisation" : "Me localiser"} aria-label={locationEnabled ? "DÃ©sactiver la localisation" : "Me localiser"}><LocateFixed size={19} /></button>
+      <button type="button" disabled={disabled} onClick={() => map?.zoomOut(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom arriÃƒÆ’Ã‚Â¨re" aria-label="Zoom arriÃƒÆ’Ã‚Â¨re"><Minus size={20} /></button>
+      <button type="button" disabled={disabled} onClick={locateUser} className={`${locationButtonClass} mapgeo-location-button`} title={locationEnabled ? "DÃƒÆ’Ã‚Â©sactiver la localisation" : "Me localiser"} aria-label={locationEnabled ? "DÃƒÆ’Ã‚Â©sactiver la localisation" : "Me localiser"}><LocateFixed size={19} /></button>
     </div>
   );
 }
@@ -476,9 +363,9 @@ function formatActiveMapFilters(filters = {}) {
   if (filters.owner_client_code) labels.push(`client ${filters.owner_client_code}`);
   if (filters.status) labels.push(`statut ${filters.status}`);
   if (filters.commune) labels.push(`commune ${filters.commune}`);
-  if (filters.period) labels.push(`pÃ©riode ${filters.period}`);
+  if (filters.period) labels.push(`pÃƒÆ’Ã‚Â©riode ${filters.period}`);
   if (filters.q) labels.push(`recherche ${filters.q}`);
-  return labels.join(" Â· ");
+  return labels.join(" Ãƒâ€šÃ‚Â· ");
 }
 
 function ViewportSampleNotice({ summary }) {
@@ -492,7 +379,7 @@ function ViewportSampleNotice({ summary }) {
 
   return (
     <div className="mapgeo-viewport-notice mapgeo-export-hidden absolute left-1/2 top-3 z-[925] max-w-[min(720px,calc(100%-1.5rem))] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#07111b]/78 px-3 py-2 text-xs font-semibold leading-5 text-white/78 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-      Carte : emprise courante Â· {loaded.toLocaleString("fr-FR")} affichÃ©e{loaded > 1 ? "s" : ""}{Number.isFinite(total) && total !== loaded ? ` / ${total.toLocaleString("fr-FR")}` : ""}.
+      Carte : emprise courante Ãƒâ€šÃ‚Â· {loaded.toLocaleString("fr-FR")} affichÃƒÆ’Ã‚Â©e{loaded > 1 ? "s" : ""}{Number.isFinite(total) && total !== loaded ? ` / ${total.toLocaleString("fr-FR")}` : ""}.
       {hasLimit ? ` Limite ${limit.toLocaleString("fr-FR")} atteinte : zoomez ou filtrez pour affiner.` : ""}
       {filtersLabel ? ` Filtres actifs : ${filtersLabel}.` : ""}
     </div>
@@ -507,7 +394,7 @@ function formatCoordinateSystemLabel(coordinateSystem) {
 }
 
 function formatCursorPosition(cursorPosition, coordinateSystem) {
-  if (!cursorPosition) return { xLabel: "â€”", yLabel: "â€”" };
+  if (!cursorPosition) return { xLabel: "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â", yLabel: "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" };
   const [lat, lng] = cursorPosition;
 
   if (coordinateSystem === SENEGAL_PROJECTED_CRS) {
@@ -518,7 +405,7 @@ function formatCursorPosition(cursorPosition, coordinateSystem) {
         yLabel: `${Math.round(y).toLocaleString("fr-FR")} m N`,
       };
     } catch {
-      return { xLabel: "â€”", yLabel: "â€”" };
+      return { xLabel: "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â", yLabel: "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" };
     }
   }
 
@@ -530,13 +417,13 @@ function formatCursorPosition(cursorPosition, coordinateSystem) {
         yLabel: `${Math.round(y).toLocaleString("fr-FR")} m`,
       };
     } catch {
-      return { xLabel: "â€”", yLabel: "â€”" };
+      return { xLabel: "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â", yLabel: "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" };
     }
   }
 
   return {
-    xLabel: `${formatCoordinate(lng)}Â°`,
-    yLabel: `${formatCoordinate(lat)}Â°`,
+    xLabel: `${formatCoordinate(lng)}Ãƒâ€šÃ‚Â°`,
+    yLabel: `${formatCoordinate(lat)}Ãƒâ€šÃ‚Â°`,
   };
 }
 
@@ -593,7 +480,7 @@ function MapStatusBar({ cursorPosition, coordinateSystem, features }) {
 
             <span className="inline-flex min-w-[13.5rem] shrink-0 items-center gap-2 whitespace-nowrap font-mono tabular-nums text-white/90">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-mapgeo-sand/90 shadow-soft" />
-              SynchronisÃ© : {syncDate}
+              SynchronisÃƒÆ’Ã‚Â© : {syncDate}
             </span>
           </>
         ) : null}
@@ -639,7 +526,7 @@ function NorthArrow({ bearing = 0, onReset = null }) {
       </svg>
       {Math.abs(normalizedBearing) > 0.5 ? (
         <span className="mt-0.5 text-[9px] font-black tabular-nums text-white/55">
-          {Math.round(normalizedBearing)}Â°
+          {Math.round(normalizedBearing)}Ãƒâ€šÃ‚Â°
         </span>
       ) : null}
     </button>
@@ -655,8 +542,8 @@ function buildMeasurementSummary(activeFeature) {
   if (!activeFeature?.rings?.length) return null;
   const vertexCount = activeFeature.rings.reduce((total, ring) => total + ring.length, 0);
   return {
-    perimeter: activeFeature.perimeterLabel || "â€”",
-    area: activeFeature.areaLabel || "â€”",
+    perimeter: activeFeature.perimeterLabel || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â",
+    area: activeFeature.areaLabel || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â",
     vertexCount,
     sideCount: vertexCount,
   };
@@ -1217,7 +1104,7 @@ function PortfolioCreateParcelPreviewSigLayer({ rings }) {
         }),
 
         onEachFeature: (_, leafletLayer) => {
-          leafletLayer.bindTooltip("AperÃ§u nouvelle parcelle", {
+          leafletLayer.bindTooltip("AperÃƒÆ’Ã‚Â§u nouvelle parcelle", {
             direction: "top",
             offset: [0, -6],
             opacity: 0.96,
@@ -1483,12 +1370,12 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       layer.options.bubblingMouseEvents = false;
       layer.setStyle?.({ ...INLINE_EDIT_STYLE, renderer: editRenderer });
 
-      // Geoman doit rÃ©initialiser la couche aprÃ¨s modification de pmIgnore/pane.
-      // Sans cela, les sommets peuvent Ãªtre visibles mais non dÃ©plaÃ§ables.
+      // Geoman doit rÃƒÆ’Ã‚Â©initialiser la couche aprÃƒÆ’Ã‚Â¨s modification de pmIgnore/pane.
+      // Sans cela, les sommets peuvent ÃƒÆ’Ã‚Âªtre visibles mais non dÃƒÆ’Ã‚Â©plaÃƒÆ’Ã‚Â§ables.
       try {
         L.PM?.reInitLayer?.(layer);
       } catch (error) {
-        console.warn("Impossible de rÃ©initialiser la couche Geoman.", error);
+        console.warn("Impossible de rÃƒÆ’Ã‚Â©initialiser la couche Geoman.", error);
       }
 
       layer.pm?.enable?.(editOptions);
@@ -1510,7 +1397,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       layer.__mapgeoDeleteVertexHandler = deleteVertexHandler;
       layer.on("dblclick", addVertexHandler);
       // Suppression de sommet via clic droit / appui contextuel uniquement.
-      // On Ã©vite un handler click sur la couche, qui peut intercepter le drag des sommets Geoman.
+      // On ÃƒÆ’Ã‚Â©vite un handler click sur la couche, qui peut intercepter le drag des sommets Geoman.
       layer.on("contextmenu", deleteVertexHandler);
       layer.on(INLINE_EDIT_EVENTS, scheduleSync);
     };
@@ -1559,9 +1446,9 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       hintlineStyle: { color: "#2563eb", dashArray: "6 6", weight: 2, pane: MAP_PANES.edit },
       pathOptions: INLINE_EDIT_STYLE,
     });
-    // La barre dâ€™outils native Geoman crÃ©e un petit panneau flottant Ã  droite
-    // et peut se dupliquer visuellement avec les contrÃ´les MapGeo. Les outils
-    // dâ€™Ã©dition restent pilotÃ©s par la couche et le panneau compact maison.
+    // La barre dÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢outils native Geoman crÃƒÆ’Ã‚Â©e un petit panneau flottant ÃƒÆ’Ã‚Â  droite
+    // et peut se dupliquer visuellement avec les contrÃƒÆ’Ã‚Â´les MapGeo. Les outils
+    // dÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â©dition restent pilotÃƒÆ’Ã‚Â©s par la couche et le panneau compact maison.
     map.pm?.removeControls?.();
 
     const doubleClickZoomWasEnabled = map.doubleClickZoom?.enabled?.() ?? false;
@@ -1677,24 +1564,24 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
   return (
     <DraggableMapPanel
       className="mapgeo-mobile-tool-panel mapgeo-geometry-panel mapgeo-export-hidden mapgeo-panel-enter pointer-events-auto absolute bottom-3 left-3 right-3 top-auto z-[950] max-h-[55%] overflow-y-auto rounded-[20px] border border-white/10 bg-[#07111b]/94 p-3 text-white shadow-[0_24px_72px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:left-4 sm:right-auto sm:top-[92px] sm:bottom-auto sm:max-h-[calc(100%-260px)] sm:w-[320px] sm:max-w-[calc(100%-2rem)]"
-      ariaLabel="DÃ©placer le panneau dâ€™Ã©dition"
+      ariaLabel="DÃƒÆ’Ã‚Â©placer le panneau dÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â©dition"
     >
       {({ dragHandleProps, resetPosition }) => (
         <>
           <PanelMoveHandle dragHandleProps={dragHandleProps} onReset={resetPosition} />
           <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-mapgeo-sand/60">Ã‰dition active</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-mapgeo-sand/60">ÃƒÆ’Ã¢â‚¬Â°dition active</p>
           <h3 className="mt-1 truncate text-base font-extrabold">{form.reference || activeFeature.parcel?.reference || "Parcelle"}</h3>
         </div>
-        <button type="button" onClick={onClose} disabled={saving} className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-45" title="Fermer lâ€™Ã©dition">
+        <button type="button" onClick={onClose} disabled={saving} className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-45" title="Fermer lÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â©dition">
           <X size={17} />
         </button>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
-        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Surface</span><strong className="text-sm">{area ? formatArea(area) : "â€”"}</strong></div>
-        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">PÃ©rimÃ¨tre</span><strong className="text-sm">{perimeter ? formatDistance(perimeter) : "â€”"}</strong></div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Surface</span><strong className="text-sm">{area ? formatArea(area) : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</strong></div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">PÃƒÆ’Ã‚Â©rimÃƒÆ’Ã‚Â¨tre</span><strong className="text-sm">{perimeter ? formatDistance(perimeter) : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</strong></div>
         <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Anneaux</span><strong className="text-sm">{rings.length}</strong></div>
         <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Sommets</span><strong className="text-sm">{vertexCount}</strong></div>
       </div>
@@ -1705,7 +1592,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
           onClick={onUndo}
           disabled={!canUndo || saving}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2.5 text-xs font-extrabold text-white/75 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
-          title="Revenir Ã  lâ€™Ã©tape prÃ©cÃ©dente (Ctrl/Cmd + Z)"
+          title="Revenir ÃƒÆ’Ã‚Â  lÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â©tape prÃƒÆ’Ã‚Â©cÃƒÆ’Ã‚Â©dente (Ctrl/Cmd + Z)"
         >
           <Undo2 size={15} /> Retour
         </button>
@@ -1714,7 +1601,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
           onClick={onRedo}
           disabled={!canRedo || saving}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2.5 text-xs font-extrabold text-white/75 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
-          title="RÃ©tablir lâ€™Ã©tape suivante (Ctrl/Cmd + Y)"
+          title="RÃƒÆ’Ã‚Â©tablir lÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â©tape suivante (Ctrl/Cmd + Y)"
         >
           <Redo2 size={15} /> Refaire
         </button>
@@ -1722,7 +1609,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
 
       {validationResult?.issues?.length ? (
         <div className={`mt-3 rounded-2xl border px-3 py-2 text-[11px] font-semibold leading-5 ${validationResult.status === "blocking" ? "border-mapgeo-sand/40 bg-mapgeo-sand/15 text-mapgeo-ivory" : validationResult.status === "warning" ? "border-mapgeo-sand/35 bg-mapgeo-sand/15 text-mapgeo-ivory" : "border-mapgeo-sand/35 bg-mapgeo-sand/15 text-mapgeo-ivory"}`}>
-          <p className="mb-1 font-black uppercase tracking-[0.14em]">ContrÃ´le gÃ©omÃ©trique</p>
+          <p className="mb-1 font-black uppercase tracking-[0.14em]">ContrÃƒÆ’Ã‚Â´le gÃƒÆ’Ã‚Â©omÃƒÆ’Ã‚Â©trique</p>
           <ul className="list-disc space-y-1 pl-4">
             {validationResult.issues.slice(0, 3).map((entry) => (
               <li key={`${entry.level}-${entry.code}`}>{entry.message}</li>
@@ -1732,11 +1619,11 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
       ) : null}
 
       <div className="mt-3 rounded-2xl border border-mapgeo-sand/30 bg-mapgeo-sand/10 px-3 py-2 text-[11px] font-semibold leading-4 text-mapgeo-ivory/85">
-        Ã‰dition gÃ©omÃ©trique uniquement : dÃ©placer les sommets, double-cliquer sur un segment pour en ajouter un, puis enregistrer.
+        ÃƒÆ’Ã¢â‚¬Â°dition gÃƒÆ’Ã‚Â©omÃƒÆ’Ã‚Â©trique uniquement : dÃƒÆ’Ã‚Â©placer les sommets, double-cliquer sur un segment pour en ajouter un, puis enregistrer.
       </div>
 
-      <label className="mt-3 block text-[11px] font-bold text-white/60">Motif de modification gÃ©omÃ©trique
-        <textarea value={form.geometry_change_reason} onChange={(event) => update("geometry_change_reason", event.target.value)} rows={2} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" placeholder="Ex. Correction terrain, import SIG vÃ©rifiÃ©, ajustement sommetâ€¦" />
+      <label className="mt-3 block text-[11px] font-bold text-white/60">Motif de modification gÃƒÆ’Ã‚Â©omÃƒÆ’Ã‚Â©trique
+        <textarea value={form.geometry_change_reason} onChange={(event) => update("geometry_change_reason", event.target.value)} rows={2} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" placeholder="Ex. Correction terrain, import SIG vÃƒÆ’Ã‚Â©rifiÃƒÆ’Ã‚Â©, ajustement sommetÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" />
       </label>
 
       <div className="mt-3 grid gap-2">
@@ -1755,7 +1642,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
         </button>
         {deleteVertexMode ? (
           <div className="rounded-2xl border border-mapgeo-sand/35 bg-mapgeo-sand/15 px-3 py-2 text-[11px] font-semibold leading-4 text-mapgeo-ivory/80">
-            Cliquez sur un sommet pour le supprimer. Sur ordinateur, tu peux aussi survoler un sommet puis appuyer sur Suppr ou Retour arriÃ¨re. Minimum 3 sommets.
+            Cliquez sur un sommet pour le supprimer. Sur ordinateur, tu peux aussi survoler un sommet puis appuyer sur Suppr ou Retour arriÃƒÆ’Ã‚Â¨re. Minimum 3 sommets.
           </div>
         ) : null}
       </div>
@@ -1767,7 +1654,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
             onClick={onDeleteParcel}
             disabled={saving}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2.5 text-xs font-extrabold text-mapgeo-ivory transition hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-45"
-            title="Archiver cette parcelle sans supprimer ses donnÃ©es"
+            title="Archiver cette parcelle sans supprimer ses donnÃƒÆ’Ã‚Â©es"
           >
             <Trash2 size={15} /> Archiver la parcelle
           </button>
@@ -1778,7 +1665,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
 
       <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
         <button type="button" onClick={onSave} disabled={saving || !rings.length} className="inline-flex items-center justify-center gap-2 rounded-xl bg-mapgeo-primary px-3 py-2.5 text-sm font-extrabold text-white transition hover:bg-mapgeo-sand disabled:cursor-not-allowed disabled:opacity-55">
-          <Save size={15} /> {saving ? "Enregistrementâ€¦" : "Enregistrer"}
+          <Save size={15} /> {saving ? "EnregistrementÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" : "Enregistrer"}
         </button>
         <button type="button" onClick={onClose} disabled={saving} className="rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-white/70 transition hover:bg-white/10 disabled:opacity-55">
           Annuler
@@ -2080,7 +1967,7 @@ export default function PortfolioMapShell({
     }
 
     // On force l inclusion de la parcelle active meme si elle n est pas
-    // dans le viewport actuel (utilisateur a dezoomÃ©e fortement).
+    // dans le viewport actuel (utilisateur a dezoomÃƒÆ’Ã‚Â©e fortement).
     // Sans ca, le badge disparait et l utilisateur perd la parcelle de vue.
     if (activeFeature && isValidFeature(activeFeature)) {
       const alreadyPresent = withGeometry.some(
@@ -2217,7 +2104,7 @@ export default function PortfolioMapShell({
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
     const draftPoints = options.measurementPoints || measurementDraft.points || [];
     const measurementPoints = draftPoints.filter((_, index) => index !== draftPoints.length - 1);
-    // Inclut la parcelle active mÃªme si elle n'est pas dans displayedFeatures (viewport hors Ã©cran)
+    // Inclut la parcelle active mÃƒÆ’Ã‚Âªme si elle n'est pas dans displayedFeatures (viewport hors ÃƒÆ’Ã‚Â©cran)
     const snapFeatures = activeFeature
       ? [activeFeature, ...displayedFeatures.filter((f) => f.id !== activeFeature.id)]
       : displayedFeatures;
@@ -2401,8 +2288,8 @@ export default function PortfolioMapShell({
     return;
   }
 
-  // Double-clic = sÃ©lection uniquement.
-  // L'Ã©dition gÃ©omÃ©trique doit s'ouvrir uniquement via le bouton dÃ©diÃ©.
+  // Double-clic = sÃƒÆ’Ã‚Â©lection uniquement.
+  // L'ÃƒÆ’Ã‚Â©dition gÃƒÆ’Ã‚Â©omÃƒÆ’Ã‚Â©trique doit s'ouvrir uniquement via le bouton dÃƒÆ’Ã‚Â©diÃƒÆ’Ã‚Â©.
   onFeatureSelection(feature);
 }, [clearPendingMeasurementClick, inlineEditOpen, onFeatureSelection, showMeasurements]);
 
@@ -2477,15 +2364,15 @@ export default function PortfolioMapShell({
       setEditGeometry(normalized);
     }
     if (!normalized) {
-      setEditMessage("La gÃ©omÃ©trie doit contenir au moins un polygone valide avant lâ€™enregistrement.");
+      setEditMessage("La gÃƒÆ’Ã‚Â©omÃƒÆ’Ã‚Â©trie doit contenir au moins un polygone valide avant lÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢enregistrement.");
       return;
     }
-    const geometryChangeReason = editForm.geometry_change_reason?.trim() || "Correction cartographique depuis lâ€™interface admin";
+    const geometryChangeReason = editForm.geometry_change_reason?.trim() || "Correction cartographique depuis lÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢interface admin";
 
     const validation = validateParcelGeometry(normalized, activeFeature.parcel || {});
     const blockingIssues = validation.issues?.filter((entry) => entry.level === "blocking") || [];
     if (blockingIssues.length) {
-      setEditMessage(`Enregistrement bloquÃ© : ${blockingIssues.slice(0, 2).map((entry) => entry.message).join(" ")}`);
+      setEditMessage(`Enregistrement bloquÃƒÆ’Ã‚Â© : ${blockingIssues.slice(0, 2).map((entry) => entry.message).join(" ")}`);
       return;
     }
 
@@ -2508,7 +2395,7 @@ export default function PortfolioMapShell({
       setEditHistoryIndex(-1);
       editHistoryIndexRef.current = -1;
     } catch (error) {
-      setEditMessage(error?.response?.data?.detail || error?.message || "Impossible dâ€™enregistrer les modifications de la parcelle.");
+      setEditMessage(error?.response?.data?.detail || error?.message || "Impossible dÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢enregistrer les modifications de la parcelle.");
     } finally {
       setEditSaving(false);
     }
@@ -2536,7 +2423,7 @@ export default function PortfolioMapShell({
     const reference = editForm.reference || activeFeature.parcel?.reference || "cette parcelle";
     setConfirmConfig({
       title: "Archiver cette parcelle ?",
-      message: `La parcelle Â« ${reference} Â» disparaÃ®tra des listes actives, mais ses gÃ©omÃ©tries, documents et historiques seront conservÃ©s.`,
+      message: `La parcelle Ãƒâ€šÃ‚Â« ${reference} Ãƒâ€šÃ‚Â» disparaÃƒÆ’Ã‚Â®tra des listes actives, mais ses gÃƒÆ’Ã‚Â©omÃƒÆ’Ã‚Â©tries, documents et historiques seront conservÃƒÆ’Ã‚Â©s.`,
       confirmLabel: "Archiver",
       onConfirm: () => {
         setConfirmConfig(null);
@@ -2565,7 +2452,7 @@ export default function PortfolioMapShell({
               }
 
               if (showMeasurements) {
-                // Mobile : le toucher Ã©cran ne doit ni crÃ©er, ni dÃ©placer, ni prÃ©visualiser un point.
+                // Mobile : le toucher ÃƒÆ’Ã‚Â©cran ne doit ni crÃƒÆ’Ã‚Â©er, ni dÃƒÆ’Ã‚Â©placer, ni prÃƒÆ’Ã‚Â©visualiser un point.
                 if (isMobileCartography) return;
 
                 if (!point) {
@@ -2879,7 +2766,7 @@ export default function PortfolioMapShell({
             onDoubleClick={(event) => event.stopPropagation()}
           >
             <p className="text-[11px] font-bold leading-4 text-white/65">
-              Place les sommets sur la carte. Double-tape, EntrÃ©e ou Terminer pour valider.
+              Place les sommets sur la carte. Double-tape, EntrÃƒÆ’Ã‚Â©e ou Terminer pour valider.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
@@ -2967,4 +2854,5 @@ export default function PortfolioMapShell({
     </section>
   );
 }
+
 
