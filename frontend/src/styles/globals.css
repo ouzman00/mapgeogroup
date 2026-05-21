@@ -2322,12 +2322,10 @@ main > .mapgeo-carto-workspace,
     z-index: 2460 !important;
   }
 
-  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel [class*="space-y-1.5"],
-  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-panel [class*="space-y-2"] {
-    max-height: 104px !important;
+  .mapgeo-portfolio-root[data-mobile-panel="map"] .mapgeo-legend-scroll {
+    min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    padding-right: 2px !important;
     -webkit-overflow-scrolling: touch !important;
   }
 }
