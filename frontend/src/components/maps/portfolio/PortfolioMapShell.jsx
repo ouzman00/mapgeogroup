@@ -2104,7 +2104,6 @@ export default function PortfolioMapShell({
     if (!canManageParcels || !featureToEdit) return;
     const initialGeometry = normalizeToMultiPolygon(featureToEdit.parcel?.geometry);
     setShowMeasurements(false);
-    setShowVertices(false);
     setActiveCommand((current) => (current === "base" || current === "export" ? "tools" : current || "tools"));
     setIdentifyState(null);
     editGeometryRef.current = initialGeometry;
@@ -2115,7 +2114,7 @@ export default function PortfolioMapShell({
     setEditMessage("");
     setDeleteVertexMode(false);
     setInlineEditOpen(true);
-  }, [activeFeature, canManageParcels, resetInlineEditHistory, setIdentifyState, setShowMeasurements, setShowVertices]);
+  }, [activeFeature, canManageParcels, resetInlineEditHistory, setIdentifyState, setShowMeasurements]);
 
   
 
@@ -2164,11 +2163,41 @@ export default function PortfolioMapShell({
     editHistoryIndexRef.current = -1;
   }, [editSaving]);
 
+  const handleSetShowMeasurements = useCallback((next) => {
+    const enabled = typeof next === "function" ? next(showMeasurements) : Boolean(next);
 
-  useEffect(() => {
-    if (!showMeasurements || !inlineEditOpen) return;
-    closeInlineEdit();
-  }, [closeInlineEdit, inlineEditOpen, showMeasurements]);
+    if (enabled) {
+      setActiveCommand(null);
+      setIdentifyState(null);
+
+      if (inlineEditOpen) {
+        closeInlineEdit();
+      }
+    } else {
+      clearPendingMeasurementClick();
+      setMeasurementDraft((current) => ({
+        ...current,
+        cursorPoint: null,
+        snapPoint: null,
+        snapKind: null,
+        finished: false,
+      }));
+    }
+
+    setShowMeasurements(enabled);
+  }, [
+    clearPendingMeasurementClick,
+    closeInlineEdit,
+    inlineEditOpen,
+    setIdentifyState,
+    setShowMeasurements,
+    showMeasurements,
+  ]);
+
+  const handleSetShowVertices = useCallback((next) => {
+    const enabled = typeof next === "function" ? next(showVertices) : Boolean(next);
+    setShowVertices(enabled);
+  }, [setShowVertices, showVertices]);
 
 
   const handleExportPng = async () => {
@@ -2651,8 +2680,8 @@ export default function PortfolioMapShell({
           setActiveCommand={setActiveCommand}
           setShowLegend={setShowLegend}
           setShowLabels={setShowLabels}
-          setShowMeasurements={setShowMeasurements}
-          setShowVertices={setShowVertices}
+          setShowMeasurements={handleSetShowMeasurements}
+          setShowVertices={handleSetShowVertices}
           onStartEdit={canManageParcels ? startInlineEdit : undefined}
           onStopEdit={closeInlineEdit}
           onOpenExportOptions={() => setShowPrintDialog(true)}
@@ -2731,8 +2760,8 @@ export default function PortfolioMapShell({
           measurementDraftSummary={measurementDraftSummary}
           isMobileMeasurePanel={isMobileCartography}
           setMeasurementDraft={setMeasurementDraft}
-          setShowMeasurements={setShowMeasurements}
-          setShowVertices={setShowVertices}
+          setShowMeasurements={handleSetShowMeasurements}
+          setShowVertices={handleSetShowVertices}
           vertexDisplayOptions={vertexDisplayOptions}
           onToggleVertexDisplay={toggleVertexDisplayOption}
           onFinishMeasurement={finishMeasurementDraft}
