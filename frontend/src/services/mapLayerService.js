@@ -423,7 +423,7 @@ const mapLayerService = {
     const results = Array.isArray(response.data?.results) ? response.data.results : [];
     return results.map(normalizeLayerInfo);
   },
-  async getLayerGeoJson(layer, params = {}) {
+  async getLayerGeoJson(layer, params = {}, requestConfig = {}) {
     let endpoint = typeof layer === "string" ? layer : layer?.endpoint;
     if (typeof layer === "string") {
       const layerId = layer.replace(/^\/+|\/+$/g, "");
@@ -431,7 +431,7 @@ const mapLayerService = {
       endpoint = endpoint.replace(/\/+/g, "/");
     }
     if (!endpoint) throw new Error("Endpoint de couche SIG manquant.");
-    const response = await getDeduped(endpoint, { params });
+    const response = await getDeduped(endpoint, { ...requestConfig, params });
     return normalizeGeoJsonPayload(response.data);
   },
   async getClientLayers() {

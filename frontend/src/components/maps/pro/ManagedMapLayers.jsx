@@ -494,6 +494,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
   const requestSeqRef = useRef(0);
   const timerRef = useRef(null);
   const lastRequestKeyRef = useRef("");
+  const abortRef = useRef(null);
   const layerRef = useRef(layer);
 
   useEffect(() => {
@@ -554,7 +555,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
       try {
         const payload = await mapLayerService.getLayerGeoJson(currentLayer, {
           bbox,
-          limit: currentLayer.limit || 1500,
+          limit: currentLayer.metadata?.frontend_limit || currentLayer.limit || 500,
         });
 
         if (requestSeq !== requestSeqRef.current) return;
@@ -566,10 +567,18 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
         setData(nextData);
         setLayerRuntime(currentLayer.id, { loading: false, error: "", featureCount });
       } catch (error) {
+        if (controller.signal.aborted || error?.code === "ERR_CANCELED" || error?.name === "CanceledError" || error?.name === "AbortError") {
+          return;
+        }
+
         if (requestSeq !== requestSeqRef.current) return;
 
         console.warn(`Impossible de charger la couche SIG ${currentLayer.name}.`, error);
         setLayerRuntime(currentLayer.id, { loading: false, error: currentLayer.privateLayer ? "Erreur couche privée" : "Erreur couche SIG" });
+      } finally {
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
       }
     }, 450);
   }, [map, setLayerRuntime]);
@@ -585,6 +594,10 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
     return () => {
       map.off("moveend zoomend", handleViewport);
       if (timerRef.current) window.clearTimeout(timerRef.current);
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
       requestSeqRef.current += 1;
     };
   }, [map, loadLayer]);
