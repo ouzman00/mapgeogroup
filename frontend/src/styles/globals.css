@@ -2994,3 +2994,68 @@ html body .mapgeo-side-label.is-measure {
   transition: none !important;
   opacity: 1 !important;
 }
+
+/* MAPGEO final map label cleanup */
+html body .leaflet-marker-icon.mapgeo-side-label-shell,
+html body .leaflet-marker-icon.mapgeo-area-label-shell,
+html body .mapgeo-side-label-shell,
+html body .mapgeo-area-label-shell,
+html body .mapgeo-side-label-rotor {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html body .mapgeo-side-label,
+html body .mapgeo-area-label,
+html body .mapgeo-area-label strong,
+html body .mapgeo-area-label em,
+html body .mapgeo-vertex-glow-label {
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html body .mapgeo-side-label {
+  padding: 0 !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 0 4px rgba(0, 0, 0, 0.85),
+    0 0 8px rgba(0, 0, 0, 0.65) !important;
+}
+
+html body .mapgeo-area-label {
+  padding: 0 !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 0 4px rgba(0, 0, 0, 0.85),
+    0 0 8px rgba(0, 0, 0, 0.65) !important;
+}
+
+html body .mapgeo-area-label strong,
+html body .mapgeo-area-label em {
+  background: transparent !important;
+  padding: 0 !important;
+  color: inherit !important;
+  text-shadow: inherit !important;
+}
