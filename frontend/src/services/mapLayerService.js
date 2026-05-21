@@ -156,7 +156,7 @@ export function normalizeClientMapLayer(layer = {}) {
     data_format_label: safeLayer.data_format_label || getMapLayerDataFormatLabel(dataFormat),
     group: safeLayer.group || LAYER_GROUPS[layerType] || "contexte",
     service,
-    endpoint: safeLayer.endpoint || (["geojson", "wfs"].includes(service) && id ? `/map-layers/${id}/geojson/` : ""),
+    endpoint: safeLayer.endpoint || (["geojson", "wfs", "postgis"].includes(service) && id ? `/map-layers/${id}/geojson/` : ""),
     tile_endpoint: safeLayer.tile_endpoint || (service === "wms" && id ? `/map-layers/${id}/tiles/{z}/{x}/{y}/` : ""),
     is_active: safeLayer.is_active !== false,
     available: clientDisplayable,
@@ -344,7 +344,7 @@ function legendFor(layer) {
 
 export function toSecureMapLayer(layer = {}) {
   const normalized = normalizeClientMapLayer(layer);
-  const isGeoJson = ["geojson", "wfs"].includes(normalized.service) || ["geojson", "wfs"].includes(normalized.data_format);
+  const isGeoJson = ["geojson", "wfs", "postgis"].includes(normalized.service) || ["geojson", "wfs", "postgis"].includes(normalized.data_format);
   const isWms = normalized.service === "wms" || normalized.data_format === "wms" || normalized.layer_type === "wms";
   const service = isGeoJson ? "geojson" : isWms ? "secure-tile" : normalized.service;
   return {
