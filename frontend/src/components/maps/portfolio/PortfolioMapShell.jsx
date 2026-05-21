@@ -52,10 +52,27 @@ import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import useCartographyViewport from "./hooks/useCartographyViewport";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
 import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
+import {
+  buildGeometryMeasurementOverlay,
+  buildMeasurementDraftOverlay,
+  buildMeasurementDraftSummary,
+  cloneGeometry,
+  closestPointOnSegment,
+  distanceAlongPoints,
+  findNearestMeasurementSnap,
+  geometryHistoryKey,
+  getMeasurementPreviewPoints,
+  pixelDistance,
+  pointsAreSame,
+  polygonGeometryFromLatLngRing,
+  repositionSideMarkersOutsideInPixels,
+  stripMeasurementClosingPoint,
+  toLayerPoint,
+} from "./utils/measurementGeometry";
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragstart pm:markerdrag pm:markerdragend pm:dragstart pm:drag pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
 const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
-const SNAP_TOLERANCE_PX = 24; // Augmenté de 18 à 24px pour plus de confort
+const SNAP_TOLERANCE_PX = 24; // AugmentÃ© de 18 Ã  24px pour plus de confort
 const EDIT_VERTEX_TOLERANCE_PX = 16;
 
 // Seuil de zoom pour basculer en mode "cluster de centroides".
@@ -179,9 +196,9 @@ function MapPaneController() {
       pane.style.pointerEvents = pointerEvents;
     });
 
-    // Les poignées de sommets Geoman sont rendues dans le markerPane Leaflet natif.
-    // Le pane d'édition MapGeo est au-dessus des polygones standards ; on remonte donc
-    // markerPane au-dessus de l'édition pour garder les sommets drag-and-drop.
+    // Les poignÃ©es de sommets Geoman sont rendues dans le markerPane Leaflet natif.
+    // Le pane d'Ã©dition MapGeo est au-dessus des polygones standards ; on remonte donc
+    // markerPane au-dessus de l'Ã©dition pour garder les sommets drag-and-drop.
     const markerPane = map.getPane("markerPane");
     if (markerPane) {
       markerPane.style.zIndex = "760";
@@ -190,403 +207,6 @@ function MapPaneController() {
   }, [map]);
 
   return null;
-}
-
-function pointsAreSame(a, b, tolerance = 1e-9) {
-  return Array.isArray(a) && Array.isArray(b) && Math.abs(Number(a[0]) - Number(b[0])) <= tolerance && Math.abs(Number(a[1]) - Number(b[1])) <= tolerance;
-}
-
-function cloneGeometry(geometry) {
-  return geometry ? JSON.parse(JSON.stringify(geometry)) : null;
-}
-
-function geometryHistoryKey(geometry) {
-  return JSON.stringify(normalizeToMultiPolygon(geometry) || null);
-}
-
-function isEditableTextTarget(target) {
-  if (!target) return false;
-  const tagName = String(target.tagName || "").toLowerCase();
-  return tagName === "input" || tagName === "textarea" || tagName === "select" || Boolean(target.isContentEditable);
-}
-
-function stripMeasurementClosingPoint(points) {
-  if (!Array.isArray(points) || points.length <= 1) return Array.isArray(points) ? points : [];
-  const cleanPoints = [...points];
-  if (pointsAreSame(cleanPoints[0], cleanPoints[cleanPoints.length - 1])) cleanPoints.pop();
-  return cleanPoints;
-}
-
-function getMeasurementPreviewPoints(draft) {
-  const points = Array.isArray(draft?.points) ? draft.points.filter((point) => Array.isArray(point) && point.length >= 2) : [];
-
-  if (draft?.finished || !draft?.cursorPoint) return points;
-  const lastPoint = points[points.length - 1];
-  if (lastPoint && pointsAreSame(lastPoint, draft.cursorPoint)) return points;
-  return [...points, draft.cursorPoint];
-}
-
-function distanceAlongPoints(points, closed = false) {
-  if (!Array.isArray(points) || points.length < 2) return 0;
-  const segmentCount = closed && points.length >= 3 ? points.length : points.length - 1;
-  let total = 0;
-  for (let index = 0; index < segmentCount; index += 1) {
-    total += computeDistanceBetweenPoints(points[index], points[(index + 1) % points.length]) || 0;
-  }
-  return total;
-}
-
-function polygonGeometryFromLatLngRing(points) {
-  const ring = stripMeasurementClosingPoint(points).filter((point) => Array.isArray(point) && point.length >= 2);
-  if (ring.length < 3) return null;
-  const coordinates = ring.map(latLngPairToProjected).filter(Boolean);
-  if (coordinates.length < 3) return null;
-  coordinates.push(coordinates[0]);
-  return { type: "Polygon", coordinates: [coordinates] };
-}
-
-function buildMeasurementDraftSummary(draft) {
-  const previewPoints = getMeasurementPreviewPoints(draft);
-  const cleanPoints = draft?.mode === "surface" ? stripMeasurementClosingPoint(previewPoints) : previewPoints;
-  const closeSurface = draft?.mode === "surface" && cleanPoints.length >= 3;
-  const surfaceGeometry = closeSurface ? polygonGeometryFromLatLngRing(cleanPoints) : null;
-  const surface = surfaceGeometry ? geometryAreaM2Projected(surfaceGeometry) : 0;
-  const distance = distanceAlongPoints(cleanPoints, closeSurface);
-
-  return {
-    distanceLabel: formatDistance(distance),
-    surfaceLabel: formatArea(surface),
-    perimeterLabel: closeSurface ? formatDistance(distance) : "—",
-    pointsCount: cleanPoints.length,
-    hasCursorPreview: Boolean(draft?.cursorPoint && !draft?.finished),
-  };
-}
-
-// Centroide simple d un anneau de points latlng (moyenne arithmetique).
-function ringCentroid(ring) {
-  if (!Array.isArray(ring) || !ring.length) return null;
-  let lat = 0;
-  let lng = 0;
-  let n = 0;
-  for (const point of ring) {
-    if (!Array.isArray(point) || point.length < 2) continue;
-    lat += point[0];
-    lng += point[1];
-    n += 1;
-  }
-  if (!n) return null;
-  return [lat / n, lng / n];
-}
-
-/**
- * Decale les side markers de facon constante en pixels
- * quel que soit le zoom.
- */
-
-
-
-// Decalage perpendiculaire vers l exterieur du polygone.
-// Pour avoir un decalage CONSTANT en pixels ecran quel que soit le zoom,
-// on convertit les latlng en pixels via map.project, decale en pixels,
-// puis reconvertit en latlng via map.unproject.
-//
-// Si map n est pas fourni (fallback), on utilise un offset metres tres faible.
-function offsetOutside(midPt, segA, segB, centroid, offsetPixels = 14, map = null) {
-  if (!Array.isArray(midPt) || !Array.isArray(segA) || !Array.isArray(segB)) return midPt;
-
-  // Si on a une instance map, calcul precis en pixels
-  if (map?.project && map?.unproject && map?.getZoom) {
-    try {
-      const zoom = map.getZoom();
-      const midPx = map.project(L.latLng(midPt[0], midPt[1]), zoom);
-      const aPx = map.project(L.latLng(segA[0], segA[1]), zoom);
-      const bPx = map.project(L.latLng(segB[0], segB[1]), zoom);
-
-      // Vecteur segment en pixels
-      const dx = bPx.x - aPx.x;
-      const dy = bPx.y - aPx.y;
-
-      // Perpendiculaire
-      let nx = -dy;
-      let ny = dx;
-      const norm = Math.hypot(nx, ny);
-      if (norm === 0) return midPt;
-      nx /= norm;
-      ny /= norm;
-
-      // Determiner exterieur via centroide en pixels
-      if (centroid) {
-        const cPx = map.project(L.latLng(centroid[0], centroid[1]), zoom);
-        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
-        if (dot > 0) {
-          nx = -nx;
-          ny = -ny;
-        }
-      }
-
-      const offsetPx = L.point(midPx.x + nx * offsetPixels, midPx.y + ny * offsetPixels);
-      const offsetLatLng = map.unproject(offsetPx, zoom);
-      return [offsetLatLng.lat, offsetLatLng.lng];
-    } catch (err) {
-      // En cas d echec, fallback metres
-    }
-  }
-
-  // Fallback : offset en metres (utilise quand map n est pas dispo)
-  const dx = segB[1] - segA[1];
-  const dy = segB[0] - segA[0];
-  let nx = -dy;
-  let ny = dx;
-  const norm = Math.hypot(nx, ny);
-  if (norm === 0) return midPt;
-  nx /= norm;
-  ny /= norm;
-
-  if (centroid) {
-    const dot = nx * (centroid[1] - midPt[1]) + ny * (centroid[0] - midPt[0]);
-    if (dot > 0) {
-      nx = -nx;
-      ny = -ny;
-    }
-  }
-
-  // Le parametre `offsetPixels` est utilise comme valeur en METRES en mode fallback.
-  // L appelant fournit donc directement la distance en metres souhaitee.
-  const offsetMeters = Math.max(0.3, offsetPixels);
-  const latRad = (midPt[0] * Math.PI) / 180;
-  const metersPerDegLng = 111320 * Math.cos(latRad);
-  const metersPerDegLat = 111320;
-  return [
-    midPt[0] + (ny * offsetMeters) / metersPerDegLat,
-    midPt[1] + (nx * offsetMeters) / metersPerDegLng,
-  ];
-}
-
-function isMobileCartographyViewportSafe() {
-  try {
-    return typeof isMobileCartographyViewport === "function" ? isMobileCartographyViewport() : false;
-  } catch {
-    return false;
-  }
-}
-
-function getSideMarkerPixelOptions(map, isMobileOverride = null) {
-  const zoom = typeof map?.getZoom === "function" ? map.getZoom() : 18;
-  const mobile = typeof isMobileOverride === "boolean" ? isMobileOverride : isMobileCartographyViewportSafe();
-
-  return {
-    zoom,
-    // Offset volontairement identique desktop/mobile : les dimensions restent
-    // à distance constante de la géométrie, seuls les seuils de lisibilité changent.
-    offsetPixels: 20,
-    minSegmentPixels: mobile ? 22 : 18,
-    minZoom: mobile ? 14 : 13,
-  };
-}
-
-function repositionSideMarkersOutsideInPixels(markers, map, pixels, viewportOptions = {}) {
-  if (!Array.isArray(markers) || markers.length === 0) return [];
-
-  if (
-    !map ||
-    typeof map.latLngToLayerPoint !== "function" ||
-    typeof map.layerPointToLatLng !== "function" ||
-    typeof map.getZoom !== "function"
-  ) {
-    return markers.map((marker) => ({ ...marker, visible: true }));
-  }
-
-  const options = getSideMarkerPixelOptions(map, viewportOptions.isMobile);
-  const offsetPixels = Number.isFinite(pixels) ? pixels : options.offsetPixels;
-
-  return markers.map((marker) => {
-    if (!marker?.midPoint || !marker?.segA || !marker?.segB) {
-      return { ...marker, visible: false };
-    }
-
-    try {
-      const midPx = map.latLngToLayerPoint(L.latLng(marker.midPoint[0], marker.midPoint[1]));
-      const aPx = map.latLngToLayerPoint(L.latLng(marker.segA[0], marker.segA[1]));
-      const bPx = map.latLngToLayerPoint(L.latLng(marker.segB[0], marker.segB[1]));
-
-      const dx = bPx.x - aPx.x;
-      const dy = bPx.y - aPx.y;
-      const segmentPixels = Math.hypot(dx, dy);
-
-      let nx = -dy;
-      let ny = dx;
-
-      const norm = Math.hypot(nx, ny);
-      if (!norm) return { ...marker, visible: false };
-
-      nx /= norm;
-      ny /= norm;
-
-      if (marker.ringCentroid) {
-        const cPx = map.latLngToLayerPoint(L.latLng(marker.ringCentroid[0], marker.ringCentroid[1]));
-        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
-        if (dot > 0) {
-          nx = -nx;
-          ny = -ny;
-        }
-      }
-
-      const labelPx = L.point(midPx.x + nx * offsetPixels, midPx.y + ny * offsetPixels);
-      const labelLatLng = map.layerPointToLatLng(labelPx);
-
-      return {
-        ...marker,
-        point: [labelLatLng.lat, labelLatLng.lng],
-        segmentPixels,
-        visible: options.zoom >= options.minZoom && segmentPixels >= options.minSegmentPixels,
-      };
-    } catch {
-      return { ...marker, visible: false };
-    }
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
-  const markers = [];
-  (Array.isArray(rings) ? rings : []).forEach((ring, ringIndex) => {
-    const cleanRing = stripMeasurementClosingPoint(ring).filter((point) => Array.isArray(point) && point.length >= 2);
-    if (cleanRing.length < 2) return;
-    const segmentCount = closed && cleanRing.length >= 3 ? cleanRing.length : cleanRing.length - 1;
-    // Centroide du polygone pour determiner l exterieur (seulement si ferme)
-    const centroid = closed && cleanRing.length >= 3 ? ringCentroid(cleanRing) : null;
-    for (let index = 0; index < segmentCount; index += 1) {
-      const point = cleanRing[index];
-      const nextPoint = cleanRing[(index + 1) % cleanRing.length];
-      const distance = computeDistanceBetweenPoints(point, nextPoint);
-      if (!Number.isFinite(distance) || distance <= 0) continue;
-      const mid = midpoint(point, nextPoint);
-      const segA = point;
-      const segB = nextPoint;
-      markers.push({
-        id: `${tone}-side-${ringIndex}-${index}`,
-        point: mid,
-        midPoint: mid,
-        segA,
-        segB,
-        ringCentroid: centroid,
-        label: formatDistance(distance),
-        tone,
-        angle: segmentAngleCss(segA, segB),
-      });
-    }
-  });
-  return markers;
-}
-
-function buildGeometryMeasurementOverlay(geometry, tone = "default") {
-  const rings = geometryToRings(geometry);
-  const sideMarkers = buildSideMarkersFromRings(rings, tone, true);
-  const area = geometryAreaM2Projected(geometry);
-  const perimeter = rings.reduce((total, ring) => total + distanceAlongPoints(stripMeasurementClosingPoint(ring), true), 0);
-  const center = geometryCentroid(geometry) || rings[0]?.[0] || null;
-
-  return {
-    sideMarkers,
-    areaMarker: center && (area > 0 || perimeter > 0)
-      ? {
-          id: `${tone}-area`,
-          point: center,
-          label: formatArea(area),
-          subtitle: perimeter > 0 ? `Périmètre ${formatDistance(perimeter)}` : "Surface",
-          tone,
-        }
-      : null,
-  };
-}
-
-function buildMeasurementDraftOverlay(draft) {
-  const previewPoints = getMeasurementPreviewPoints(draft);
-  const cleanPoints = draft?.mode === "surface" ? stripMeasurementClosingPoint(previewPoints) : previewPoints;
-  const isSurface = draft?.mode === "surface" && cleanPoints.length >= 3;
-  const geometry = isSurface ? polygonGeometryFromLatLngRing(cleanPoints) : null;
-  const sideMarkers = buildSideMarkersFromRings([cleanPoints], "measure", isSurface);
-  const overlay = geometry ? buildGeometryMeasurementOverlay(geometry, "measure") : { sideMarkers: [], areaMarker: null };
-
-  return {
-    sideMarkers,
-    areaMarker: overlay.areaMarker,
-  };
-}
-
-function toLayerPoint(map, point) {
-  if (!map || !Array.isArray(point)) return null;
-  return map.latLngToLayerPoint(L.latLng(point[0], point[1]));
-}
-
-function pixelDistance(a, b) {
-  if (!a || !b) return Infinity;
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function closestPointOnSegment(target, start, end) {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const lengthSquared = dx * dx + dy * dy;
-  if (!lengthSquared) return { point: start, ratio: 0, distance: pixelDistance(target, start) };
-  const ratio = Math.max(0, Math.min(1, ((target.x - start.x) * dx + (target.y - start.y) * dy) / lengthSquared));
-  const point = L.point(start.x + ratio * dx, start.y + ratio * dy);
-  return { point, ratio, distance: pixelDistance(target, point) };
-}
-
-function findNearestMeasurementSnap(map, point, features = [], measurementPoints = [], options = {}) {
-  const fallback = { point, snapped: false, kind: null };
-  if (!map || !Array.isArray(point) || point.length < 2) return fallback;
-  const tolerance = Number(options.tolerancePx || SNAP_TOLERANCE_PX);
-  const target = toLayerPoint(map, point);
-  if (!target) return fallback;
-
-  let best = { distance: Infinity, point, kind: null };
-  const candidateRings = [];
-
-  (Array.isArray(features) ? features : []).forEach((feature) => {
-    (feature?.rings || []).forEach((ring) => candidateRings.push(stripMeasurementClosingPoint(ring)));
-  });
-  if (Array.isArray(measurementPoints) && measurementPoints.length) {
-    candidateRings.push(stripMeasurementClosingPoint(measurementPoints));
-  }
-
-  candidateRings.forEach((ring) => {
-    const cleanRing = (Array.isArray(ring) ? ring : []).filter((candidate) => Array.isArray(candidate) && candidate.length >= 2);
-    cleanRing.forEach((candidate) => {
-      const distance = pixelDistance(target, toLayerPoint(map, candidate));
-      if (distance < best.distance) best = { distance, point: candidate, kind: "vertex" };
-    });
-
-    if (cleanRing.length < 2) return;
-    const segmentCount = cleanRing.length >= 3 ? cleanRing.length : cleanRing.length - 1;
-    for (let index = 0; index < segmentCount; index += 1) {
-      const start = toLayerPoint(map, cleanRing[index]);
-      const end = toLayerPoint(map, cleanRing[(index + 1) % cleanRing.length]);
-      if (!start || !end) continue;
-      const closest = closestPointOnSegment(target, start, end);
-      if (closest.distance < best.distance) {
-        const latlng = map.layerPointToLatLng(closest.point);
-        best = { distance: closest.distance, point: [latlng.lat, latlng.lng], kind: "segment" };
-      }
-    }
-  });
-
-  return best.distance <= tolerance ? { point: best.point, snapped: true, kind: best.kind } : fallback;
 }
 
 function getEditableRings(layer) {
@@ -844,8 +464,8 @@ function MapControlStack({ map, locationEnabled, onToggleLocation, onLocationErr
   return (
     <div {...overlayEventProps} className="mapgeo-map-control-stack mapgeo-export-hidden mapgeo-popover-enter absolute right-3 top-[112px] z-[920] overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/80 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-xl sm:left-5 sm:right-auto sm:top-1/2 sm:-translate-y-1/2">
       <button type="button" disabled={disabled} onClick={() => map?.zoomIn(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom avant" aria-label="Zoom avant"><Plus size={20} /></button>
-      <button type="button" disabled={disabled} onClick={() => map?.zoomOut(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom arrière" aria-label="Zoom arrière"><Minus size={20} /></button>
-      <button type="button" disabled={disabled} onClick={locateUser} className={`${locationButtonClass} mapgeo-location-button`} title={locationEnabled ? "Désactiver la localisation" : "Me localiser"} aria-label={locationEnabled ? "Désactiver la localisation" : "Me localiser"}><LocateFixed size={19} /></button>
+      <button type="button" disabled={disabled} onClick={() => map?.zoomOut(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom arriÃ¨re" aria-label="Zoom arriÃ¨re"><Minus size={20} /></button>
+      <button type="button" disabled={disabled} onClick={locateUser} className={`${locationButtonClass} mapgeo-location-button`} title={locationEnabled ? "DÃ©sactiver la localisation" : "Me localiser"} aria-label={locationEnabled ? "DÃ©sactiver la localisation" : "Me localiser"}><LocateFixed size={19} /></button>
     </div>
   );
 }
@@ -856,9 +476,9 @@ function formatActiveMapFilters(filters = {}) {
   if (filters.owner_client_code) labels.push(`client ${filters.owner_client_code}`);
   if (filters.status) labels.push(`statut ${filters.status}`);
   if (filters.commune) labels.push(`commune ${filters.commune}`);
-  if (filters.period) labels.push(`période ${filters.period}`);
+  if (filters.period) labels.push(`pÃ©riode ${filters.period}`);
   if (filters.q) labels.push(`recherche ${filters.q}`);
-  return labels.join(" · ");
+  return labels.join(" Â· ");
 }
 
 function ViewportSampleNotice({ summary }) {
@@ -872,7 +492,7 @@ function ViewportSampleNotice({ summary }) {
 
   return (
     <div className="mapgeo-viewport-notice mapgeo-export-hidden absolute left-1/2 top-3 z-[925] max-w-[min(720px,calc(100%-1.5rem))] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#07111b]/78 px-3 py-2 text-xs font-semibold leading-5 text-white/78 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-      Carte : emprise courante · {loaded.toLocaleString("fr-FR")} affichée{loaded > 1 ? "s" : ""}{Number.isFinite(total) && total !== loaded ? ` / ${total.toLocaleString("fr-FR")}` : ""}.
+      Carte : emprise courante Â· {loaded.toLocaleString("fr-FR")} affichÃ©e{loaded > 1 ? "s" : ""}{Number.isFinite(total) && total !== loaded ? ` / ${total.toLocaleString("fr-FR")}` : ""}.
       {hasLimit ? ` Limite ${limit.toLocaleString("fr-FR")} atteinte : zoomez ou filtrez pour affiner.` : ""}
       {filtersLabel ? ` Filtres actifs : ${filtersLabel}.` : ""}
     </div>
@@ -887,7 +507,7 @@ function formatCoordinateSystemLabel(coordinateSystem) {
 }
 
 function formatCursorPosition(cursorPosition, coordinateSystem) {
-  if (!cursorPosition) return { xLabel: "—", yLabel: "—" };
+  if (!cursorPosition) return { xLabel: "â€”", yLabel: "â€”" };
   const [lat, lng] = cursorPosition;
 
   if (coordinateSystem === SENEGAL_PROJECTED_CRS) {
@@ -898,7 +518,7 @@ function formatCursorPosition(cursorPosition, coordinateSystem) {
         yLabel: `${Math.round(y).toLocaleString("fr-FR")} m N`,
       };
     } catch {
-      return { xLabel: "—", yLabel: "—" };
+      return { xLabel: "â€”", yLabel: "â€”" };
     }
   }
 
@@ -910,13 +530,13 @@ function formatCursorPosition(cursorPosition, coordinateSystem) {
         yLabel: `${Math.round(y).toLocaleString("fr-FR")} m`,
       };
     } catch {
-      return { xLabel: "—", yLabel: "—" };
+      return { xLabel: "â€”", yLabel: "â€”" };
     }
   }
 
   return {
-    xLabel: `${formatCoordinate(lng)}°`,
-    yLabel: `${formatCoordinate(lat)}°`,
+    xLabel: `${formatCoordinate(lng)}Â°`,
+    yLabel: `${formatCoordinate(lat)}Â°`,
   };
 }
 
@@ -973,7 +593,7 @@ function MapStatusBar({ cursorPosition, coordinateSystem, features }) {
 
             <span className="inline-flex min-w-[13.5rem] shrink-0 items-center gap-2 whitespace-nowrap font-mono tabular-nums text-white/90">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-mapgeo-sand/90 shadow-soft" />
-              Synchronisé : {syncDate}
+              SynchronisÃ© : {syncDate}
             </span>
           </>
         ) : null}
@@ -1019,7 +639,7 @@ function NorthArrow({ bearing = 0, onReset = null }) {
       </svg>
       {Math.abs(normalizedBearing) > 0.5 ? (
         <span className="mt-0.5 text-[9px] font-black tabular-nums text-white/55">
-          {Math.round(normalizedBearing)}°
+          {Math.round(normalizedBearing)}Â°
         </span>
       ) : null}
     </button>
@@ -1035,8 +655,8 @@ function buildMeasurementSummary(activeFeature) {
   if (!activeFeature?.rings?.length) return null;
   const vertexCount = activeFeature.rings.reduce((total, ring) => total + ring.length, 0);
   return {
-    perimeter: activeFeature.perimeterLabel || "—",
-    area: activeFeature.areaLabel || "—",
+    perimeter: activeFeature.perimeterLabel || "â€”",
+    area: activeFeature.areaLabel || "â€”",
     vertexCount,
     sideCount: vertexCount,
   };
@@ -1597,7 +1217,7 @@ function PortfolioCreateParcelPreviewSigLayer({ rings }) {
         }),
 
         onEachFeature: (_, leafletLayer) => {
-          leafletLayer.bindTooltip("Aperçu nouvelle parcelle", {
+          leafletLayer.bindTooltip("AperÃ§u nouvelle parcelle", {
             direction: "top",
             offset: [0, -6],
             opacity: 0.96,
@@ -1863,12 +1483,12 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       layer.options.bubblingMouseEvents = false;
       layer.setStyle?.({ ...INLINE_EDIT_STYLE, renderer: editRenderer });
 
-      // Geoman doit réinitialiser la couche après modification de pmIgnore/pane.
-      // Sans cela, les sommets peuvent être visibles mais non déplaçables.
+      // Geoman doit rÃ©initialiser la couche aprÃ¨s modification de pmIgnore/pane.
+      // Sans cela, les sommets peuvent Ãªtre visibles mais non dÃ©plaÃ§ables.
       try {
         L.PM?.reInitLayer?.(layer);
       } catch (error) {
-        console.warn("Impossible de réinitialiser la couche Geoman.", error);
+        console.warn("Impossible de rÃ©initialiser la couche Geoman.", error);
       }
 
       layer.pm?.enable?.(editOptions);
@@ -1890,7 +1510,7 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       layer.__mapgeoDeleteVertexHandler = deleteVertexHandler;
       layer.on("dblclick", addVertexHandler);
       // Suppression de sommet via clic droit / appui contextuel uniquement.
-      // On évite un handler click sur la couche, qui peut intercepter le drag des sommets Geoman.
+      // On Ã©vite un handler click sur la couche, qui peut intercepter le drag des sommets Geoman.
       layer.on("contextmenu", deleteVertexHandler);
       layer.on(INLINE_EDIT_EVENTS, scheduleSync);
     };
@@ -1939,9 +1559,9 @@ function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryCha
       hintlineStyle: { color: "#2563eb", dashArray: "6 6", weight: 2, pane: MAP_PANES.edit },
       pathOptions: INLINE_EDIT_STYLE,
     });
-    // La barre d’outils native Geoman crée un petit panneau flottant à droite
-    // et peut se dupliquer visuellement avec les contrôles MapGeo. Les outils
-    // d’édition restent pilotés par la couche et le panneau compact maison.
+    // La barre dâ€™outils native Geoman crÃ©e un petit panneau flottant Ã  droite
+    // et peut se dupliquer visuellement avec les contrÃ´les MapGeo. Les outils
+    // dâ€™Ã©dition restent pilotÃ©s par la couche et le panneau compact maison.
     map.pm?.removeControls?.();
 
     const doubleClickZoomWasEnabled = map.doubleClickZoom?.enabled?.() ?? false;
@@ -2057,24 +1677,24 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
   return (
     <DraggableMapPanel
       className="mapgeo-mobile-tool-panel mapgeo-geometry-panel mapgeo-export-hidden mapgeo-panel-enter pointer-events-auto absolute bottom-3 left-3 right-3 top-auto z-[950] max-h-[55%] overflow-y-auto rounded-[20px] border border-white/10 bg-[#07111b]/94 p-3 text-white shadow-[0_24px_72px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:left-4 sm:right-auto sm:top-[92px] sm:bottom-auto sm:max-h-[calc(100%-260px)] sm:w-[320px] sm:max-w-[calc(100%-2rem)]"
-      ariaLabel="Déplacer le panneau d’édition"
+      ariaLabel="DÃ©placer le panneau dâ€™Ã©dition"
     >
       {({ dragHandleProps, resetPosition }) => (
         <>
           <PanelMoveHandle dragHandleProps={dragHandleProps} onReset={resetPosition} />
           <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-mapgeo-sand/60">Édition active</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-mapgeo-sand/60">Ã‰dition active</p>
           <h3 className="mt-1 truncate text-base font-extrabold">{form.reference || activeFeature.parcel?.reference || "Parcelle"}</h3>
         </div>
-        <button type="button" onClick={onClose} disabled={saving} className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-45" title="Fermer l’édition">
+        <button type="button" onClick={onClose} disabled={saving} className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-45" title="Fermer lâ€™Ã©dition">
           <X size={17} />
         </button>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
-        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Surface</span><strong className="text-sm">{area ? formatArea(area) : "—"}</strong></div>
-        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Périmètre</span><strong className="text-sm">{perimeter ? formatDistance(perimeter) : "—"}</strong></div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Surface</span><strong className="text-sm">{area ? formatArea(area) : "â€”"}</strong></div>
+        <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">PÃ©rimÃ¨tre</span><strong className="text-sm">{perimeter ? formatDistance(perimeter) : "â€”"}</strong></div>
         <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Anneaux</span><strong className="text-sm">{rings.length}</strong></div>
         <div className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2"><span className="block text-white/40">Sommets</span><strong className="text-sm">{vertexCount}</strong></div>
       </div>
@@ -2085,7 +1705,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
           onClick={onUndo}
           disabled={!canUndo || saving}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2.5 text-xs font-extrabold text-white/75 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
-          title="Revenir à l’étape précédente (Ctrl/Cmd + Z)"
+          title="Revenir Ã  lâ€™Ã©tape prÃ©cÃ©dente (Ctrl/Cmd + Z)"
         >
           <Undo2 size={15} /> Retour
         </button>
@@ -2094,7 +1714,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
           onClick={onRedo}
           disabled={!canRedo || saving}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2.5 text-xs font-extrabold text-white/75 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
-          title="Rétablir l’étape suivante (Ctrl/Cmd + Y)"
+          title="RÃ©tablir lâ€™Ã©tape suivante (Ctrl/Cmd + Y)"
         >
           <Redo2 size={15} /> Refaire
         </button>
@@ -2102,7 +1722,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
 
       {validationResult?.issues?.length ? (
         <div className={`mt-3 rounded-2xl border px-3 py-2 text-[11px] font-semibold leading-5 ${validationResult.status === "blocking" ? "border-mapgeo-sand/40 bg-mapgeo-sand/15 text-mapgeo-ivory" : validationResult.status === "warning" ? "border-mapgeo-sand/35 bg-mapgeo-sand/15 text-mapgeo-ivory" : "border-mapgeo-sand/35 bg-mapgeo-sand/15 text-mapgeo-ivory"}`}>
-          <p className="mb-1 font-black uppercase tracking-[0.14em]">Contrôle géométrique</p>
+          <p className="mb-1 font-black uppercase tracking-[0.14em]">ContrÃ´le gÃ©omÃ©trique</p>
           <ul className="list-disc space-y-1 pl-4">
             {validationResult.issues.slice(0, 3).map((entry) => (
               <li key={`${entry.level}-${entry.code}`}>{entry.message}</li>
@@ -2112,11 +1732,11 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
       ) : null}
 
       <div className="mt-3 rounded-2xl border border-mapgeo-sand/30 bg-mapgeo-sand/10 px-3 py-2 text-[11px] font-semibold leading-4 text-mapgeo-ivory/85">
-        Édition géométrique uniquement : déplacer les sommets, double-cliquer sur un segment pour en ajouter un, puis enregistrer.
+        Ã‰dition gÃ©omÃ©trique uniquement : dÃ©placer les sommets, double-cliquer sur un segment pour en ajouter un, puis enregistrer.
       </div>
 
-      <label className="mt-3 block text-[11px] font-bold text-white/60">Motif de modification géométrique
-        <textarea value={form.geometry_change_reason} onChange={(event) => update("geometry_change_reason", event.target.value)} rows={2} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" placeholder="Ex. Correction terrain, import SIG vérifié, ajustement sommet…" />
+      <label className="mt-3 block text-[11px] font-bold text-white/60">Motif de modification gÃ©omÃ©trique
+        <textarea value={form.geometry_change_reason} onChange={(event) => update("geometry_change_reason", event.target.value)} rows={2} className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.065] px-3 py-2 text-sm font-semibold text-white outline-none focus:border-mapgeo-sand/60" placeholder="Ex. Correction terrain, import SIG vÃ©rifiÃ©, ajustement sommetâ€¦" />
       </label>
 
       <div className="mt-3 grid gap-2">
@@ -2135,7 +1755,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
         </button>
         {deleteVertexMode ? (
           <div className="rounded-2xl border border-mapgeo-sand/35 bg-mapgeo-sand/15 px-3 py-2 text-[11px] font-semibold leading-4 text-mapgeo-ivory/80">
-            Cliquez sur un sommet pour le supprimer. Sur ordinateur, tu peux aussi survoler un sommet puis appuyer sur Suppr ou Retour arrière. Minimum 3 sommets.
+            Cliquez sur un sommet pour le supprimer. Sur ordinateur, tu peux aussi survoler un sommet puis appuyer sur Suppr ou Retour arriÃ¨re. Minimum 3 sommets.
           </div>
         ) : null}
       </div>
@@ -2147,7 +1767,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
             onClick={onDeleteParcel}
             disabled={saving}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-mapgeo-sand/40 bg-mapgeo-sand/15 px-3 py-2.5 text-xs font-extrabold text-mapgeo-ivory transition hover:bg-mapgeo-sand/20 disabled:cursor-not-allowed disabled:opacity-45"
-            title="Archiver cette parcelle sans supprimer ses données"
+            title="Archiver cette parcelle sans supprimer ses donnÃ©es"
           >
             <Trash2 size={15} /> Archiver la parcelle
           </button>
@@ -2158,7 +1778,7 @@ function InlineParcelEditPanel({ activeFeature, form, setForm, geometry, saving,
 
       <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
         <button type="button" onClick={onSave} disabled={saving || !rings.length} className="inline-flex items-center justify-center gap-2 rounded-xl bg-mapgeo-primary px-3 py-2.5 text-sm font-extrabold text-white transition hover:bg-mapgeo-sand disabled:cursor-not-allowed disabled:opacity-55">
-          <Save size={15} /> {saving ? "Enregistrement…" : "Enregistrer"}
+          <Save size={15} /> {saving ? "Enregistrementâ€¦" : "Enregistrer"}
         </button>
         <button type="button" onClick={onClose} disabled={saving} className="rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-white/70 transition hover:bg-white/10 disabled:opacity-55">
           Annuler
@@ -2460,7 +2080,7 @@ export default function PortfolioMapShell({
     }
 
     // On force l inclusion de la parcelle active meme si elle n est pas
-    // dans le viewport actuel (utilisateur a dezoomée fortement).
+    // dans le viewport actuel (utilisateur a dezoomÃ©e fortement).
     // Sans ca, le badge disparait et l utilisateur perd la parcelle de vue.
     if (activeFeature && isValidFeature(activeFeature)) {
       const alreadyPresent = withGeometry.some(
@@ -2597,7 +2217,7 @@ export default function PortfolioMapShell({
   const resolveMeasurementPoint = useCallback((point, options = {}) => {
     const draftPoints = options.measurementPoints || measurementDraft.points || [];
     const measurementPoints = draftPoints.filter((_, index) => index !== draftPoints.length - 1);
-    // Inclut la parcelle active même si elle n'est pas dans displayedFeatures (viewport hors écran)
+    // Inclut la parcelle active mÃªme si elle n'est pas dans displayedFeatures (viewport hors Ã©cran)
     const snapFeatures = activeFeature
       ? [activeFeature, ...displayedFeatures.filter((f) => f.id !== activeFeature.id)]
       : displayedFeatures;
@@ -2781,8 +2401,8 @@ export default function PortfolioMapShell({
     return;
   }
 
-  // Double-clic = sélection uniquement.
-  // L'édition géométrique doit s'ouvrir uniquement via le bouton dédié.
+  // Double-clic = sÃ©lection uniquement.
+  // L'Ã©dition gÃ©omÃ©trique doit s'ouvrir uniquement via le bouton dÃ©diÃ©.
   onFeatureSelection(feature);
 }, [clearPendingMeasurementClick, inlineEditOpen, onFeatureSelection, showMeasurements]);
 
@@ -2857,15 +2477,15 @@ export default function PortfolioMapShell({
       setEditGeometry(normalized);
     }
     if (!normalized) {
-      setEditMessage("La géométrie doit contenir au moins un polygone valide avant l’enregistrement.");
+      setEditMessage("La gÃ©omÃ©trie doit contenir au moins un polygone valide avant lâ€™enregistrement.");
       return;
     }
-    const geometryChangeReason = editForm.geometry_change_reason?.trim() || "Correction cartographique depuis l’interface admin";
+    const geometryChangeReason = editForm.geometry_change_reason?.trim() || "Correction cartographique depuis lâ€™interface admin";
 
     const validation = validateParcelGeometry(normalized, activeFeature.parcel || {});
     const blockingIssues = validation.issues?.filter((entry) => entry.level === "blocking") || [];
     if (blockingIssues.length) {
-      setEditMessage(`Enregistrement bloqué : ${blockingIssues.slice(0, 2).map((entry) => entry.message).join(" ")}`);
+      setEditMessage(`Enregistrement bloquÃ© : ${blockingIssues.slice(0, 2).map((entry) => entry.message).join(" ")}`);
       return;
     }
 
@@ -2888,7 +2508,7 @@ export default function PortfolioMapShell({
       setEditHistoryIndex(-1);
       editHistoryIndexRef.current = -1;
     } catch (error) {
-      setEditMessage(error?.response?.data?.detail || error?.message || "Impossible d’enregistrer les modifications de la parcelle.");
+      setEditMessage(error?.response?.data?.detail || error?.message || "Impossible dâ€™enregistrer les modifications de la parcelle.");
     } finally {
       setEditSaving(false);
     }
@@ -2916,7 +2536,7 @@ export default function PortfolioMapShell({
     const reference = editForm.reference || activeFeature.parcel?.reference || "cette parcelle";
     setConfirmConfig({
       title: "Archiver cette parcelle ?",
-      message: `La parcelle « ${reference} » disparaîtra des listes actives, mais ses géométries, documents et historiques seront conservés.`,
+      message: `La parcelle Â« ${reference} Â» disparaÃ®tra des listes actives, mais ses gÃ©omÃ©tries, documents et historiques seront conservÃ©s.`,
       confirmLabel: "Archiver",
       onConfirm: () => {
         setConfirmConfig(null);
@@ -2945,7 +2565,7 @@ export default function PortfolioMapShell({
               }
 
               if (showMeasurements) {
-                // Mobile : le toucher écran ne doit ni créer, ni déplacer, ni prévisualiser un point.
+                // Mobile : le toucher Ã©cran ne doit ni crÃ©er, ni dÃ©placer, ni prÃ©visualiser un point.
                 if (isMobileCartography) return;
 
                 if (!point) {
@@ -3259,7 +2879,7 @@ export default function PortfolioMapShell({
             onDoubleClick={(event) => event.stopPropagation()}
           >
             <p className="text-[11px] font-bold leading-4 text-white/65">
-              Place les sommets sur la carte. Double-tape, Entrée ou Terminer pour valider.
+              Place les sommets sur la carte. Double-tape, EntrÃ©e ou Terminer pour valider.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
@@ -3347,3 +2967,4 @@ export default function PortfolioMapShell({
     </section>
   );
 }
+
