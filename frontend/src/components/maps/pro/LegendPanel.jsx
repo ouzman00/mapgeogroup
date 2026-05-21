@@ -67,7 +67,7 @@ function LegendImage({ item, muted = false, compact = true }) {
         }
       })
       .catch((error) => {
-        console.warn("Impossible de charger la lÃƒÂ©gende WMS publiÃƒÂ©e par le serveur.", error);
+        console.warn("Impossible de charger la lÃƒÆ’Ã‚Â©gende WMS publiÃƒÆ’Ã‚Â©e par le serveur.", error);
 
         if (active) {
           setSrc("");
@@ -87,14 +87,14 @@ function LegendImage({ item, muted = false, compact = true }) {
     if (compact) {
       return (
         <span className={`inline-flex max-w-[140px] shrink-0 overflow-hidden rounded bg-white/95 p-1 shadow-sm ${muted ? "opacity-40" : "opacity-100"}`}>
-          <img src={src} alt={item?.label || "LÃƒÂ©gende WMS"} className="max-h-8 max-w-[76px] object-contain" loading="lazy" />
+          <img src={src} alt={item?.label || "LÃƒÆ’Ã‚Â©gende WMS"} className="max-h-6 max-w-[64px] object-contain" loading="lazy" />
         </span>
       );
     }
 
     return (
       <span className={`block w-full overflow-auto rounded-lg border border-white/15 bg-white p-2 shadow-inner ${muted ? "opacity-50" : "opacity-100"}`}>
-        <img src={src} alt={item?.label || "LÃƒÂ©gende WMS"} className="block h-auto max-h-16 max-w-full object-contain" loading="lazy" />
+        <img src={src} alt={item?.label || "LÃƒÆ’Ã‚Â©gende WMS"} className="block h-auto max-h-10 max-w-full object-contain" loading="lazy" />
       </span>
     );
   }
@@ -207,19 +207,19 @@ function layerStatus(layer = {}) {
   if (layer?.available === false || !isReady(layer)) {
     return {
       tone: "disabled",
-      label: layer.displayMessage || layer.display_message || "Couche non prÃƒÂªte ou non compatible",
+      label: layer.displayMessage || layer.display_message || "Couche non prÃƒÆ’Ã‚Âªte ou non compatible",
     };
   }
 
-  if (!visible) return { tone: "muted", label: "MasquÃƒÂ©e sur cette carte Ã¢â‚¬â€ cliquez pour rÃƒÂ©activer" };
+  if (!visible) return { tone: "muted", label: "MasquÃƒÆ’Ã‚Â©e sur cette carte ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cliquez pour rÃƒÆ’Ã‚Â©activer" };
   if (layer?.error) return { tone: "error", label: layer.error };
-  if (layer?.loading) return { tone: "loading", label: "PrÃƒÂ©parationÃ¢â‚¬Â¦" };
+  if (layer?.loading) return { tone: "loading", label: "PrÃƒÆ’Ã‚Â©parationÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" };
   if (layer?.zoomVisible === false) return { tone: "warning", label: "Active, mais hors niveau de zoom" };
 
   if (Number.isFinite(Number(layer?.featureCount))) {
     return {
       tone: "ok",
-      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargÃƒÂ©${Number(layer.featureCount) > 1 ? "s" : ""}`,
+      label: `${Number(layer.featureCount).toLocaleString("fr-FR")} objet${Number(layer.featureCount) > 1 ? "s" : ""} chargÃƒÆ’Ã‚Â©${Number(layer.featureCount) > 1 ? "s" : ""}`,
     };
   }
 
@@ -255,7 +255,7 @@ function legendItems(layer, features = []) {
       ? publishedLegend
       : [
           {
-            label: layer?.name || "LÃƒÂ©gende WMS",
+            label: layer?.name || "LÃƒÆ’Ã‚Â©gende WMS",
             symbol: "wms-legend",
             imageEndpoint: layer?.sourceLayerId ? `/map-layers/${layer.sourceLayerId}/legend/` : "",
           },
@@ -276,7 +276,7 @@ function legendItems(layer, features = []) {
 
   return [
     {
-      label: layer?.name || "Ãƒâ€°lÃƒÂ©ment cartographique",
+      label: layer?.name || "ÃƒÆ’Ã¢â‚¬Â°lÃƒÆ’Ã‚Â©ment cartographique",
       symbol: isTileLike ? "image" : geometryType === "line" ? "line" : geometryType === "point" ? "point" : "polygon",
       color: layer?.color || style.strokeColor || style.color || "#FBBF24",
       strokeColor: layer?.color || style.strokeColor || style.color || "#FBBF24",
@@ -323,7 +323,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
             type="button"
             onClick={handleToggle}
             disabled={unavailable}
-            className={`grid h-4 w-4 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
+            className={`grid h-3.5 w-3.5 shrink-0 place-items-center rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-mapgeo-sand/30 disabled:cursor-not-allowed ${
               visible && !unavailable
                 ? "border-mapgeo-sand/40 bg-mapgeo-primary/70 text-white shadow-soft"
                 : "border-white/20 bg-white/[0.035] text-transparent hover:border-white/30 hover:bg-white/[0.065]"
@@ -332,16 +332,16 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
             aria-label={visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
             title={unavailable ? `${layerLabel} indisponible` : visible ? `Masquer ${layerLabel}` : `Afficher ${layerLabel}`}
           >
-            {visible && !unavailable ? <Check size={12} strokeWidth={3} /> : null}
+            {visible && !unavailable ? <Check size={10} strokeWidth={3} /> : null}
           </button>
 
           <span className="min-w-0">
-            <span className={`block truncate text-[9px] font-extrabold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
+            <span className={`block truncate text-[8px] font-bold ${visible && !unavailable ? "text-white" : "text-white/45"}`}>
               {layerLabel}
             </span>
 
             <span
-              className={`mt-0.5 flex items-center gap-1.5 text-[9px] font-bold ${
+              className={`mt-0.5 flex items-center gap-1.5 text-[8px] font-bold ${
                 status.tone === "error"
                   ? "text-red-200"
                   : status.tone === "warning"
@@ -364,7 +364,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
       </div>
 
       {showItemDetails ? (
-        <div className={`mt-1 max-h-20 space-y-0.5 overflow-y-auto border-t border-white/10 pt-2 ${isParcelsLayer ? "mapgeo-parcel-sublegend" : ""}`}>
+        <div className={`mt-1 max-h-12 space-y-0.5 overflow-y-auto border-t border-white/10 pt-2 ${isParcelsLayer ? "mapgeo-parcel-sublegend" : ""}`}>
           {items.map((item) => {
             const isImageLegend = isLegendImageItem(item);
             const itemKey = `${layer.id}-${item.id || item.label || item.url || item.imageUrl || item.imageEndpoint || "legend"}`;
@@ -372,8 +372,8 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
             if (isImageLegend) {
               return (
                 <div key={itemKey} className="rounded-lg border border-white/10 bg-black/10 p-2">
-                  <div className="mb-1.5 truncate text-[12px] font-extrabold text-white/75">
-                    {item.label || "LÃƒÂ©gende publiÃƒÂ©e par le serveur WMS"}
+                  <div className="mb-1.5 truncate text-[12px] font-bold text-white/75">
+                    {item.label || "LÃƒÆ’Ã‚Â©gende publiÃƒÆ’Ã‚Â©e par le serveur WMS"}
                   </div>
                   <LegendSymbol item={item} compact={false} />
                 </div>
@@ -381,7 +381,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
             }
 
             return (
-              <div key={itemKey} className="flex items-center justify-between gap-1.5 text-[9px] font-bold text-white/65">
+              <div key={itemKey} className="flex items-center justify-between gap-1.5 text-[8px] font-bold text-white/65">
                 <span className="truncate">{item.label}</span>
                 <LegendSymbol item={item} />
               </div>
@@ -429,7 +429,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
   return (
     <div
-      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] flex max-h-[min(280px,38vh)] min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[#07111b]/88 p-1.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[190px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
+      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] flex max-h-[min(220px,32vh)] min-h-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[#07111b]/88 p-1 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[168px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
@@ -437,9 +437,9 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       onContextMenu={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-xs font-extrabold tracking-tight text-white">LÃƒÂ©gende</h3>
+        <h3 className="text-xs font-bold tracking-tight text-white">LÃƒÆ’Ã‚Â©gende</h3>
 
-        <span className="rounded-lg border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[9px] font-extrabold text-white/70">
+        <span className="rounded-lg border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[8px] font-bold text-white/70">
           {visibleCount}/{totalCount}
         </span>
       </div>
@@ -448,24 +448,24 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
         <button
           type="button"
           onClick={showHiddenLayers}
-          className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-mapgeo-sand/25 bg-mapgeo-sand/10 px-2.5 py-1.5 text-[9px] font-extrabold text-mapgeo-sand transition hover:bg-mapgeo-sand/15"
+          className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-mapgeo-sand/25 bg-mapgeo-sand/10 px-2.5 py-1.5 text-[8px] font-bold text-mapgeo-sand transition hover:bg-mapgeo-sand/15"
         >
-          <RotateCcw size={14} /> RÃƒÂ©afficher {hiddenCount} couche{hiddenCount > 1 ? "s" : ""} masquÃƒÂ©e{hiddenCount > 1 ? "s" : ""}
+          <RotateCcw size={14} /> RÃƒÆ’Ã‚Â©afficher {hiddenCount} couche{hiddenCount > 1 ? "s" : ""} masquÃƒÆ’Ã‚Â©e{hiddenCount > 1 ? "s" : ""}
         </button>
       ) : null}
 
-      <div className="mapgeo-legend-scroll mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
+      <div className="mapgeo-legend-scroll mt-1 max-h-[145px] min-h-0 flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
         {legendLayers.length ? (
           legendLayers.map((layer) => <LegendToggleRow key={layer.id} layer={layer} features={features} onToggleLayer={onToggleLayer} />)
         ) : (
           <div className="rounded-lg border border-white/10 bg-white/[0.05] p-3 text-sm font-semibold leading-6 text-white/60">
-            Aucune couche nÃ¢â‚¬â„¢est disponible pour cette carte.
+            Aucune couche nÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢est disponible pour cette carte.
           </div>
         )}
       </div>
 
       {totalCount ? (
-        <p className="mt-2 shrink-0 border-t border-white/10 pt-1 text-[9px] font-medium leading-4 text-white/40">
+        <p className="mt-2 shrink-0 border-t border-white/10 pt-1 text-[8px] font-medium leading-4 text-white/40">
           Couches visibles.
         </p>
       ) : null}
