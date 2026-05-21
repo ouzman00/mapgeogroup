@@ -459,7 +459,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
           legendLayers.map((layer) => <LegendToggleRow key={layer.id} layer={layer} features={features} onToggleLayer={onToggleLayer} />)
         ) : (
           <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3 text-sm font-semibold leading-6 text-white/60">
-            Aucune couche n’est disponible pour cette carte.
+            Aucune couche n'est disponible pour cette carte.
           </div>
         )}
       </div>
