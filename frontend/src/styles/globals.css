@@ -3059,3 +3059,64 @@ html body .mapgeo-area-label em {
   color: inherit !important;
   text-shadow: inherit !important;
 }
+
+/* MAPGEO clean parcel map labels */
+html body .leaflet-marker-icon.mapgeo-side-label-shell,
+html body .leaflet-marker-icon.mapgeo-area-label-shell,
+html body .mapgeo-side-label-shell,
+html body .mapgeo-area-label-shell,
+html body .mapgeo-side-label-rotor,
+html body .mapgeo-parcel-label,
+html body .mapgeo-feature-label {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html body .mapgeo-side-label,
+html body .mapgeo-area-label,
+html body .mapgeo-area-label strong,
+html body .mapgeo-area-label em,
+html body .mapgeo-parcel-label,
+html body .mapgeo-feature-label,
+html body .mapgeo-vertex-glow-label {
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html body .mapgeo-side-label,
+html body .mapgeo-area-label,
+html body .mapgeo-parcel-label,
+html body .mapgeo-feature-label {
+  color: #0f172a !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(255, 255, 255, 0.85) !important;
+}
+
+html body .mapgeo-area-label strong,
+html body .mapgeo-area-label em {
+  color: inherit !important;
+  background: transparent !important;
+  padding: 0 !important;
+  text-shadow: inherit !important;
+}
