@@ -1,0 +1,54 @@
+﻿
+/* MAPGEO — légende compacte et scrollable */
+.mapgeo-legend-panel {
+  width: 220px !important;
+  max-width: 220px !important;
+  height: 128px !important;
+  max-height: 128px !important;
+  min-height: 0 !important;
+  padding: 6px !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+}
+
+.mapgeo-legend-panel .mapgeo-legend-scroll {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 76px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 6px !important;
+  scrollbar-gutter: stable !important;
+}
+
+.mapgeo-legend-panel .mapgeo-parcel-sublegend {
+  max-height: 30px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 4px !important;
+}
+
+.mapgeo-legend-panel h3 {
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+}
+
+.mapgeo-legend-panel button,
+.mapgeo-legend-panel p,
+.mapgeo-legend-panel span,
+.mapgeo-legend-panel strong {
+  font-size: 9px !important;
+  line-height: 1.15 !important;
+}
+
+.mapgeo-legend-panel .rounded,
+.mapgeo-legend-panel .rounded-md,
+.mapgeo-legend-panel .rounded-lg,
+.mapgeo-legend-panel .rounded-xl,
+.mapgeo-legend-panel .rounded-2xl {
+  border-radius: 8px !important;
+}
+
+.mapgeo-legend-panel [class*="space-y"] > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 3px !important;
+}
