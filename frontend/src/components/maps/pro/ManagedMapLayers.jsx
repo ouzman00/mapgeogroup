@@ -12,7 +12,8 @@ const MANAGED_LAYER_PANES = {
 };
 
 const GEOJSON_BBOX_CACHE = new Map();
-const GEOJSON_BBOX_CACHE_MAX = 120;
+const GEOJSON_LAYER_LAST_PAYLOAD = new Map();
+const GEOJSON_BBOX_CACHE_MAX = 160;
 
 function rememberGeoJsonPayload(key, value) {
   if (!key || !value) return;
@@ -535,6 +536,13 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
       return;
     }
 
+    const lastLayerPayload = GEOJSON_LAYER_LAST_PAYLOAD.get(currentLayer.id);
+    if (lastLayerPayload) {
+      const featureCount = Array.isArray(lastLayerPayload?.features) ? lastLayerPayload.features.length : 0;
+      setData(lastLayerPayload);
+      setLayerRuntime(currentLayer.id, { loading: false, error: "", featureCount });
+    }
+
     if (timerRef.current) window.clearTimeout(timerRef.current);
 
     timerRef.current = window.setTimeout(async () => {
@@ -554,6 +562,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
         const featureCount = Array.isArray(payload?.features) ? payload.features.length : 0;
         const nextData = { ...payload, __requestKey: requestKey };
         rememberGeoJsonPayload(requestKey, nextData);
+        GEOJSON_LAYER_LAST_PAYLOAD.set(currentLayer.id, nextData);
         setData(nextData);
         setLayerRuntime(currentLayer.id, { loading: false, error: "", featureCount });
       } catch (error) {

@@ -71,8 +71,13 @@ def import_geojson_features_to_db(layer: ClientMapLayer, payload: dict[str, Any]
 
 
 def build_db_geojson(layer: ClientMapLayer, *, bbox: tuple[float, float, float, float] | None = None, limit: int = 2500) -> dict[str, Any]:
-    """Construit une FeatureCollection GeoJSON depuis les features PostGIS d'une couche."""
-    queryset = layer.features.all().order_by("id")
+    """Construit une FeatureCollection GeoJSON depuis les features PostGIS d'une couche.
+
+    Cette route est appelée à chaque viewport. Elle doit donc éviter les calculs
+    globaux coûteux : count complet, résumé attributaire et types géométriques
+    sont déjà stockés dans layer.metadata au moment de l'import.
+    """
+    queryset = layer.features.all().only("id", "source_feature_id", "geometry", "properties").order_by("id")
     if bbox:
         west, south, east, north = bbox
         bbox_geom = Polygon.from_bbox((west, south, east, north))
@@ -83,6 +88,7 @@ def build_db_geojson(layer: ClientMapLayer, *, bbox: tuple[float, float, float, 
     rows = list(queryset[:limit])
     features: list[dict[str, Any]] = []
     positions: list[list[float]] = []
+
     for row in rows:
         geometry = json.loads(row.geometry.geojson)
         properties = row.properties if isinstance(row.properties, dict) else {}
@@ -95,7 +101,9 @@ def build_db_geojson(layer: ClientMapLayer, *, bbox: tuple[float, float, float, 
         features.append(feature)
         positions.extend(collect_positions({"type": "FeatureCollection", "features": [feature]}))
 
+    stored_metadata = layer.metadata if isinstance(layer.metadata, dict) else {}
     collection = {"type": "FeatureCollection", "features": features}
+
     return {
         **collection,
         "metadata": {
@@ -103,11 +111,11 @@ def build_db_geojson(layer: ClientMapLayer, *, bbox: tuple[float, float, float, 
             "source_kind": ClientMapLayer.SOURCE_DATABASE,
             "layer_id": layer.id,
             "count": len(features),
-            "feature_count": layer.features.count(),
+            "feature_count": stored_metadata.get("feature_count"),
             "bbox_filtered": bool(bbox),
-            "geometry_types": geometry_type_counts(collection),
+            "geometry_types": stored_metadata.get("geometry_types") or {},
             "bounds_wgs84": bounds_from_positions(positions),
-            "attribute_fields": summarize_geojson_attributes(features),
+            "attribute_fields": stored_metadata.get("attribute_fields") or [],
             "served_crs": "EPSG:4326",
         },
     }
