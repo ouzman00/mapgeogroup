@@ -67,7 +67,7 @@ function LegendImage({ item, muted = false, compact = true }) {
         }
       })
       .catch((error) => {
-        console.warn("Impossible de charger la lÃƒÆ’Ã‚Â©gende WMS publiÃƒÆ’Ã‚Â©e par le serveur.", error);
+        console.warn("Impossible de charger la lÃƒÆ’Ã‚Â©gende WMS publiée par le serveur.", error);
 
         if (active) {
           setSrc("");
@@ -87,14 +87,14 @@ function LegendImage({ item, muted = false, compact = true }) {
     if (compact) {
       return (
         <span className={`inline-flex max-w-[140px] shrink-0 overflow-hidden rounded bg-white/95 p-1 shadow-sm ${muted ? "opacity-40" : "opacity-100"}`}>
-          <img src={src} alt={item?.label || "LÃƒÆ’Ã‚Â©gende WMS"} className="max-h-6 max-w-[64px] object-contain" loading="lazy" />
+          <img src={src} alt={item?.label || "Légende WMS"} className="max-h-6 max-w-[64px] object-contain" loading="lazy" />
         </span>
       );
     }
 
     return (
       <span className={`block w-full overflow-auto rounded-lg border border-white/15 bg-white p-2 shadow-inner ${muted ? "opacity-50" : "opacity-100"}`}>
-        <img src={src} alt={item?.label || "LÃƒÆ’Ã‚Â©gende WMS"} className="block h-auto max-h-10 max-w-full object-contain" loading="lazy" />
+        <img src={src} alt={item?.label || "Légende WMS"} className="block h-auto max-h-10 max-w-full object-contain" loading="lazy" />
       </span>
     );
   }
@@ -255,7 +255,7 @@ function legendItems(layer, features = []) {
       ? publishedLegend
       : [
           {
-            label: layer?.name || "LÃƒÆ’Ã‚Â©gende WMS",
+            label: layer?.name || "Légende WMS",
             symbol: "wms-legend",
             imageEndpoint: layer?.sourceLayerId ? `/map-layers/${layer.sourceLayerId}/legend/` : "",
           },
@@ -373,7 +373,7 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
               return (
                 <div key={itemKey} className="rounded-lg border border-white/10 bg-black/10 p-2">
                   <div className="mb-1.5 truncate text-[12px] font-bold text-white/75">
-                    {item.label || "LÃƒÆ’Ã‚Â©gende publiÃƒÆ’Ã‚Â©e par le serveur WMS"}
+                    {item.label || "Légende publiée par le serveur WMS"}
                   </div>
                   <LegendSymbol item={item} compact={false} />
                 </div>
@@ -437,7 +437,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
       onContextMenu={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-xs font-bold tracking-tight text-white">LÃƒÆ’Ã‚Â©gende</h3>
+        <h3 className="text-xs font-bold tracking-tight text-white">Légende</h3>
 
         <span className="rounded-lg border border-white/10 bg-white/[0.045] px-2 py-0.5 text-[8px] font-bold text-white/70">
           {visibleCount}/{totalCount}
