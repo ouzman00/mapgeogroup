@@ -11,3 +11,5 @@ backups/
 Thumbs.db
 .vscode/
 .idea/
+.vercel
+.env*.local
