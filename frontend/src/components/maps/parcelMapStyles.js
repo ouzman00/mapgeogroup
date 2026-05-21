@@ -416,11 +416,6 @@ export function getAvailableLegendItems(features = []) {
     ? features.filter(Boolean)
     : [];
 
-  if (!normalizedFeatures.length) {
-    return [];
-  }
-
-  // 1. Lister les statuts presents dans le portefeuille pour les afficher en haut
   const presentStatuses = new Set();
   for (const feature of normalizedFeatures) {
     const rawStatus = feature?.parcel?.status;
@@ -429,34 +424,40 @@ export function getAvailableLegendItems(features = []) {
     }
   }
 
-  const statusItems = STATUS_LEGEND_ORDER
-    .filter((status) => presentStatuses.has(status))
-    .map((status) => {
-      const style = PARCEL_STATUS_STYLES[status];
-      return {
-        id: `status-${status}`,
-        label: style.legend || style.label || status,
-        symbol: "polygon",
-        color: style.color,
-        fillColor: style.fillColor,
-        fillOpacity: 0.2,
-        strokeOpacity: 1,
-        weight: 3,
-      };
-    });
+  const hasFeatureData = normalizedFeatures.length > 0;
 
-  // 2. Items contextuels (alertes metier)
+  // Légende Parcelles stable : on garde tous les statuts métier,
+  // même si aucun exemplaire n'est visible dans le viewport courant.
+  // Les statuts absents sont atténués côté LegendPanel via item.muted.
+  const statusItems = STATUS_LEGEND_ORDER.map((status) => {
+    const style = PARCEL_STATUS_STYLES[status];
+    const present = presentStatuses.has(status);
+
+    return {
+      id: `status-${status}`,
+      label: style.legend || style.label || status,
+      symbol: "polygon",
+      color: style.color,
+      fillColor: style.fillColor,
+      fillOpacity: 0.2,
+      strokeOpacity: 1,
+      weight: 3,
+      muted: hasFeatureData && !present,
+    };
+  });
+
   const hasGeometryError = normalizedFeatures.some((feature) =>
     Boolean(
       feature?.geometryWarning ||
-      feature?.parcel?.geometry_error ||
-      feature?.parcel?.geometry_valid === false,
+        feature?.parcel?.geometry_error ||
+        feature?.parcel?.geometry_valid === false,
     ),
   );
 
   const hasDocuments = normalizedFeatures.some(
     (feature) =>
-      Array.isArray(feature?.documents) && feature.documents.length > 0,
+      Array.isArray(feature?.documents) &&
+      feature.documents.length > 0,
   );
 
   const hasSurfaceWarning = normalizedFeatures.some((feature) => {
