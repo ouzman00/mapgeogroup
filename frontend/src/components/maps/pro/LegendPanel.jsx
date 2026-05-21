@@ -380,10 +380,17 @@ function LegendToggleRow({ layer, onToggleLayer, features = [] }) {
               );
             }
 
+            const itemMuted = Boolean(item.muted);
+
             return (
-              <div key={itemKey} className="flex items-center justify-between gap-2 text-[11px] font-bold text-white/65">
+              <div
+                key={itemKey}
+                className={`flex items-center justify-between gap-2 text-[11px] font-bold ${
+                  itemMuted ? "text-white/35" : "text-white/65"
+                }`}
+              >
                 <span className="truncate">{item.label}</span>
-                <LegendSymbol item={item} />
+                <LegendSymbol item={item} muted={itemMuted} />
               </div>
             );
           })}
