@@ -41,7 +41,6 @@ import { validateParcelGeometry } from "../../../utils/geometryTopology";
 import { parcelToGeoJsonFeature } from "../../../utils/parcelGeoJson";
 import { getParcelPathOptions, getParcelSymbology } from "../parcelMapStyles";
 import ManagedMapLayers from "../pro/ManagedMapLayers";
-import { exportGeometryAsGeoJson, exportMapAsJpeg, exportMapAsPng } from "../pro/mapExport";
 import LegendPanel from "../pro/LegendPanel";
 import MiniMap from "../pro/MiniMap";
 import IdentifyCard from "./IdentifyCard";
@@ -2828,6 +2827,7 @@ export default function PortfolioMapShell({
     setShowMeasurements(false);
     setShowVertices(false);
     setActiveCommand(null);
+    const { exportMapAsPng } = await import("../pro/mapExport");
     await exportMapAsPng(mapContainerRef.current, activeFeature?.parcel?.reference ? `Carte ${activeFeature.parcel.reference}` : "Carte SIG");
   };
 
@@ -2836,12 +2836,14 @@ export default function PortfolioMapShell({
     setShowMeasurements(false);
     setShowVertices(false);
     setActiveCommand(null);
+    const { exportMapAsJpeg } = await import("../pro/mapExport");
     await exportMapAsJpeg(mapContainerRef.current, activeFeature?.parcel?.reference ? `Carte ${activeFeature.parcel.reference}` : "Carte SIG");
   };
 
-  const handleExportGeoJson = () => {
+  const handleExportGeoJson = async () => {
     if (!activeFeature?.parcel?.geometry) return;
     setActiveCommand(null);
+    const { exportGeometryAsGeoJson } = await import("../pro/mapExport");
     exportGeometryAsGeoJson(
       activeFeature.geojson || parcelToGeoJsonFeature(activeFeature.parcel),
       activeFeature.parcel.reference || "parcelle",

@@ -1,12 +1,14 @@
+import { lazy, Suspense } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useProfessionalLayers from "./pro/useProfessionalLayers";
-import PrintMapDialog from "./pro/PrintMapDialog";
 import PortfolioSidebar from "./portfolio/PortfolioSidebar";
 import PortfolioMapShell from "./portfolio/PortfolioMapShell";
 import PortfolioInspector from "./portfolio/PortfolioInspector";
 import usePortfolioFeatures from "./portfolio/usePortfolioFeatures";
 import parcelService from "../../services/parcelService";
 import { lngLatToSenegalProjected } from "../../utils/parcelGeometry";
+
+const PrintMapDialog = lazy(() => import("./pro/PrintMapDialog"));
 
 function simplifyToleranceForZoom(zoom) {
   const numericZoom = Number(zoom);
@@ -807,6 +809,7 @@ export default function ClientPortfolioMap({
         </div>
       </div>
 
+      <Suspense fallback={null}>
       <PrintMapDialog
         open={showPrintDialog}
         onClose={() => setShowPrintDialog(false)}
@@ -815,6 +818,7 @@ export default function ClientPortfolioMap({
         activeLayers={visibleExternalLayers}
         author={portfolioIdentity.ownerName || portfolioIdentity.clientCode || ""}
       />
+      </Suspense>
     </div>
   );
 }
