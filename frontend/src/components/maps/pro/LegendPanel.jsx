@@ -429,7 +429,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
 
   return (
     <div
-      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] flex max-h-[min(560px,72vh)] min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/88 p-2.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[276px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
+      className="mapgeo-mobile-tool-panel mapgeo-legend-panel mapgeo-export-hidden mapgeo-overlay-panel pointer-events-auto absolute bottom-3 left-3 right-3 z-[945] flex max-h-[104px] min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/88 p-2.5 text-white shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:bottom-4 sm:left-auto sm:right-4 sm:w-[276px] sm:max-w-[calc(100%-2rem)] lg:bottom-[178px]"
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
