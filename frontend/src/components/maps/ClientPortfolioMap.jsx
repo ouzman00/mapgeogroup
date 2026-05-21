@@ -761,7 +761,9 @@ export default function ClientPortfolioMap({
           </div>
         ) : null}
 
-        <div className="mapgeo-portfolio-inspector order-3 min-h-0 min-w-0 overflow-hidden lg:col-span-2 min-[1180px]:col-span-1 min-[1180px]:order-3"><PortfolioInspector
+        <div className="mapgeo-portfolio-inspector order-3 min-h-0 min-w-0 overflow-hidden lg:col-span-2 min-[1180px]:col-span-1 min-[1180px]:order-3">
+          <Suspense fallback={null}>
+            <PortfolioInspector
           activeFeature={portfolio.activeFeature}
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -799,7 +801,8 @@ export default function ClientPortfolioMap({
             }
             await onParcelCreated?.(newParcel);
           }}
-        />
+            />
+          </Suspense>
         </div>
       </div>
 
