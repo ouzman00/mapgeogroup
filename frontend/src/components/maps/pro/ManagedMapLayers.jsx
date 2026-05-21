@@ -550,13 +550,24 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
       const requestSeq = requestSeqRef.current + 1;
       requestSeqRef.current = requestSeq;
 
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       setLayerRuntime(currentLayer.id, { loading: true, error: "" });
 
       try {
-        const payload = await mapLayerService.getLayerGeoJson(currentLayer, {
-          bbox,
-          limit: currentLayer.metadata?.frontend_limit || currentLayer.limit || 500,
-        });
+        const payload = await mapLayerService.getLayerGeoJson(
+          currentLayer,
+          {
+            bbox,
+            limit: currentLayer.metadata?.frontend_limit || currentLayer.limit || 500,
+          },
+          { signal: controller.signal },
+        );
 
         if (requestSeq !== requestSeqRef.current) return;
 
