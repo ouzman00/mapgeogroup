@@ -39,6 +39,7 @@ import {
 } from "../../../utils/geometryIo";
 import { validateParcelGeometry } from "../../../utils/geometryTopology";
 import { parcelToGeoJsonFeature } from "../../../utils/parcelGeoJson";
+import { canUsePassiveOverlay, getActiveMapMode } from "./utils/mapToolState";
 import { getParcelPathOptions, getParcelSymbology } from "../parcelMapStyles";
 import ManagedMapLayers from "../pro/ManagedMapLayers";
 import { exportGeometryAsGeoJson, exportMapAsJpeg, exportMapAsPng } from "../pro/mapExport";
@@ -1693,6 +1694,17 @@ export default function PortfolioMapShell({
   const [createParcelDraftPoints, setCreateParcelDraftPoints] = useState([]);
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
   const [deleteVertexMode, setDeleteVertexMode] = useState(false);
+
+  const activeMapMode = getActiveMapMode({
+    showMeasurements,
+    inlineEditOpen,
+    createParcelDrawingActive,
+    deleteVertexMode,
+    activeCommand,
+  });
+
+  const canShowVertexOverlay = showVertices && canUsePassiveOverlay(activeMapMode, "vertices");
+  const canShowDimensionOverlay = showVertices && canUsePassiveOverlay(activeMapMode, "dimensions");
   const [userLocationEnabled, setUserLocationEnabled] = useState(false);
   const [userLocationMessage, setUserLocationMessage] = useState("");
 
@@ -2589,7 +2601,7 @@ export default function PortfolioMapShell({
 
             {showMeasurements ? <MeasurementOverlay draft={measurementDraft} /> : null}
 
-            {showVertices && vertexDisplayOptions.sommets !== false && activeFeature?.rings?.length
+            {canShowVertexOverlay && vertexDisplayOptions.sommets !== false && activeFeature?.rings?.length
               ? activeFeature.rings.flatMap((ring, ringIndex) =>
                   ring.map((point, index) => (
                     <CircleMarker
@@ -2616,7 +2628,7 @@ export default function PortfolioMapShell({
                 )
               : null}
 
-            {showVertices && vertexDisplayOptions.dimensions !== false
+            {canShowDimensionOverlay && vertexDisplayOptions.dimensions !== false
               ? selectedMeasurementOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
                   <Marker
                     key={`selected-${item.id}`}
@@ -2671,6 +2683,7 @@ export default function PortfolioMapShell({
           showLabels={showLabels}
           showMeasurements={showMeasurements}
           showVertices={showVertices}
+          activeMapMode={activeMapMode}
           inlineEditActive={inlineEditOpen}
           activeFeature={activeFeature}
           canManageParcels={canManageParcels}
@@ -2754,6 +2767,7 @@ export default function PortfolioMapShell({
           map={map}
           showMeasurements={showMeasurements}
           showVertices={showVertices}
+          activeMapMode={activeMapMode}
           activeFeature={activeFeature}
           measurementSummary={measurementSummary}
           measurementDraft={measurementDraft}
