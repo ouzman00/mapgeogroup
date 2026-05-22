@@ -51,6 +51,24 @@ function getAccessErrorMessage(error) {
   return "Impossible de charger les données cartographiques.";
 }
 
+function shallowEqualObject(a = {}, b = {}) {
+  const aKeys = Object.keys(a || {});
+  const bKeys = Object.keys(b || {});
+  if (aKeys.length !== bKeys.length) return false;
+
+  return aKeys.every((key) => Object.is(a?.[key], b?.[key]));
+}
+
+function areViewportSummariesEqual(a = {}, b = {}) {
+  return (
+    Object.is(a?.loaded, b?.loaded) &&
+    Object.is(a?.total, b?.total) &&
+    Object.is(a?.limit, b?.limit) &&
+    Object.is(a?.bbox, b?.bbox) &&
+    shallowEqualObject(a?.filters, b?.filters)
+  );
+}
+
 export default function ClientPortfolioMap({
   clientCode,
   ownerName,
@@ -333,13 +351,19 @@ export default function ClientPortfolioMap({
           const total = Number(payload.count ?? results.length);
 
           setViewportParcels(results);
-          setViewportSummary({
+          const nextViewportSummary = {
             loaded: results.length,
             total,
             limit: 500,
             bbox,
             filters: effectiveMapFilters,
-          });
+          };
+
+          setViewportSummary((current) =>
+            areViewportSummariesEqual(current, nextViewportSummary)
+              ? current
+              : nextViewportSummary,
+          );
         } catch (error) {
           if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED" || abortController.signal.aborted) return;
           if (requestSeq !== viewportRequestSeqRef.current) return;
