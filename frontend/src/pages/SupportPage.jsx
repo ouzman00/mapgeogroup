@@ -987,7 +987,7 @@ export default function SupportPage() {
     setError("");
 
     try {
-      const requests = [supportService.getAllTickets({})];
+      const requests = [supportService.getTickets({ page: 1, page_size: 50 })];
 
       if (isInternalPortal) {
         requests.push(fetchAllClients({ ordering: "name" }));
