@@ -22,14 +22,9 @@ import {
   DEFAULT_MAP_CENTER,
   SENEGAL_PROJECTED_CRS,
   SENEGAL_PROJECTED_CRS_LABEL,
-  computeDistanceBetweenPoints,
   computePerimeterFromPoints,
   formatArea,
   formatDistance,
-  geometryAreaM2Projected,
-  geometryCentroid,
-  geometryToRings,
-  latLngPairToProjected,
   normalizeCoordinateValue,
 } from "../../../utils/parcelGeometry";
 import {
@@ -51,8 +46,17 @@ import SearchNoResultNotice from "./SearchNoResultNotice";
 import MapToolFeedbackPanel, { DraggableMapPanel, PanelMoveHandle } from "./panels/MapFloatingPanels";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import useCartographyViewport from "./hooks/useCartographyViewport";
+import {
+  buildGeometryMeasurementOverlay,
+  buildMeasurementDraftOverlay,
+  buildMeasurementDraftSummary,
+  distanceAlongPoints,
+  polygonGeometryFromLatLngRing,
+  repositionSideMarkersOutsideInPixels,
+  stripDimensionClosingPoint,
+} from "./utils/dimensionOverlays";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../constants/mapConstants";
-import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate, midpoint, segmentAngleCss } from "./mapUtils";
+import { createParcelBadgeIcon, createSideLabelIcon, formatCoordinate } from "./mapUtils";
 const INLINE_EDIT_EVENTS = "pm:edit pm:update pm:markerdragstart pm:markerdrag pm:markerdragend pm:dragstart pm:drag pm:dragend pm:vertexadded pm:vertexremoved pm:change pm:snapdrag";
 const MEASUREMENT_CLICK_DELAY_MS = 180;
 const MEASUREMENT_PAN_CLICK_GUARD_MS = 220;
@@ -203,7 +207,7 @@ function isEditableTextTarget(target) {
   return tagName === "input" || tagName === "textarea" || tagName === "select" || Boolean(target.isContentEditable);
 }
 
-function stripMeasurementClosingPoint(points) {
+function stripDimensionClosingPoint(points) {
   if (!Array.isArray(points) || points.length <= 1) return Array.isArray(points) ? points : [];
   const cleanPoints = [...points];
   if (pointsAreSame(cleanPoints[0], cleanPoints[cleanPoints.length - 1])) cleanPoints.pop();
@@ -217,308 +221,6 @@ function getMeasurementPreviewPoints(draft) {
   const lastPoint = points[points.length - 1];
   if (lastPoint && pointsAreSame(lastPoint, draft.cursorPoint)) return points;
   return [...points, draft.cursorPoint];
-}
-
-function distanceAlongPoints(points, closed = false) {
-  if (!Array.isArray(points) || points.length < 2) return 0;
-  const segmentCount = closed && points.length >= 3 ? points.length : points.length - 1;
-  let total = 0;
-  for (let index = 0; index < segmentCount; index += 1) {
-    total += computeDistanceBetweenPoints(points[index], points[(index + 1) % points.length]) || 0;
-  }
-  return total;
-}
-
-function polygonGeometryFromLatLngRing(points) {
-  const ring = stripMeasurementClosingPoint(points).filter((point) => Array.isArray(point) && point.length >= 2);
-  if (ring.length < 3) return null;
-  const coordinates = ring.map(latLngPairToProjected).filter(Boolean);
-  if (coordinates.length < 3) return null;
-  coordinates.push(coordinates[0]);
-  return { type: "Polygon", coordinates: [coordinates] };
-}
-
-function buildMeasurementDraftSummary(draft) {
-  const previewPoints = getMeasurementPreviewPoints(draft);
-  const cleanPoints = draft?.mode === "surface" ? stripMeasurementClosingPoint(previewPoints) : previewPoints;
-  const closeSurface = draft?.mode === "surface" && cleanPoints.length >= 3;
-  const surfaceGeometry = closeSurface ? polygonGeometryFromLatLngRing(cleanPoints) : null;
-  const surface = surfaceGeometry ? geometryAreaM2Projected(surfaceGeometry) : 0;
-  const distance = distanceAlongPoints(cleanPoints, closeSurface);
-
-  return {
-    distanceLabel: formatDistance(distance),
-    surfaceLabel: formatArea(surface),
-    perimeterLabel: closeSurface ? formatDistance(distance) : "—",
-    pointsCount: cleanPoints.length,
-    hasCursorPreview: Boolean(draft?.cursorPoint && !draft?.finished),
-  };
-}
-
-// Centroide simple d un anneau de points latlng (moyenne arithmetique).
-function ringCentroid(ring) {
-  if (!Array.isArray(ring) || !ring.length) return null;
-  let lat = 0;
-  let lng = 0;
-  let n = 0;
-  for (const point of ring) {
-    if (!Array.isArray(point) || point.length < 2) continue;
-    lat += point[0];
-    lng += point[1];
-    n += 1;
-  }
-  if (!n) return null;
-  return [lat / n, lng / n];
-}
-
-/**
- * Decale les side markers de facon constante en pixels
- * quel que soit le zoom.
- */
-
-
-
-// Decalage perpendiculaire vers l exterieur du polygone.
-// Pour avoir un decalage CONSTANT en pixels ecran quel que soit le zoom,
-// on convertit les latlng en pixels via map.project, decale en pixels,
-// puis reconvertit en latlng via map.unproject.
-//
-// Si map n est pas fourni (fallback), on utilise un offset metres tres faible.
-function offsetOutside(midPt, segA, segB, centroid, offsetPixels = 14, map = null) {
-  if (!Array.isArray(midPt) || !Array.isArray(segA) || !Array.isArray(segB)) return midPt;
-
-  // Si on a une instance map, calcul precis en pixels
-  if (map?.project && map?.unproject && map?.getZoom) {
-    try {
-      const zoom = map.getZoom();
-      const midPx = map.project(L.latLng(midPt[0], midPt[1]), zoom);
-      const aPx = map.project(L.latLng(segA[0], segA[1]), zoom);
-      const bPx = map.project(L.latLng(segB[0], segB[1]), zoom);
-
-      // Vecteur segment en pixels
-      const dx = bPx.x - aPx.x;
-      const dy = bPx.y - aPx.y;
-
-      // Perpendiculaire
-      let nx = -dy;
-      let ny = dx;
-      const norm = Math.hypot(nx, ny);
-      if (norm === 0) return midPt;
-      nx /= norm;
-      ny /= norm;
-
-      // Determiner exterieur via centroide en pixels
-      if (centroid) {
-        const cPx = map.project(L.latLng(centroid[0], centroid[1]), zoom);
-        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
-        if (dot > 0) {
-          nx = -nx;
-          ny = -ny;
-        }
-      }
-
-      const offsetPx = L.point(midPx.x + nx * offsetPixels, midPx.y + ny * offsetPixels);
-      const offsetLatLng = map.unproject(offsetPx, zoom);
-      return [offsetLatLng.lat, offsetLatLng.lng];
-    } catch (err) {
-      // En cas d echec, fallback metres
-    }
-  }
-
-  // Fallback : offset en metres (utilise quand map n est pas dispo)
-  const dx = segB[1] - segA[1];
-  const dy = segB[0] - segA[0];
-  let nx = -dy;
-  let ny = dx;
-  const norm = Math.hypot(nx, ny);
-  if (norm === 0) return midPt;
-  nx /= norm;
-  ny /= norm;
-
-  if (centroid) {
-    const dot = nx * (centroid[1] - midPt[1]) + ny * (centroid[0] - midPt[0]);
-    if (dot > 0) {
-      nx = -nx;
-      ny = -ny;
-    }
-  }
-
-  // Le parametre `offsetPixels` est utilise comme valeur en METRES en mode fallback.
-  // L appelant fournit donc directement la distance en metres souhaitee.
-  const offsetMeters = Math.max(0.3, offsetPixels);
-  const latRad = (midPt[0] * Math.PI) / 180;
-  const metersPerDegLng = 111320 * Math.cos(latRad);
-  const metersPerDegLat = 111320;
-  return [
-    midPt[0] + (ny * offsetMeters) / metersPerDegLat,
-    midPt[1] + (nx * offsetMeters) / metersPerDegLng,
-  ];
-}
-
-function isMobileCartographyViewportSafe() {
-  try {
-    return typeof isMobileCartographyViewport === "function" ? isMobileCartographyViewport() : false;
-  } catch {
-    return false;
-  }
-}
-
-function getSideMarkerPixelOptions(map, isMobileOverride = null) {
-  const zoom = typeof map?.getZoom === "function" ? map.getZoom() : 18;
-  const mobile = typeof isMobileOverride === "boolean" ? isMobileOverride : isMobileCartographyViewportSafe();
-
-  return {
-    zoom,
-    // Offset volontairement identique desktop/mobile : les dimensions restent
-    // à distance constante de la géométrie, seuls les seuils de lisibilité changent.
-    offsetPixels: 20,
-    minSegmentPixels: mobile ? 44 : 34,
-    minZoom: mobile ? 17 : 15,
-  };
-}
-
-function repositionSideMarkersOutsideInPixels(markers, map, pixels, viewportOptions = {}) {
-  if (!Array.isArray(markers) || markers.length === 0) return [];
-
-  if (
-    !map ||
-    typeof map.latLngToLayerPoint !== "function" ||
-    typeof map.layerPointToLatLng !== "function" ||
-    typeof map.getZoom !== "function"
-  ) {
-    return markers.map((marker) => ({ ...marker, visible: true }));
-  }
-
-  const options = getSideMarkerPixelOptions(map, viewportOptions.isMobile);
-  const offsetPixels = Number.isFinite(pixels) ? pixels : options.offsetPixels;
-
-  return markers.map((marker) => {
-    if (!marker?.midPoint || !marker?.segA || !marker?.segB) {
-      return { ...marker, visible: false };
-    }
-
-    try {
-      const midPx = map.latLngToLayerPoint(L.latLng(marker.midPoint[0], marker.midPoint[1]));
-      const aPx = map.latLngToLayerPoint(L.latLng(marker.segA[0], marker.segA[1]));
-      const bPx = map.latLngToLayerPoint(L.latLng(marker.segB[0], marker.segB[1]));
-
-      const dx = bPx.x - aPx.x;
-      const dy = bPx.y - aPx.y;
-      const segmentPixels = Math.hypot(dx, dy);
-
-      let nx = -dy;
-      let ny = dx;
-
-      const norm = Math.hypot(nx, ny);
-      if (!norm) return { ...marker, visible: false };
-
-      nx /= norm;
-      ny /= norm;
-
-      if (marker.ringCentroid) {
-        const cPx = map.latLngToLayerPoint(L.latLng(marker.ringCentroid[0], marker.ringCentroid[1]));
-        const dot = nx * (cPx.x - midPx.x) + ny * (cPx.y - midPx.y);
-        if (dot > 0) {
-          nx = -nx;
-          ny = -ny;
-        }
-      }
-
-      const labelPx = L.point(midPx.x + nx * offsetPixels, midPx.y + ny * offsetPixels);
-      const labelLatLng = map.layerPointToLatLng(labelPx);
-
-      return {
-        ...marker,
-        point: [labelLatLng.lat, labelLatLng.lng],
-        segmentPixels,
-        visible: options.zoom >= options.minZoom && segmentPixels >= options.minSegmentPixels,
-      };
-    } catch {
-      return { ...marker, visible: false };
-    }
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function buildSideMarkersFromRings(rings, tone = "default", closed = true) {
-  const markers = [];
-  (Array.isArray(rings) ? rings : []).forEach((ring, ringIndex) => {
-    const cleanRing = stripMeasurementClosingPoint(ring).filter((point) => Array.isArray(point) && point.length >= 2);
-    if (cleanRing.length < 2) return;
-    const segmentCount = closed && cleanRing.length >= 3 ? cleanRing.length : cleanRing.length - 1;
-    // Centroide du polygone pour determiner l exterieur (seulement si ferme)
-    const centroid = closed && cleanRing.length >= 3 ? ringCentroid(cleanRing) : null;
-    for (let index = 0; index < segmentCount; index += 1) {
-      const point = cleanRing[index];
-      const nextPoint = cleanRing[(index + 1) % cleanRing.length];
-      const distance = computeDistanceBetweenPoints(point, nextPoint);
-      if (!Number.isFinite(distance) || distance <= 0) continue;
-      const mid = midpoint(point, nextPoint);
-      const segA = point;
-      const segB = nextPoint;
-      markers.push({
-        id: `${tone}-side-${ringIndex}-${index}`,
-        point: mid,
-        midPoint: mid,
-        segA,
-        segB,
-        ringCentroid: centroid,
-        label: formatDistance(distance),
-        tone,
-        angle: segmentAngleCss(segA, segB),
-      });
-    }
-  });
-  return markers;
-}
-
-function buildGeometryMeasurementOverlay(geometry, tone = "default") {
-  const rings = geometryToRings(geometry);
-  const sideMarkers = buildSideMarkersFromRings(rings, tone, true);
-  const area = geometryAreaM2Projected(geometry);
-  const perimeter = rings.reduce((total, ring) => total + distanceAlongPoints(stripMeasurementClosingPoint(ring), true), 0);
-  const center = geometryCentroid(geometry) || rings[0]?.[0] || null;
-
-  return {
-    sideMarkers,
-    areaMarker: center && (area > 0 || perimeter > 0)
-      ? {
-          id: `${tone}-area`,
-          point: center,
-          label: formatArea(area),
-          subtitle: perimeter > 0 ? `Périmètre ${formatDistance(perimeter)}` : "Surface",
-          tone,
-        }
-      : null,
-  };
-}
-
-function buildMeasurementDraftOverlay(draft) {
-  const previewPoints = getMeasurementPreviewPoints(draft);
-  const cleanPoints = draft?.mode === "surface" ? stripMeasurementClosingPoint(previewPoints) : previewPoints;
-  const isSurface = draft?.mode === "surface" && cleanPoints.length >= 3;
-  const geometry = isSurface ? polygonGeometryFromLatLngRing(cleanPoints) : null;
-  const sideMarkers = buildSideMarkersFromRings([cleanPoints], "measure", isSurface);
-  const overlay = geometry ? buildGeometryMeasurementOverlay(geometry, "measure") : { sideMarkers: [], areaMarker: null };
-
-  return {
-    sideMarkers,
-    areaMarker: overlay.areaMarker,
-  };
 }
 
 function toLayerPoint(map, point) {
@@ -552,10 +254,10 @@ function findNearestMeasurementSnap(map, point, features = [], measurementPoints
   const candidateRings = [];
 
   (Array.isArray(features) ? features : []).forEach((feature) => {
-    (feature?.rings || []).forEach((ring) => candidateRings.push(stripMeasurementClosingPoint(ring)));
+    (feature?.rings || []).forEach((ring) => candidateRings.push(stripDimensionClosingPoint(ring)));
   });
   if (Array.isArray(measurementPoints) && measurementPoints.length) {
-    candidateRings.push(stripMeasurementClosingPoint(measurementPoints));
+    candidateRings.push(stripDimensionClosingPoint(measurementPoints));
   }
 
   candidateRings.forEach((ring) => {
@@ -1065,7 +767,7 @@ function MeasurementOverlay({ draft }) {
   const isMobileMeasureOverlay = isMobileCartographyViewport();
   const isSurface = draft.mode === "surface";
   const polygonPoints = isSurface
-    ? stripMeasurementClosingPoint(previewPoints)
+    ? stripDimensionClosingPoint(previewPoints)
     : previewPoints;
 
   const lastFixedPoint = points[points.length - 1];
@@ -1994,7 +1696,7 @@ export default function PortfolioMapShell({
     setMeasurementDraft((current) => {
       const points = current?.points || [];
       if (!points.length) return { ...current, cursorPoint: null, snapPoint: null, snapKind: null, finished: false };
-      const cleanPoints = current?.mode === "surface" ? stripMeasurementClosingPoint(points) : points;
+      const cleanPoints = current?.mode === "surface" ? stripDimensionClosingPoint(points) : points;
       return { ...current, points: cleanPoints, cursorPoint: null, snapPoint: null, snapKind: null, finished: true };
     });
   }, [clearPendingMeasurementClick, showMeasurements]);
@@ -2014,7 +1716,7 @@ export default function PortfolioMapShell({
       const closesSurfaceOnFirstPoint = current?.mode === "surface" && points.length >= 3 && pointsAreSame(points[0], point);
 
       if (closesSurfaceOnFirstPoint) {
-        return { ...current, points: stripMeasurementClosingPoint(points), cursorPoint: null, snapPoint: null, snapKind: null, finished: true };
+        return { ...current, points: stripDimensionClosingPoint(points), cursorPoint: null, snapPoint: null, snapKind: null, finished: true };
       }
 
       if (isDuplicate) {
