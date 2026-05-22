@@ -33,17 +33,6 @@ function roadStyle(feature) {
   return { ...base, color: "#94A3B8", weight: 1.6, opacity: 0.45 };
 }
 
-function communeStyle() {
-  return {
-    color: "#60A5FA",
-    weight: 1.2,
-    opacity: 0.72,
-    fillColor: "#60A5FA",
-    fillOpacity: 0.035,
-    dashArray: "6 7",
-    interactive: true,
-  };
-}
 
 function pointStyle(layerId, feature) {
   const klass = normalizeClass(feature?.properties?.classification);
@@ -84,7 +73,6 @@ function popupHtml(layerId, properties = {}) {
 
 function featureStyle(layer) {
   return (feature) => {
-    if (layer.id === "communes") return communeStyle(feature);
     if (layer.id === "roads") return roadStyle(feature);
     return { color: "#123B5D", weight: 1.5, opacity: 0.7, fillOpacity: 0.1 };
   };
@@ -151,18 +139,6 @@ export default function MapContextGeoJsonLayer({ layer, setLayerRuntime }) {
     const properties = feature?.properties || {};
     leafletLayer.on({ click: stopMapEvent, dblclick: stopMapEvent, contextmenu: stopMapEvent });
 
-    if (layer.id === "communes") {
-      const label = properties.CCRCA_1 || properties.label || properties.name;
-      if (label) {
-        leafletLayer.bindTooltip(escapeHtml(label), {
-          permanent: showLabels,
-          sticky: !showLabels,
-          direction: "center",
-          className: showLabels ? "mapgeo-commune-label" : "mapgeo-sig-tooltip",
-        });
-      }
-      return;
-    }
 
     if (layer.id === "roads") {
       const label = properties.name || properties.type || "Route";
