@@ -25,6 +25,8 @@ import {
   computePerimeterFromPoints,
   formatArea,
   formatDistance,
+  geometryAreaM2Projected,
+  geometryToRings,
   normalizeCoordinateValue,
 } from "../../../utils/parcelGeometry";
 import {
