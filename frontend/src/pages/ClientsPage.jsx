@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
-import { activateUser, createClient, deactivateUser, fetchAllClients, resetClientAccess, updateClient } from "../services/clientService";
+import { activateUser, createClient, deactivateUser, fetchClients, resetClientAccess, updateClient } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import {
   getPortalAccessActionLabel,
@@ -886,7 +886,7 @@ export default function ClientsPage() {
     setError("");
 
     try {
-      const data = await fetchAllClients({ ordering: "name" });
+      const data = await fetchClients({ ordering: "name", page: 1, page_size: 100 });
       setClients(data.results || []);
     } catch (err) {
       setError(getErrorMessage(err, "Impossible de charger les clients."));
