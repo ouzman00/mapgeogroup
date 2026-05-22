@@ -193,6 +193,18 @@ function canToggleLayer(layer = {}) {
   return Boolean(layer?.id) && layer.available !== false && isReady(layer);
 }
 
+function isRemovedLegendLayer(layer = {}) {
+  const id = String(layer.id || layer.layerId || layer.sourceLayerId || "").toLowerCase();
+  const name = String(layer.name || layer.title || "").toLowerCase();
+  const endpoint = String(layer.endpoint || layer.url || "").toLowerCase();
+
+  return (
+    id === "communes" ||
+    name === "communes" ||
+    endpoint.includes("/map/communes/")
+  );
+}
+
 function isParcelsLegendLayer(layer = {}) {
   return layer?.id === "parcels-portfolio" || layer?.group === "parcelles";
 }
@@ -395,7 +407,7 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
     () =>
       (Array.isArray(activeLayers) ? activeLayers : [])
         .filter((layer) => {
-          if (!layer?.id) return false;
+          if (!layer?.id || isRemovedLegendLayer(layer)) return false;
 
           const isCoreLayer = isParcelsLegendLayer(layer);
           const sourceKind = String(layer.service || layer.type || "").toLowerCase();
