@@ -24,7 +24,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
 import AdminMapLayersPanel from "../components/admin/AdminMapLayersPanel";
 import LoadingState from "../components/ui/LoadingState";
-import { deactivateUser, fetchAllClients, fetchClientById, resetClientAccess, updateClient } from "../services/clientService";
+import { deactivateUser, fetchClientById, getClientLookup, resetClientAccess, updateClient } from "../services/clientService";
 import parcelService from "../services/parcelService";
 import documentService from "../services/documentService";
 import supportService from "../services/supportService";
@@ -123,8 +123,8 @@ async function fetchClientSafely(id) {
     if (!isNotFoundError(error)) throw error;
   }
 
-  const clientsPayload = await fetchAllClients({ ordering: "name" });
-  const clients = (clientsPayload.results || []).map(normalizeClient);
+  const clientsPayload = await getClientLookup({ q: id, limit: 20 });
+  const clients = (clientsPayload.results || clientsPayload || []).map(normalizeClient);
   const found = clients.find((item) => String(item.id) === String(id) || String(item.code) === String(id));
 
   if (!found) throw new Error("Client introuvable dans l’API.");
@@ -137,20 +137,20 @@ async function loadRelatedData(selectedClient) {
   const ownerCode = selectedClient?.primary_user_client_code || selectedClient?.code;
 
   const [parcelsPayload, documentsPayload, ticketsPayload] = await Promise.allSettled([
-    parcelService.getAllParcels({ organization_id: organizationId, organization_code: organizationCode }),
-    documentService.getAllDocuments({ organization_id: organizationId, organization_code: organizationCode }),
-    supportService.getAllTickets({ organization_id: organizationId, organization_code: organizationCode }),
+    parcelService.getParcels({ organization_id: organizationId, organization_code: organizationCode, page: 1, page_size: 50 }),
+    documentService.getDocuments({ organization_id: organizationId, organization_code: organizationCode, page: 1, page_size: 20 }),
+    supportService.getTickets({ organization_id: organizationId, organization_code: organizationCode, page: 1, page_size: 20 }),
   ]);
 
   let parcels = parcelsPayload.status === "fulfilled" ? (parcelsPayload.value.results || []) : [];
 
   if (!parcels.length && ownerCode) {
-    const fallbackPayload = await parcelService.getAllParcels({ owner_client_code: ownerCode }).catch(() => null);
+    const fallbackPayload = await parcelService.getParcels({ owner_client_code: ownerCode, page: 1, page_size: 50 }).catch(() => null);
     parcels = fallbackPayload?.results || [];
   }
 
   if (!parcels.length && organizationCode) {
-    const fallbackPayload = await parcelService.getAllParcels({ organization_code: organizationCode }).catch(() => null);
+    const fallbackPayload = await parcelService.getParcels({ organization_code: organizationCode, page: 1, page_size: 50 }).catch(() => null);
     parcels = fallbackPayload?.results || [];
   }
 
