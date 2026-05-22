@@ -43,6 +43,7 @@ import MiniMap from "../pro/MiniMap";
 import IdentifyCard from "./IdentifyCard";
 import FloatingMapToolbar from "./PortfolioMapToolbar";
 import SearchNoResultNotice from "./SearchNoResultNotice";
+import DimensionSideMarkers from "./overlays/DimensionSideMarkers";
 import MapToolFeedbackPanel, { DraggableMapPanel, PanelMoveHandle } from "./panels/MapFloatingPanels";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import useCartographyViewport from "./hooks/useCartographyViewport";
@@ -873,22 +874,6 @@ function MeasurementOverlay({ draft }) {
       ) : null}
     </>
   );
-}
-
-function DimensionSideMarkers({ markers = [], keyPrefix = "dimension" }) {
-  if (!Array.isArray(markers) || !markers.length) return null;
-
-  return markers
-    .filter((item) => item?.visible !== false)
-    .map((item) => (
-      <Marker
-        key={`${keyPrefix}-${item.id}`}
-        position={item.point}
-        pane={MAP_PANES.measure}
-        icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
-        interactive={false}
-      />
-    ));
 }
 
 function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryChange, onGeometryGetterChange, deleteVertexMode, geometryReloadKey }) {
@@ -2356,11 +2341,11 @@ export default function PortfolioMapShell({
               : null}
 
             {showSelectedDimensionMarkers ? (
-              <DimensionSideMarkers markers={selectedMeasurementOverlay.sideMarkers} keyPrefix="selected" />
+              <DimensionSideMarkers markers={selectedMeasurementOverlay.sideMarkers} keyPrefix="selected" pane={MAP_PANES.measure} />
             ) : null}
 
             {showMeasurementDimensionMarkers ? (
-              <DimensionSideMarkers markers={measurementDraftOverlay.sideMarkers} keyPrefix="measure" />
+              <DimensionSideMarkers markers={measurementDraftOverlay.sideMarkers} keyPrefix="measure" pane={MAP_PANES.measure} />
             ) : null}
 
 
@@ -2375,7 +2360,7 @@ export default function PortfolioMapShell({
           />
 
           {showEditDimensionMarkers && !showMeasurementDimensionMarkers ? (
-            <DimensionSideMarkers markers={editMeasurementOverlay.sideMarkers} keyPrefix="edit" />
+            <DimensionSideMarkers markers={editMeasurementOverlay.sideMarkers} keyPrefix="edit" pane={MAP_PANES.measure} />
           ) : null}
 
         </MapContainer>
