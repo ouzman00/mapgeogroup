@@ -20,7 +20,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
 import useParcels from "../hooks/useParcels";
 import parcelService from "../services/parcelService";
-import { fetchAllClients } from "../services/clientService";
+import { getClientLookup } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import {
   PARCEL_STATUS_OPTIONS,
@@ -682,7 +682,7 @@ export default function ParcellesPage() {
       fetchOwners().catch(() => {});
     }
 
-    fetchAllClients({ ordering: "name" })
+    getClientLookup({ limit: 200 })
       .then((payload) => setClients(payload.results || []))
       .catch(() => setClients([]));
   }, [canImportParcels, fetchOwners, isInternalPortal]);
