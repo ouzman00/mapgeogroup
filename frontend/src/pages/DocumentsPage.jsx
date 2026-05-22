@@ -982,7 +982,9 @@ export default function DocumentsPage() {
     setError("");
 
     try {
-      const data = await documentService.getAllDocuments({
+      const data = await documentService.getDocuments({
+        page: 1,
+        page_size: 50,
         ...(params.q ? { q: params.q } : {}),
         ...(params.status ? { status: params.status } : {}),
         ...(params.document_type ? { document_type: params.document_type } : {}),
