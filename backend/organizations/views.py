@@ -5,7 +5,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from accounts.permissions import MANAGER_ROLES, IsAdminOrManager, filter_organizations_for_user, user_can_manage_organization
 from .models import Organization, OrganizationMembership
-from .serializers import OrganizationSerializer
+from .serializers import OrganizationLookupSerializer, OrganizationSerializer
 
 User = get_user_model()
 
@@ -114,3 +114,45 @@ class OrganizationDetailView(OrganizationQuerysetMixin, generics.RetrieveUpdateD
             raise ValidationError({"detail": "Cette organisation contient encore des parcelles ou des membres. Archivez-la plutôt que de la supprimer."})
 
         instance.delete()
+
+class OrganizationLookupView(generics.ListAPIView):
+    """
+    Lookup léger pour les sélecteurs dashboard.
+    Évite de charger tout l'annuaire client avec les memberships et agrégats.
+    """
+    serializer_class = OrganizationLookupSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        query = (self.request.query_params.get("q") or "").strip()
+        status_value = (self.request.query_params.get("status") or "").strip()
+
+        try:
+            limit = min(max(int(self.request.query_params.get("limit", 100)), 1), 200)
+        except (TypeError, ValueError):
+            limit = 100
+
+        queryset = Organization.objects.only(
+            "id",
+            "name",
+            "code",
+            "organization_type",
+            "status",
+        ).filter(
+            organization_type="client",
+        )
+
+        queryset = filter_organizations_for_user(queryset, self.request.user)
+
+        if query:
+            queryset = queryset.filter(
+                Q(name__icontains=query)
+                | Q(code__icontains=query)
+                | Q(email__icontains=query)
+            )
+
+        if status_value:
+            queryset = queryset.filter(status=status_value)
+
+        return queryset.order_by("name", "id")[:limit]

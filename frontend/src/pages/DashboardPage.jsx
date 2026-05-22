@@ -23,7 +23,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
 import dashboardService from "../services/dashboardService";
 import parcelService from "../services/parcelService";
-import { fetchAllClients } from "../services/clientService";
+import { getClientLookup } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import { PARCEL_STATUS_OPTIONS, getParcelStatusClasses, getParcelStatusLabel, normalizeParcelStatus, progressFromStatus } from "../constants/parcelConstants";
 import { premium } from "../components/ui/designSystem";
@@ -675,7 +675,7 @@ export default function DashboardPage() {
         const [statsPayload, clientsPayload] = await Promise.all([
           dashboardService.getStats(),
           isInternalPortal
-            ? fetchAllClients({ ordering: "name" }).catch(() => ({ results: [] }))
+            ? getClientLookup({ limit: 200 }).catch(() => ({ results: [] }))
             : Promise.resolve({ results: [] }),
         ]);
 

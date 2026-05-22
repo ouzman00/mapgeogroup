@@ -195,3 +195,22 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
         return "active"
 
+class OrganizationLookupSerializer(serializers.ModelSerializer):
+    label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Organization
+        fields = [
+            "id",
+            "name",
+            "code",
+            "organization_type",
+            "status",
+            "label",
+        ]
+
+    def get_label(self, obj):
+        code = (getattr(obj, "code", "") or "").strip()
+        name = (getattr(obj, "name", "") or "").strip()
+        return f"{name} · {code}" if name and code else name or code or f"Client {obj.pk}"
+

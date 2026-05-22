@@ -65,3 +65,10 @@ export async function confirmClientActivation(payload) {
   );
   return response.data;
 }
+
+export async function getClientLookup(params = {}) {
+  const response = await api.get(`${CLIENTS_ENDPOINT}lookup/`, {
+    params: { limit: 100, ...params },
+  });
+  return normalizeListResponse(response.data);
+}
