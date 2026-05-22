@@ -291,6 +291,11 @@ function MeasurementToolPanel({ open, map, measurementDraft, measurementDraftSum
 }
 
 
+const DEFAULT_VERTEX_DISPLAY_OPTIONS = {
+  sommets: true,
+  dimensions: true,
+};
+
 function VertexToolPanel({ open, activeFeature, measurementSummary, displayOptions = DEFAULT_VERTEX_DISPLAY_OPTIONS, onToggleDisplay, onClose, shiftLeft = false }) {
   if (!open) return null;
 
