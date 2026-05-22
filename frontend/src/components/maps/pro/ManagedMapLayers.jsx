@@ -311,15 +311,14 @@ function getLayerStyle(layer, feature) {
   const opacity = Number.isFinite(Number(layer.opacity)) ? Number(layer.opacity) : 1;
   if (isCommuneLayer(layer)) {
     return {
-    color: "#CBD5E1",
-    weight: 2,
-    opacity: 0.7 * opacity,
-    fillColor: "#CBD5E1",
-    fillOpacity: 0.01 * opacity,
-    dashArray: undefined,
-    lineCap: "round",
-    lineJoin: "round",
-    interactive: false,
+      color: "#0F172A",
+      weight: 3,
+      opacity: 1 * opacity,
+      fillColor: "#38BDF8",
+      fillOpacity: 0.08 * opacity,
+      dashArray: undefined,
+      lineCap: "round",
+      lineJoin: "round",
     };
   }
   if (layer.id === "roads") {
@@ -624,7 +623,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
           } catch {
             // Certains layers GeoJSON n'exposent pas setZIndex.
           }
-          if (isCommuneLayer(layer)) event.layer?.bringToBack?.();
+          if (isCommuneLayer(layer)) event.layer?.bringToFront?.();
         },
       }}
     />
