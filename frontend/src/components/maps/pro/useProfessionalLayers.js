@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildLayerCatalog, isLayerVisibleAtZoom } from "./layerCatalog";
+import { isRemovedCommunesLayer } from "./removedMapLayers";
 
 function safeJsonParse(value) {
   try {
@@ -169,7 +170,10 @@ export default function useProfessionalLayers({ sigLayers, userKey, mapZoom }) {
   );
 
   const baseLayers = useMemo(() => layersWithRuntime.filter((layer) => layer.group === "fonds"), [layersWithRuntime]);
-  const operationalLayers = useMemo(() => layersWithRuntime.filter((layer) => layer.group !== "fonds"), [layersWithRuntime]);
+  const operationalLayers = useMemo(
+    () => layersWithRuntime.filter((layer) => layer.group !== "fonds" && !isRemovedCommunesLayer(layer)),
+    [layersWithRuntime],
+  );
   const visibleOperationalLayers = useMemo(
     () => operationalLayers.filter((layer) => layer.visible && layer.zoomVisible && layer.available !== false),
     [operationalLayers],

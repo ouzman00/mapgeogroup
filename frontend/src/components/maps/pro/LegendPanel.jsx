@@ -2,6 +2,7 @@ import { AlertTriangle, Check, Loader2, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getAvailableLegendItems } from "../parcelMapStyles";
 import mapLayerService from "../../../services/mapLayerService";
+import { isRemovedCommunesLayer } from "./removedMapLayers";
 
 function clampNumber(value, fallback, min, max) {
   const number = Number(String(value ?? "").replace(",", "."));
@@ -194,15 +195,7 @@ function canToggleLayer(layer = {}) {
 }
 
 function isRemovedLegendLayer(layer = {}) {
-  const id = String(layer.id || layer.layerId || layer.sourceLayerId || "").toLowerCase();
-  const name = String(layer.name || layer.title || "").toLowerCase();
-  const endpoint = String(layer.endpoint || layer.url || "").toLowerCase();
-
-  return (
-    id === "communes" ||
-    name === "communes" ||
-    endpoint.includes("/map/communes/")
-  );
+  return isRemovedCommunesLayer(layer);
 }
 
 function isParcelsLegendLayer(layer = {}) {

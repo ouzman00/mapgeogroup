@@ -1,3 +1,4 @@
+import { isRemovedCommunesLayer } from "./removedMapLayers";
 import { getMapConfig } from "../../../config/mapConfig";
 
 export const LAYER_GROUPS = [
@@ -107,15 +108,7 @@ function normaliseContextLayer(layer, index) {
 }
 
 function isRemovedOperationalLayer(layer = {}) {
-  const id = String(layer.id || layer.layerId || layer.sourceLayerId || "").toLowerCase();
-  const name = String(layer.name || layer.title || "").toLowerCase();
-  const endpoint = String(layer.endpoint || layer.url || "").toLowerCase();
-
-  return (
-    id === "communes" ||
-    name === "communes" ||
-    endpoint.includes("/map/communes/")
-  );
+  return isRemovedCommunesLayer(layer);
 }
 
 export function buildLayerCatalog(sigLayers = []) {
