@@ -1721,6 +1721,15 @@ export default function PortfolioMapShell({
 
   const canShowVertexOverlay = showVertices && canUsePassiveOverlay(activeMapMode, "vertices");
   const canShowDimensionOverlay = showVertices && canUsePassiveOverlay(activeMapMode, "dimensions");
+
+  const showMeasurementDimensionMarkers = showMeasurements;
+  const showEditDimensionMarkers = inlineEditOpen;
+  const showSelectedDimensionMarkers =
+    canShowDimensionOverlay &&
+    vertexDisplayOptions.dimensions !== false &&
+    !showMeasurementDimensionMarkers &&
+    !showEditDimensionMarkers;
+
   const [userLocationEnabled, setUserLocationEnabled] = useState(false);
   const [userLocationMessage, setUserLocationMessage] = useState("");
 
@@ -2644,11 +2653,11 @@ export default function PortfolioMapShell({
                 )
               : null}
 
-            {canShowDimensionOverlay && vertexDisplayOptions.dimensions !== false ? (
+            {showSelectedDimensionMarkers ? (
               <DimensionSideMarkers markers={selectedMeasurementOverlay.sideMarkers} keyPrefix="selected" />
             ) : null}
 
-            {showMeasurements ? (
+            {showMeasurementDimensionMarkers ? (
               <DimensionSideMarkers markers={measurementDraftOverlay.sideMarkers} keyPrefix="measure" />
             ) : null}
 
@@ -2663,7 +2672,7 @@ export default function PortfolioMapShell({
             geometryReloadKey={editLayerResetKey}
           />
 
-          {inlineEditOpen ? (
+          {showEditDimensionMarkers && !showMeasurementDimensionMarkers ? (
             <DimensionSideMarkers markers={editMeasurementOverlay.sideMarkers} keyPrefix="edit" />
           ) : null}
 
