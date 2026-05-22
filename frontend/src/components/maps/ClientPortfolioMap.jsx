@@ -82,6 +82,10 @@ function areViewportParcelListsEquivalent(current = [], next = []) {
   );
 }
 
+function setBooleanStateIfChanged(setter, nextValue) {
+  setter((current) => (Object.is(current, nextValue) ? current : nextValue));
+}
+
 export default function ClientPortfolioMap({
   clientCode,
   ownerName,
@@ -218,7 +222,7 @@ export default function ClientPortfolioMap({
     }
 
     viewportRequestSeqRef.current += 1;
-    setViewportLoading(false);
+    setBooleanStateIfChanged(setViewportLoading, false);
   }, []);
 
   const blockViewportRequests = useCallback(
@@ -233,7 +237,7 @@ export default function ClientPortfolioMap({
   const retryViewportRequests = useCallback(() => {
     viewportFetchKeyRef.current = "";
     viewportRequestSeqRef.current += 1;
-    setViewportLoading(false);
+    setBooleanStateIfChanged(setViewportLoading, false);
     setMapAccessBlocked(false);
     setMapAccessMessage("");
   }, []);
@@ -345,7 +349,7 @@ export default function ClientPortfolioMap({
 
         const abortController = new AbortController();
         viewportAbortRef.current = abortController;
-        setViewportLoading(true);
+        setBooleanStateIfChanged(setViewportLoading, true);
 
         try {
           const payload = await parcelService.getParcelMap(
@@ -399,7 +403,7 @@ export default function ClientPortfolioMap({
           }
 
           if (requestSeq === viewportRequestSeqRef.current) {
-            setViewportLoading(false);
+            setBooleanStateIfChanged(setViewportLoading, false);
           }
         }
       }, 350);
