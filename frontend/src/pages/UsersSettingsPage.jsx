@@ -17,7 +17,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import LoadingState from "../components/ui/LoadingState";
 import useAuth from "../hooks/useAuth";
 import userService from "../services/userService";
-import { fetchAllClients } from "../services/clientService";
+import { getClientLookup } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import { ROLE_LABELS, getRoleLabel } from "../constants/roleConstants";
 
@@ -160,7 +160,7 @@ export default function UsersSettingsPage() {
 
   const loadOrganizations = async () => {
     try {
-      const payload = await fetchAllClients({ ordering: "name" });
+      const payload = await getClientLookup({ limit: 200 });
       setOrganizations(payload.results || []);
     } catch {
       setOrganizations([]);
