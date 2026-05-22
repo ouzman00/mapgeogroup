@@ -28,9 +28,9 @@ LAYER_CONFIGS: dict[str, dict[str, Any]] = {
         "label_candidates": ("CCRCA_1", "ccrca_1", "commune", "COMMUNE", "nom", "NOM", "name", "NAME"),
         "type_candidates": (),
         "commune_candidates": ("CCRCA_1", "ccrca_1", "commune", "COMMUNE"),
-        "visible": False,
-        "minZoom": 10,
-        "labelMinZoom": 12,
+        "visible": True,
+        "minZoom": 8,
+        "labelMinZoom": 11,
         "legend": [
             {"label": "Limite communale", "symbol": "polygon-outline", "color": "#0EA5E9", "fillColor": "rgba(14,165,233,0.08)"},
         ],
