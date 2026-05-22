@@ -23,7 +23,7 @@ import {
 import DashboardLayout from "../layouts/DashboardLayout";
 import useAuth from "../hooks/useAuth";
 import supportService from "../services/supportService";
-import { fetchAllClients } from "../services/clientService";
+import { getClientLookup } from "../services/clientService";
 import { getErrorMessage } from "../services/responseUtils";
 import useParcelSearch, { formatParcelOptionLabel } from "../hooks/useParcelSearch";
 import {
@@ -990,7 +990,7 @@ export default function SupportPage() {
       const requests = [supportService.getTickets({ page: 1, page_size: 50 })];
 
       if (isInternalPortal) {
-        requests.push(fetchAllClients({ ordering: "name" }));
+        requests.push(getClientLookup({ limit: 200 }));
       }
 
       const [ticketData, clientData] = await Promise.allSettled(requests);
