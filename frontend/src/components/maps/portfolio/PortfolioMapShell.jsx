@@ -1173,6 +1173,22 @@ function MeasurementOverlay({ draft }) {
   );
 }
 
+function DimensionSideMarkers({ markers = [], keyPrefix = "dimension" }) {
+  if (!Array.isArray(markers) || !markers.length) return null;
+
+  return markers
+    .filter((item) => item?.visible !== false)
+    .map((item) => (
+      <Marker
+        key={`${keyPrefix}-${item.id}`}
+        position={item.point}
+        pane={MAP_PANES.measure}
+        icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
+        interactive={false}
+      />
+    ));
+}
+
 function InlineParcelEditLayer({ activeFeature, editing, geometry, onGeometryChange, onGeometryGetterChange, deleteVertexMode, geometryReloadKey }) {
   const map = useMap();
   const groupRef = useRef(null);
@@ -2628,29 +2644,13 @@ export default function PortfolioMapShell({
                 )
               : null}
 
-            {canShowDimensionOverlay && vertexDisplayOptions.dimensions !== false
-              ? selectedMeasurementOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
-                  <Marker
-                    key={`selected-${item.id}`}
-                    position={item.point}
-                    pane={MAP_PANES.measure}
-                    icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
-                    interactive={false}
-                  />
-                ))
-              : null}
+            {canShowDimensionOverlay && vertexDisplayOptions.dimensions !== false ? (
+              <DimensionSideMarkers markers={selectedMeasurementOverlay.sideMarkers} keyPrefix="selected" />
+            ) : null}
 
-            {showMeasurements
-              ? measurementDraftOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
-                  <Marker
-                    key={item.id}
-                    position={item.point}
-                    pane={MAP_PANES.measure}
-                    icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
-                    interactive={false}
-                  />
-                ))
-              : null}
+            {showMeasurements ? (
+              <DimensionSideMarkers markers={measurementDraftOverlay.sideMarkers} keyPrefix="measure" />
+            ) : null}
 
 
           <InlineParcelEditLayer
@@ -2663,17 +2663,9 @@ export default function PortfolioMapShell({
             geometryReloadKey={editLayerResetKey}
           />
 
-          {inlineEditOpen
-          ? editMeasurementOverlay.sideMarkers.filter((item) => item.visible !== false).map((item) => (
-              <Marker
-                key={item.id}
-                position={item.point}
-                pane={MAP_PANES.measure}
-                icon={createSideLabelIcon(item.label, item.tone, item.angle || 0)}
-                interactive={false}
-              />
-            ))
-          : null}
+          {inlineEditOpen ? (
+            <DimensionSideMarkers markers={editMeasurementOverlay.sideMarkers} keyPrefix="edit" />
+          ) : null}
 
         </MapContainer>
 
