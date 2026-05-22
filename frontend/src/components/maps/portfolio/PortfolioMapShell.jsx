@@ -174,12 +174,6 @@ function isEditableTextTarget(target) {
   return tagName === "input" || tagName === "textarea" || tagName === "select" || Boolean(target.isContentEditable);
 }
 
-function stripDimensionClosingPoint(points) {
-  if (!Array.isArray(points) || points.length <= 1) return Array.isArray(points) ? points : [];
-  const cleanPoints = [...points];
-  if (pointsAreSame(cleanPoints[0], cleanPoints[cleanPoints.length - 1])) cleanPoints.pop();
-  return cleanPoints;
-}
 
 function getMeasurementPreviewPoints(draft) {
   const points = Array.isArray(draft?.points) ? draft.points.filter((point) => Array.isArray(point) && point.length >= 2) : [];
