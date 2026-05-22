@@ -106,6 +106,18 @@ function normaliseContextLayer(layer, index) {
   };
 }
 
+function isRemovedOperationalLayer(layer = {}) {
+  const id = String(layer.id || layer.layerId || layer.sourceLayerId || "").toLowerCase();
+  const name = String(layer.name || layer.title || "").toLowerCase();
+  const endpoint = String(layer.endpoint || layer.url || "").toLowerCase();
+
+  return (
+    id === "communes" ||
+    name === "communes" ||
+    endpoint.includes("/map/communes/")
+  );
+}
+
 export function buildLayerCatalog(sigLayers = []) {
   const mapConfig = getMapConfig();
 
@@ -260,7 +272,7 @@ export function buildLayerCatalog(sigLayers = []) {
     : [];
 
   const externalLayers = (Array.isArray(sigLayers) ? sigLayers : [])
-    .filter(isSupportedOperationalSource)
+    .filter((layer) => isSupportedOperationalSource(layer) && !isRemovedOperationalLayer(layer))
     .map((layer, index) => {
     if (layer?.type === "geojson" || layer?.service === "geojson" || layer?.service === "wfs" || layer?.dataFormat === "wfs" || layer?.endpoint) {
       return normaliseContextLayer(layer, index);
