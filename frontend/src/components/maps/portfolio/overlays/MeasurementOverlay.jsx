@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { CircleMarker, Polygon, Polyline, Tooltip } from "react-leaflet";
 import { getMeasurementPreviewPoints, stripDimensionClosingPoint } from "../utils/dimensionOverlays";
 
@@ -149,4 +150,4 @@ function MeasurementOverlay({ draft }) {
   );
 }
 
-export default MeasurementOverlay;
+export default memo(MeasurementOverlay);

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { LocateFixed, Minus, Plus } from "lucide-react";
 import { overlayEventProps } from "../utils/mapUiEvents";
 import { USER_LOCATION_FOCUS_ZOOM } from "../../../../constants/mapConstants";
@@ -62,4 +63,4 @@ function MapControlStack({ map, locationEnabled, onToggleLocation, onLocationErr
   );
 }
 
-export default MapControlStack;
+export default memo(MapControlStack);

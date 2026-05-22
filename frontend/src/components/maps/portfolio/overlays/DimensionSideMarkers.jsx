@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { Marker } from "react-leaflet";
 import { createSideLabelIcon } from "../mapUtils";
 
-export default function DimensionSideMarkers({
+function DimensionSideMarkers({
   markers = [],
   keyPrefix = "dimension",
   pane,
@@ -20,3 +21,5 @@ export default function DimensionSideMarkers({
       />
     ));
 }
+
+export default memo(DimensionSideMarkers);

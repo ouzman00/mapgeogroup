@@ -1,3 +1,4 @@
+import { memo } from "react";
 function formatActiveMapFilters(filters = {}) {
   const labels = [];
   if (filters.owner_client_code) labels.push(`client ${filters.owner_client_code}`);
@@ -26,4 +27,4 @@ function ViewportSampleNotice({ summary }) {
   );
 }
 
-export default ViewportSampleNotice;
+export default memo(ViewportSampleNotice);
