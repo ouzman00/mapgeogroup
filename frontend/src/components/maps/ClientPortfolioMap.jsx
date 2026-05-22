@@ -86,6 +86,10 @@ function setBooleanStateIfChanged(setter, nextValue) {
   setter((current) => (Object.is(current, nextValue) ? current : nextValue));
 }
 
+function setStringStateIfChanged(setter, nextValue = "") {
+  setter((current) => (Object.is(current, nextValue) ? current : nextValue));
+}
+
 export default function ClientPortfolioMap({
   clientCode,
   ownerName,
@@ -228,8 +232,8 @@ export default function ClientPortfolioMap({
   const blockViewportRequests = useCallback(
     (error) => {
       stopViewportLoading();
-      setMapAccessBlocked(true);
-      setMapAccessMessage(getAccessErrorMessage(error));
+      setBooleanStateIfChanged(setMapAccessBlocked, true);
+      setStringStateIfChanged(setMapAccessMessage, getAccessErrorMessage(error));
     },
     [stopViewportLoading],
   );
@@ -238,8 +242,8 @@ export default function ClientPortfolioMap({
     viewportFetchKeyRef.current = "";
     viewportRequestSeqRef.current += 1;
     setBooleanStateIfChanged(setViewportLoading, false);
-    setMapAccessBlocked(false);
-    setMapAccessMessage("");
+    setBooleanStateIfChanged(setMapAccessBlocked, false);
+    setStringStateIfChanged(setMapAccessMessage, "");
   }, []);
 
   const applyParcelOverride = useCallback(
