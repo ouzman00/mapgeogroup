@@ -69,6 +69,19 @@ function areViewportSummariesEqual(a = {}, b = {}) {
   );
 }
 
+function getParcelStableId(parcel) {
+  return parcel?.id ?? parcel?.uuid ?? parcel?.reference ?? null;
+}
+
+function areViewportParcelListsEquivalent(current = [], next = []) {
+  if (!Array.isArray(current) || !Array.isArray(next)) return false;
+  if (current.length !== next.length) return false;
+
+  return current.every((parcel, index) =>
+    Object.is(getParcelStableId(parcel), getParcelStableId(next[index])),
+  );
+}
+
 export default function ClientPortfolioMap({
   clientCode,
   ownerName,
@@ -350,7 +363,10 @@ export default function ClientPortfolioMap({
           const results = payload.results || [];
           const total = Number(payload.count ?? results.length);
 
-          setViewportParcels(results);
+          setViewportParcels((current) =>
+            areViewportParcelListsEquivalent(current, results) ? current : results,
+          );
+
           const nextViewportSummary = {
             loaded: results.length,
             total,
