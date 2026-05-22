@@ -231,16 +231,6 @@ function legendItems(layer, features = []) {
     return getAvailableLegendItems(features);
   }
 
-  if (layer?.id === "communes") {
-    return [
-      {
-        label: "Limite communale passive",
-        symbol: "polygon-outline",
-        color: "#2f3a43",
-        fillColor: "rgba(47,58,67,0.025)",
-      },
-    ];
-  }
 
   const sourceKind = String(layer?.type || layer?.service || "").toLowerCase();
   const sourceFormat = String(layer?.dataFormat || layer?.data_format || layer?.metadata?.dataFormat || layer?.clientLayerType || "").toLowerCase();
@@ -408,14 +398,13 @@ export default function LegendPanel({ open, features = [], activeLayers = [], on
           if (!layer?.id) return false;
 
           const isCoreLayer = isParcelsLegendLayer(layer);
-          const isOptionalContextLayer = layer.id === "communes";
           const sourceKind = String(layer.service || layer.type || "").toLowerCase();
           const sourceFormat = String(layer.dataFormat || layer.data_format || layer.metadata?.dataFormat || layer.clientLayerType || "").toLowerCase();
           const isSupportedOperationalLayer = ["geojson", "wfs", "wms"].includes(sourceKind) || ["geojson", "wfs", "wms"].includes(sourceFormat);
 
           if (layer.available === false && !isCoreLayer) return false;
 
-          return isCoreLayer || isOptionalContextLayer || isSupportedOperationalLayer;
+          return isCoreLayer || isSupportedOperationalLayer;
         })
         .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)),
     [activeLayers],

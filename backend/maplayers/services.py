@@ -19,22 +19,6 @@ GEOMETRY_COLUMNS = ("geom", "geometry", "the_geom", "wkb_geometry")
 ID_COLUMNS = ("id", "gid", "fid", "ogc_fid", "objectid", "object_id")
 
 LAYER_CONFIGS: dict[str, dict[str, Any]] = {
-    "communes": {
-        "name": "Communes",
-        "group": "contexte",
-        "geometry_type": "polygon",
-        "endpoint": "/map/communes/",
-        "table_candidates": ("communes", "commune", "limites_communales", "sig_communes", "gpkg_communes"),
-        "label_candidates": ("CCRCA_1", "ccrca_1", "commune", "COMMUNE", "nom", "NOM", "name", "NAME"),
-        "type_candidates": (),
-        "commune_candidates": ("CCRCA_1", "ccrca_1", "commune", "COMMUNE"),
-        "visible": False,
-        "minZoom": 10,
-        "labelMinZoom": 12,
-        "legend": [
-            {"label": "Limite communale", "symbol": "polygon-outline", "color": "#0EA5E9", "fillColor": "rgba(14,165,233,0.08)"},
-        ],
-    },
     "roads": {
         "name": "Réseau routier",
         "group": "contexte",
@@ -441,8 +425,6 @@ def _feature_properties(layer_id: str, row: dict[str, Any], schema: LayerSchema)
         "layer_id": layer_id,
         "layer_name": LAYER_CONFIGS[layer_id]["name"],
     }
-    if layer_id == "communes":
-        properties["CCRCA_1"] = raw_label or ""
     return properties
 
 

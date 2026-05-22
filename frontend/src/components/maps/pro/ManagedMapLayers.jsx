@@ -7,18 +7,10 @@ import { AuthenticatedTileLayer } from "./AuthenticatedRasterLayers";
 const MANAGED_LAYER_PANES = {
   context: "mapgeo-context-pane",
   private: "mapgeo-private-layer-pane",
-  communes: "mapgeo-communes-pane",
-  communeLabels: "mapgeo-communes-label-pane",
 };
 
-function isCommuneLayer(layer) {
-  const id = String(layer?.id || "").toLowerCase();
-  const name = String(layer?.name || "").toLowerCase();
-  return id === "communes" || id.includes("commune") || name.includes("commune");
-}
 
 function getGeoJsonPane(layer) {
-  if (isCommuneLayer(layer)) return MANAGED_LAYER_PANES.communes;
   if (layer?.privateLayer) return MANAGED_LAYER_PANES.private;
   return MANAGED_LAYER_PANES.context;
 }
@@ -32,13 +24,6 @@ function ensureGeoJsonPanes(map) {
   const privatePane = map.getPane(MANAGED_LAYER_PANES.private) || map.createPane(MANAGED_LAYER_PANES.private);
   privatePane.style.zIndex = "410";
 
-  const communesPane = map.getPane(MANAGED_LAYER_PANES.communes) || map.createPane(MANAGED_LAYER_PANES.communes);
-  communesPane.style.zIndex = "370";
-  communesPane.style.pointerEvents = "none";
-
-  const communeLabelsPane = map.getPane(MANAGED_LAYER_PANES.communeLabels) || map.createPane(MANAGED_LAYER_PANES.communeLabels);
-  communeLabelsPane.style.zIndex = "420";
-  communeLabelsPane.style.pointerEvents = "none";
 }
 
 
@@ -309,19 +294,6 @@ function styleForFeatureCategory(layer = {}, feature, baseStyle = {}) {
 
 function getLayerStyle(layer, feature) {
   const opacity = Number.isFinite(Number(layer.opacity)) ? Number(layer.opacity) : 1;
-  if (isCommuneLayer(layer)) {
-    return {
-    color: "#CBD5E1",
-    weight: 2,
-    opacity: 0.7 * opacity,
-    fillColor: "#CBD5E1",
-    fillOpacity: 0.01 * opacity,
-    dashArray: undefined,
-    lineCap: "round",
-    lineJoin: "round",
-    interactive: false,
-    };
-  }
   if (layer.id === "roads") {
     const style = getRoadStyle(getFeatureClassification(feature));
     return { ...style, opacity: (style.opacity ?? 1) * opacity };
@@ -575,21 +547,7 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
     const props = feature?.properties || {};
     const label = props.CCRCA_1 || props.label || props.name || props.type || layer.name;
 
-    if (!isCommuneLayer(layer)) {
-      featureLayer.bindPopup(buildPopupHtml(layer, feature), { className: "mapgeo-sig-popup-shell", maxWidth: 240 });
-    }
-
-    if (isCommuneLayer(layer) && showLabels && label) {
-      featureLayer.bindTooltip(String(label).toUpperCase(), {
-        permanent: true,
-        direction: "center",
-        className: "mapgeo-commune-label",
-        opacity: 0.88,
-        pane: MANAGED_LAYER_PANES.communeLabels,
-        interactive: false,
-      });
-      return;
-    }
+    featureLayer.bindPopup(buildPopupHtml(layer, feature), { className: "mapgeo-sig-popup-shell", maxWidth: 240 });
 
     if ((layer.id === "roads" && showLabels) || layer.geometryType === "point") {
       featureLayer.bindTooltip(String(label), {
@@ -612,19 +570,16 @@ function GeoJsonBboxLayer({ layer, zIndex, setLayerRuntime }) {
       pointToLayer={pointToLayer}
       onEachFeature={onEachFeature}
       pane={getGeoJsonPane(layer)}
-      interactive={!isCommuneLayer(layer)}
+      interactive
       eventHandlers={{
         add: (event) => {
           event.layer?.eachLayer?.((childLayer) => {
-            childLayer.options.interactive = !isCommuneLayer(layer);
-            if (isCommuneLayer(layer)) childLayer.options.bubblingMouseEvents = false;
           });
           try {
             event.layer?.setZIndex?.(zIndex);
           } catch {
             // Certains layers GeoJSON n'exposent pas setZIndex.
           }
-          if (isCommuneLayer(layer)) event.layer?.bringToBack?.();
         },
       }}
     />
