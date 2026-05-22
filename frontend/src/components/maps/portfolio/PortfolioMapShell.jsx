@@ -45,6 +45,7 @@ import FloatingMapToolbar from "./PortfolioMapToolbar";
 import SearchNoResultNotice from "./SearchNoResultNotice";
 import DimensionSideMarkers from "./overlays/DimensionSideMarkers";
 import MeasurementOverlay from "./overlays/MeasurementOverlay";
+import MapPaneController, { MAP_PANES } from "./overlays/MapPaneController";
 import MapToolFeedbackPanel, { DraggableMapPanel, PanelMoveHandle } from "./panels/MapFloatingPanels";
 import { MapRuntimeObserver, PortfolioViewport } from "./PortfolioViewport";
 import useCartographyViewport from "./hooks/useCartographyViewport";
@@ -71,12 +72,6 @@ const EDIT_VERTEX_TOLERANCE_PX = 16;
 const POLYGON_MIN_ZOOM = 14;
 const CENTROID_RADIUS_BASE = 6;
 
-const MAP_PANES = {
-  parcels: "mapgeo-parcel-pane",
-  labels: "mapgeo-parcel-label-pane",
-  edit: "mapgeo-edit-pane",
-  measure: "mapgeo-measure-pane",
-};
 const INLINE_EDIT_STYLE = {
   color: "#2563eb",
   fillColor: "#dbeafe",
@@ -157,38 +152,6 @@ function createUserLocationIcon() {
     iconSize: [24, 24],
     iconAnchor: [12, 12],
   });
-}
-
-function MapPaneController() {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map?.createPane) return;
-
-    const panes = [
-      [MAP_PANES.parcels, 650, "auto"],
-      [MAP_PANES.labels, 680, "auto"],
-      [MAP_PANES.edit, 690, "auto"],
-      [MAP_PANES.measure, 710, "none"],
-    ];
-
-    panes.forEach(([name, zIndex, pointerEvents]) => {
-      const pane = map.getPane(name) || map.createPane(name);
-      pane.style.zIndex = String(zIndex);
-      pane.style.pointerEvents = pointerEvents;
-    });
-
-    // Les poignées de sommets Geoman sont rendues dans le markerPane Leaflet natif.
-    // Le pane d'édition MapGeo est au-dessus des polygones standards ; on remonte donc
-    // markerPane au-dessus de l'édition pour garder les sommets drag-and-drop.
-    const markerPane = map.getPane("markerPane");
-    if (markerPane) {
-      markerPane.style.zIndex = "760";
-      markerPane.style.pointerEvents = "auto";
-    }
-  }, [map]);
-
-  return null;
 }
 
 function pointsAreSame(a, b, tolerance = 1e-9) {
