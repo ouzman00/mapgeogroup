@@ -15,7 +15,11 @@ export function ParcelProvider({ children }) {
   const fetchParcels = useCallback(async (params = {}) => {
     setLoadingList(true);
     try {
-      const payload = await parcelService.getAllParcels(params);
+      const payload = await parcelService.getParcels({
+        page: 1,
+        page_size: 100,
+        ...params,
+      });
       setParcels(payload.results);
       setListMeta({ count: payload.count, next: payload.next, previous: payload.previous });
       return payload;
