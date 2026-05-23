@@ -1219,8 +1219,8 @@ function CategorizedSymbologyPanel({ layer, draft, onChange, geometryType, disab
 function DeleteLayerDialog({ layer, loading, onCancel, onConfirm }) {
   if (!layer) return null;
   return (
-    <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-mapgeo-primary/40 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-layer-title">
-      <div className="w-full max-w-lg rounded-3xl border border-mapgeo-line bg-white p-6 shadow-panel">
+    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-mapgeo-primary/40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="delete-layer-title">
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-[28px] border border-mapgeo-line bg-white p-5 shadow-panel sm:rounded-3xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-red-700">Suppression définitive</p>
@@ -1379,7 +1379,7 @@ function LayerActionButton({ active = false, danger = false, children, className
 
 function LayerEditorShell({ title, subtitle, tabs, activeTab, onTabChange, children }) {
   return (
-    <div className="mt-4 overflow-hidden rounded-3xl border border-mapgeo-line bg-white shadow-[0_12px_32px_rgba(15,23,42,0.04)]">
+    <div className="mt-4 overflow-visible rounded-3xl border border-mapgeo-line bg-white shadow-[0_12px_32px_rgba(15,23,42,0.04)] md:overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-mapgeo-line bg-mapgeo-ivory/40 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm font-extrabold text-mapgeo-primary">{title}</p>
@@ -1424,7 +1424,7 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
   const openEditor = (nextEditor) => setEditor((current) => (current === nextEditor ? null : nextEditor));
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-mapgeo-line bg-white shadow-soft">
+    <article className="overflow-visible rounded-3xl border border-mapgeo-line bg-white shadow-soft md:overflow-hidden">
       <div className="overflow-x-auto">
         <div className="grid min-w-[980px] grid-cols-[minmax(160px,1.1fr)_120px_120px_140px_minmax(190px,1.1fr)_130px_105px_280px] items-center gap-3 border-b border-mapgeo-line bg-mapgeo-ivory/35 px-4 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-mapgeo-secondary/60">
           <span>Couche</span>
