@@ -3452,3 +3452,84 @@ body {
     top: calc(var(--mapgeo-safe-top) + 8.75rem);
   }
 }
+
+/* --------------------------------------------------------------------------
+   ADMIN MAP LAYERS LIST
+   Corrige l'affichage de la liste des couches SIG dans les fiches client :
+   actions lisibles, boutons non écrasés, adaptation à la largeur du panneau.
+-------------------------------------------------------------------------- */
+.mapgeo-admin-layer-list {
+  max-width: 100%;
+  container-type: inline-size;
+  container-name: admin-layer-list;
+}
+
+.mapgeo-admin-layer-scroll {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mapgeo-admin-layer-grid {
+  align-items: center;
+}
+
+.mapgeo-admin-layer-grid > * {
+  min-width: 0;
+}
+
+.mapgeo-admin-layer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.mapgeo-admin-layer-actions button,
+.mapgeo-admin-layer-actions a {
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+@container admin-layer-list (max-width: 1180px) {
+  .mapgeo-admin-layer-scroll {
+    overflow-x: visible;
+  }
+
+  .mapgeo-admin-layer-header {
+    display: none;
+  }
+
+  .mapgeo-admin-layer-grid {
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .mapgeo-admin-layer-grid > :nth-child(2),
+  .mapgeo-admin-layer-grid > :nth-child(3),
+  .mapgeo-admin-layer-grid > :nth-child(4),
+  .mapgeo-admin-layer-grid > :nth-child(5),
+  .mapgeo-admin-layer-grid > :nth-child(6),
+  .mapgeo-admin-layer-grid > :nth-child(7) {
+    display: none;
+  }
+
+  .mapgeo-admin-layer-grid > :last-child {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .mapgeo-admin-layer-actions {
+    justify-content: flex-start;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(var(--mapgeo-sand-rgb), 0.28);
+  }
+}
+
+@container admin-layer-list (min-width: 1181px) {
+  .mapgeo-admin-layer-actions {
+    justify-content: flex-end;
+  }
+}

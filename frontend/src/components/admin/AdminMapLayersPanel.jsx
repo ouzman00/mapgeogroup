@@ -1424,9 +1424,9 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
   const openEditor = (nextEditor) => setEditor((current) => (current === nextEditor ? null : nextEditor));
 
   return (
-    <article className="overflow-visible rounded-3xl border border-mapgeo-line bg-white shadow-soft md:overflow-hidden">
-      <div className="overflow-x-auto">
-        <div className="grid min-w-[980px] grid-cols-[minmax(160px,1.1fr)_120px_120px_140px_minmax(190px,1.1fr)_130px_105px_280px] items-center gap-3 border-b border-mapgeo-line bg-mapgeo-ivory/35 px-4 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-mapgeo-secondary/60">
+    <article className="mapgeo-admin-layer-list overflow-visible rounded-3xl border border-mapgeo-line bg-white shadow-soft md:overflow-hidden">
+      <div className="mapgeo-admin-layer-scroll overflow-x-auto">
+        <div className="mapgeo-admin-layer-grid mapgeo-admin-layer-header grid min-w-[1120px] grid-cols-[minmax(170px,1.2fr)_110px_110px_120px_minmax(170px,1fr)_115px_95px_minmax(300px,auto)] items-center gap-3 border-b border-mapgeo-line bg-mapgeo-ivory/35 px-4 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-mapgeo-secondary/60">
           <span>Couche</span>
           <span>Source</span>
           <span>Géométrie</span>
@@ -1436,7 +1436,7 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
           <span>État</span>
           <span className="text-right">Actions</span>
         </div>
-        <div className="grid min-w-[980px] grid-cols-[minmax(160px,1.1fr)_120px_120px_140px_minmax(190px,1.1fr)_130px_105px_280px] items-center gap-3 px-4 py-3 text-sm">
+        <div className="mapgeo-admin-layer-grid grid min-w-[1120px] grid-cols-[minmax(170px,1.2fr)_110px_110px_120px_minmax(170px,1fr)_115px_95px_minmax(300px,auto)] items-center gap-3 px-4 py-3 text-sm">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
               <span className="h-3 w-3 shrink-0 rounded bg-mapgeo-primary" />
@@ -1450,7 +1450,7 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
           <span className="truncate font-semibold text-mapgeo-secondary/80" title={displayLabel}>{displayLabel}</span>
           <span className="inline-flex w-fit items-center rounded-full border border-green-100 bg-green-50 px-3 py-1 text-xs font-extrabold text-green-700">{isClientVisible(layer) ? "Visible" : visibility.label}</span>
           <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-extrabold ${cfg.className}`}>{cfg.label}</span>
-          <div className="flex justify-end gap-2">
+          <div className="mapgeo-admin-layer-actions flex flex-wrap justify-end gap-2">
             {isVector ? (
               <LayerActionButton active={editor === "style"} onClick={() => openEditor("style")} className="px-3 py-2">
                 <Palette size={14} /> Configurer
