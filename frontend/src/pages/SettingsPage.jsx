@@ -1041,7 +1041,7 @@ export default function SettingsPage() {
           : "Gérez votre profil, votre sécurité, vos préférences et les paramètres d’organisation."
       }
     >
-      <div className="flex min-h-[calc(100dvh-7.25rem)] flex-col gap-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] 2xl:h-[calc(100dvh-7.25rem)] 2xl:min-h-[580px] 2xl:overflow-hidden 2xl:pb-0">
+      <div className="flex flex-col gap-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
         <section className="flex shrink-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <nav className="text-sm font-semibold text-mapgeo-primary" aria-label="Fil d’Ariane">
@@ -1082,8 +1082,8 @@ export default function SettingsPage() {
           </div>
         ) : null}
 
-        <section className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-visible 2xl:grid-cols-[minmax(0,1fr)_380px] 2xl:overflow-hidden">
-          <div className="flex min-h-0 flex-col gap-6 overflow-visible lg:flex-row 2xl:overflow-hidden">
+        <section className="grid min-h-0 grid-cols-1 gap-6 overflow-visible 2xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="flex min-h-0 flex-col gap-6 overflow-visible lg:flex-row">
             <SettingsNav
               activeSection={activeSection}
               onNavigateSection={handleNavigateSection}
@@ -1093,7 +1093,7 @@ export default function SettingsPage() {
             <div
               ref={sectionsScrollRef}
               id="settings-sections-scroll"
-              className="min-h-0 min-w-0 flex-1 overflow-visible rounded-3xl border border-mapgeo-line bg-white shadow-soft scroll-smooth 2xl:overflow-y-auto"
+              className="min-h-0 min-w-0 flex-1 overflow-visible rounded-3xl border border-mapgeo-line bg-white shadow-soft scroll-smooth"
             >
               <ProfileSection
                 profileForm={profileForm}
