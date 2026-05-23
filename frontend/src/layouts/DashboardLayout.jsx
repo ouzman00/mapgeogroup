@@ -35,7 +35,7 @@ export default function DashboardLayout({
         <div className="flex min-w-0 flex-1 flex-col overflow-visible md:overflow-hidden">
           <Navbar title={title} subtitle={subtitle} />
 
-          <main className={`${resolvedMainClass} ${mainClassName}`.trim()}>
+          <main className={`mapgeo-dashboard-main ${resolvedMainClass} ${mainClassName}`.trim()}>
             <div className={fullHeight ? "h-full min-h-0" : "mx-auto w-full max-w-[1600px]"}>
               {children}
             </div>
