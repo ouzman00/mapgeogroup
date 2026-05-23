@@ -231,8 +231,8 @@ function ConfirmDialog({ open, title, description, actionLabel, loading, onCance
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-mapgeo-primary/40 px-4 backdrop-blur-sm">
-      <section className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-panel">
+    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-mapgeo-primary/40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true">
+      <section className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-[28px] bg-white p-5 shadow-panel sm:rounded-3xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-mapgeo-secondary/70">Confirmation</p>
@@ -489,7 +489,7 @@ export default function ClientDetailPage() {
                 </DetailTable>
               </div>
 
-              <aside className="relative overflow-hidden rounded-3xl bg-hero p-6 text-white shadow-panel">
+              <aside className="relative overflow-visible rounded-3xl bg-hero p-6 text-white shadow-panel lg:overflow-hidden">
                 <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white/80">Activité & alertes client</h3>
                 <div className="mt-5 space-y-3 border-b border-white/10 pb-5">
                   <InfoSummary icon={Clock3} label="Dernière activité" value={formatDateLabel(client.updated_at || client.created_at)} />

@@ -567,7 +567,7 @@ function ClientSummary({ clients, user, onSelectAlert }) {
   ];
 
   return (
-    <aside className="relative overflow-hidden rounded-3xl bg-hero p-6 text-white shadow-panel">
+    <aside className="relative overflow-visible rounded-3xl bg-hero p-6 text-white shadow-panel lg:overflow-hidden">
       <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/[0.06] blur-3xl" />
       <div className="relative">
         <h3 className="text-sm font-extrabold text-white">Résumé client</h3>
@@ -784,8 +784,8 @@ function TextInput({ label, value, onChange, placeholder, type = "text", require
 
 function ConfirmDialog({ action, loading, onCancel, onConfirm }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-mapgeo-primary/35 px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-lg rounded-3xl border border-mapgeo-line bg-white p-6 shadow-panel">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-mapgeo-primary/35 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true">
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-[28px] border border-mapgeo-line bg-white p-5 shadow-panel sm:rounded-3xl sm:p-6">
         <h3 className="text-2xl font-extrabold text-mapgeo-primary">{action.title}</h3>
         <p className="mt-3 text-sm leading-6 text-mapgeo-secondary">{action.message}</p>
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
