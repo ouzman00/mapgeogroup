@@ -658,7 +658,7 @@ function AccountSummary({ user, profileCompletion, preferences, onNavigateSectio
   ].filter(Boolean).length;
 
   return (
-    <aside className="relative overflow-hidden rounded-3xl bg-hero p-6 text-white shadow-panel lg:h-full">
+    <aside className="relative overflow-visible rounded-3xl bg-hero p-6 text-white shadow-panel lg:h-full lg:overflow-hidden">
       <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/[0.06] blur-3xl" />
 
       <div className="relative">
@@ -1041,8 +1041,8 @@ export default function SettingsPage() {
           : "Gérez votre profil, votre sécurité, vos préférences et les paramètres d’organisation."
       }
     >
-      <div className="flex h-[calc(100dvh-7.25rem)] min-h-[580px] flex-col overflow-hidden">
-        <section className="mb-3 flex shrink-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex min-h-[calc(100dvh-7.25rem)] flex-col gap-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-7.25rem)] md:min-h-[580px] md:overflow-hidden md:pb-0">
+        <section className="flex shrink-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <nav className="text-sm font-semibold text-mapgeo-primary" aria-label="Fil d’Ariane">
               Accueil <span className="mx-1 text-mapgeo-secondary/40">/</span> Paramètres
@@ -1082,8 +1082,8 @@ export default function SettingsPage() {
           </div>
         ) : null}
 
-        <section className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-hidden 2xl:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="flex min-h-0 flex-col gap-6 overflow-hidden lg:flex-row">
+        <section className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-visible md:overflow-hidden 2xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="flex min-h-0 flex-col gap-6 overflow-visible md:overflow-hidden lg:flex-row">
             <SettingsNav
               activeSection={activeSection}
               onNavigateSection={handleNavigateSection}
@@ -1093,7 +1093,7 @@ export default function SettingsPage() {
             <div
               ref={sectionsScrollRef}
               id="settings-sections-scroll"
-              className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-3xl border border-mapgeo-line bg-white shadow-soft scroll-smooth"
+              className="min-h-0 min-w-0 flex-1 overflow-visible rounded-3xl border border-mapgeo-line bg-white shadow-soft scroll-smooth md:overflow-y-auto"
             >
               <ProfileSection
                 profileForm={profileForm}
