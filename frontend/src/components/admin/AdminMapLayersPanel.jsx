@@ -1464,7 +1464,7 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
               aria-label="Modifier les informations de la couche"
             >
               <PencilLine size={14} />
-              <span className="hidden xl:inline">Infos</span>
+              <span className="hidden 2xl:inline">Infos</span>
             </LayerActionButton>
             <LayerActionButton
               active={editor === "display"}
@@ -1474,7 +1474,7 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
               aria-label="Modifier les paramètres d'affichage"
             >
               <SlidersHorizontal size={14} />
-              <span className="hidden xl:inline">Affichage</span>
+              <span className="hidden 2xl:inline">Affichage</span>
             </LayerActionButton>
             <LayerActionButton
               onClick={() => onToggle(layer)}
@@ -1490,7 +1490,7 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
               ) : (
                 <EyeOff size={14} />
               )}
-              <span className="hidden xl:inline">
+              <span className="hidden 2xl:inline">
                 {layer.is_active === false ? "Autoriser" : "Masquer"}
               </span>
             </LayerActionButton>
@@ -1502,7 +1502,7 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
               aria-label="Supprimer la couche"
             >
               <Trash2 size={14} />
-              <span className="hidden xl:inline">Supprimer</span>
+              <span className="hidden 2xl:inline">Supprimer</span>
             </LayerActionButton>
           </div>
         </div>
