@@ -3256,3 +3256,115 @@ body {
     height: 100vh;
   }
 }
+
+/* --------------------------------------------------------------------------
+   MAPGEO MOBILE TABLE CARDS
+   Les tableaux critiques restent des tableaux desktop, mais deviennent
+   des cards lisibles sur mobile sans scroll horizontal global.
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-mobile-table-scroll {
+    overflow-x: visible;
+  }
+
+  .mapgeo-mobile-card-table {
+    min-width: 0 !important;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .mapgeo-mobile-card-table thead {
+    display: none;
+  }
+
+  .mapgeo-mobile-card-table tbody {
+    display: block;
+    padding: 0.5rem;
+  }
+
+  .mapgeo-mobile-card-table tr {
+    display: block;
+    margin: 0.75rem 0;
+    overflow: hidden;
+    border: 1px solid rgba(var(--mapgeo-sand-rgb), 0.30);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 12px 30px rgba(18, 59, 93, 0.07);
+  }
+
+  .mapgeo-mobile-card-table td {
+    display: grid;
+    grid-template-columns: minmax(6.75rem, 0.42fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    min-width: 0;
+    border-bottom: 1px solid rgba(var(--mapgeo-sand-rgb), 0.22);
+    padding: 0.85rem 1rem !important;
+    color: var(--mapgeo-primary);
+    text-align: left !important;
+    white-space: normal;
+  }
+
+  .mapgeo-mobile-card-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .mapgeo-mobile-card-table td::before {
+    content: "";
+    align-self: start;
+    color: rgba(var(--mapgeo-primary-rgb), 0.55);
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.10em;
+    line-height: 1.25;
+    text-transform: uppercase;
+  }
+
+  .mapgeo-mobile-card-table td > * {
+    min-width: 0;
+  }
+
+  .mapgeo-mobile-card-table td[colspan] {
+    display: block;
+    padding: 1.5rem !important;
+    text-align: center !important;
+  }
+
+  .mapgeo-mobile-card-table td[colspan]::before {
+    display: none;
+  }
+
+  .mapgeo-mobile-card-table .justify-end {
+    justify-content: flex-start;
+  }
+
+  .mapgeo-mobile-card-table .text-right {
+    text-align: left;
+  }
+
+  .mapgeo-clients-table td:nth-child(1)::before { content: "Client"; }
+  .mapgeo-clients-table td:nth-child(2)::before { content: "Code"; }
+  .mapgeo-clients-table td:nth-child(3)::before { content: "Contact"; }
+  .mapgeo-clients-table td:nth-child(4)::before { content: "Parcelles"; }
+  .mapgeo-clients-table td:nth-child(5)::before { content: "Statut"; }
+  .mapgeo-clients-table td:nth-child(6)::before { content: "Activité"; }
+  .mapgeo-clients-table td:nth-child(7)::before { content: "Accès"; }
+  .mapgeo-clients-table td:nth-child(8)::before { content: "Actions"; }
+
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(1)::before { content: "Client"; }
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(2)::before { content: "Parcelles"; }
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(3)::before { content: "Commune"; }
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(4)::before { content: "Responsable"; }
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(5)::before { content: "État"; }
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(6)::before { content: "Progression"; }
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(7)::before { content: "Mise à jour"; }
+  .mapgeo-dashboard-portfolio-table--internal td:nth-child(8)::before { content: "Actions"; }
+
+  .mapgeo-dashboard-portfolio-table--client td:nth-child(1)::before { content: "Parcelle"; }
+  .mapgeo-dashboard-portfolio-table--client td:nth-child(2)::before { content: "Commune"; }
+  .mapgeo-dashboard-portfolio-table--client td:nth-child(3)::before { content: "État"; }
+  .mapgeo-dashboard-portfolio-table--client td:nth-child(4)::before { content: "Progression"; }
+  .mapgeo-dashboard-portfolio-table--client td:nth-child(5)::before { content: "Mise à jour"; }
+  .mapgeo-dashboard-portfolio-table--client td:nth-child(6)::before { content: "Actions"; }
+}

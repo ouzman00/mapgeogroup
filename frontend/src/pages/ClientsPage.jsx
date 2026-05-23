@@ -388,8 +388,8 @@ function ClientsTable({ clients, loading, actionSaving, onDeleteClient, onDelete
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-[1080px] w-full text-left text-sm">
+      <div className="mapgeo-mobile-table-scroll overflow-x-auto">
+        <table className="mapgeo-mobile-card-table mapgeo-clients-table min-w-[1080px] w-full text-left text-sm">
           <thead>
             <tr className="border-b border-mapgeo-line bg-mapgeo-ivory/70 text-xs font-bold uppercase tracking-[0.10em] text-mapgeo-secondary/70">
               <th className="px-5 py-4">Client</th>
