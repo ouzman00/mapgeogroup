@@ -1456,17 +1456,53 @@ function LayerCard({ layer, toggling, infoSaving, styleSaving, settingsSaving, o
                 <Palette size={14} /> Configurer
               </LayerActionButton>
             ) : null}
-            <LayerActionButton active={editor === "general"} onClick={() => openEditor("general")} className="px-3 py-2" title="Informations">
+            <LayerActionButton
+              active={editor === "general"}
+              onClick={() => openEditor("general")}
+              className="px-3 py-2"
+              title="Informations"
+              aria-label="Modifier les informations de la couche"
+            >
               <PencilLine size={14} />
+              <span className="hidden xl:inline">Infos</span>
             </LayerActionButton>
-            <LayerActionButton active={editor === "display"} onClick={() => openEditor("display")} className="px-3 py-2" title="Affichage">
+            <LayerActionButton
+              active={editor === "display"}
+              onClick={() => openEditor("display")}
+              className="px-3 py-2"
+              title="Affichage"
+              aria-label="Modifier les paramètres d'affichage"
+            >
               <SlidersHorizontal size={14} />
+              <span className="hidden xl:inline">Affichage</span>
             </LayerActionButton>
-            <LayerActionButton onClick={() => onToggle(layer)} disabled={toggling} className="px-3 py-2" title="Autoriser ou masquer côté client">
-              {toggling ? <Loader2 size={14} className="animate-spin" /> : layer.is_active === false ? <Eye size={14} /> : <EyeOff size={14} />}
+            <LayerActionButton
+              onClick={() => onToggle(layer)}
+              disabled={toggling}
+              className="px-3 py-2"
+              title="Autoriser ou masquer côté client"
+              aria-label="Autoriser ou masquer cette couche côté client"
+            >
+              {toggling ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : layer.is_active === false ? (
+                <Eye size={14} />
+              ) : (
+                <EyeOff size={14} />
+              )}
+              <span className="hidden xl:inline">
+                {layer.is_active === false ? "Autoriser" : "Masquer"}
+              </span>
             </LayerActionButton>
-            <LayerActionButton danger onClick={() => onDelete(layer)} className="px-3 py-2" title="Supprimer">
+            <LayerActionButton
+              danger
+              onClick={() => onDelete(layer)}
+              className="px-3 py-2"
+              title="Supprimer"
+              aria-label="Supprimer la couche"
+            >
               <Trash2 size={14} />
+              <span className="hidden xl:inline">Supprimer</span>
             </LayerActionButton>
           </div>
         </div>
