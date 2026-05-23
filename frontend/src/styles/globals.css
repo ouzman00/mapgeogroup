@@ -3368,3 +3368,87 @@ body {
   .mapgeo-dashboard-portfolio-table--client td:nth-child(5)::before { content: "Mise à jour"; }
   .mapgeo-dashboard-portfolio-table--client td:nth-child(6)::before { content: "Actions"; }
 }
+
+/* --------------------------------------------------------------------------
+   MAPGEO MOBILE CARTOGRAPHY OVERLAYS
+   Organisation explicite des contrôles Leaflet, nord, notices, identification
+   et panneaux pour éviter les chevauchements sur petit écran.
+-------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .mapgeo-portfolio-root {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0.5rem 0.5rem calc(var(--mapgeo-mobile-carto-tabs-height) + 0.5rem);
+  }
+
+  .mapgeo-carto-workspace {
+    isolation: isolate;
+  }
+
+  .mapgeo-north-arrow {
+    top: calc(var(--mapgeo-safe-top) + 0.75rem);
+    right: var(--mapgeo-mobile-edge);
+    width: 46px;
+    height: 62px;
+  }
+
+  .mapgeo-map-control-stack {
+    top: calc(var(--mapgeo-safe-top) + 5rem);
+    right: var(--mapgeo-mobile-edge);
+    left: auto;
+    transform: none;
+  }
+
+  .mapgeo-viewport-notice {
+    top: calc(var(--mapgeo-safe-top) + 0.75rem);
+    left: var(--mapgeo-mobile-edge);
+    right: calc(var(--mapgeo-mobile-edge) + 56px);
+    max-width: none;
+    transform: none;
+    font-size: 0.68rem;
+    line-height: 1.25rem;
+  }
+
+  .mapgeo-identify-card {
+    top: calc(var(--mapgeo-safe-top) + 9.25rem);
+    left: var(--mapgeo-mobile-edge);
+    right: var(--mapgeo-mobile-edge);
+    width: auto;
+    max-width: none;
+    max-height: min(44dvh, calc(100dvh - var(--mapgeo-mobile-carto-tabs-height) - 11rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mapgeo-portfolio-inspector-inner {
+    max-height: min(66dvh, calc(100dvh - var(--mapgeo-mobile-carto-tabs-height) - 4rem));
+  }
+
+  .mapgeo-overlay-panel {
+    max-width: calc(100vw - 1.5rem);
+  }
+
+  .mapgeo-carto-workspace .leaflet-control-scale {
+    margin-bottom: 0;
+  }
+
+  .mapgeo-carto-workspace .leaflet-control-attribution {
+    max-width: min(72vw, 300px);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 390px) {
+  .mapgeo-viewport-notice {
+    right: calc(var(--mapgeo-mobile-edge) + 50px);
+    padding-inline: 0.55rem;
+  }
+
+  .mapgeo-identify-card {
+    top: calc(var(--mapgeo-safe-top) + 8.75rem);
+  }
+}

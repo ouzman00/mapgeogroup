@@ -22,7 +22,7 @@ export default function IdentifyCard({ feature, onClose, onOpenParcel }) {
     : "";
 
   return (
-    <div className="absolute right-4 top-4 z-[900] w-[300px] max-w-[calc(100%-2rem)] rounded-[18px] border border-white/10 bg-[#07111b]/92 p-3 text-white shadow-[0_24px_75px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+    <div className="mapgeo-identify-card absolute right-4 top-4 z-[900] w-[300px] max-w-[calc(100%-2rem)] rounded-[18px] border border-white/10 bg-[#07111b]/92 p-3 text-white shadow-[0_24px_75px_rgba(0,0,0,0.34)] backdrop-blur-xl">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40">Parcelle sélectionnée</p>
