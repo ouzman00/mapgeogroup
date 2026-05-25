@@ -843,8 +843,8 @@ function MapControlStack({ map, locationEnabled, onToggleLocation, onLocationErr
 
   return (
     <div {...overlayEventProps} className="mapgeo-map-control-stack mapgeo-export-hidden mapgeo-popover-enter absolute right-3 top-[112px] z-[920] overflow-hidden rounded-2xl border border-white/10 bg-[#07111b]/80 shadow-[0_20px_60px_rgba(0,0,0,0.34)] backdrop-blur-xl sm:left-5 sm:right-auto sm:top-1/2 sm:-translate-y-1/2">
-      <button type="button" disabled={disabled} onClick={() => map?.zoomIn(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom avant" aria-label="Zoom avant"><Plus size={20} /></button>
       <StreetViewButton map={map} disabled={disabled} className={`${buttonClass} mapgeo-street-view-button`} />
+      <button type="button" disabled={disabled} onClick={() => map?.zoomIn(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom avant" aria-label="Zoom avant"><Plus size={20} /></button>
       <button type="button" disabled={disabled} onClick={() => map?.zoomOut(1, { animate: true })} className={`${buttonClass} mapgeo-zoom-button`} title="Zoom arrière" aria-label="Zoom arrière"><Minus size={20} /></button>
       <button type="button" disabled={disabled} onClick={locateUser} className={`${locationButtonClass} mapgeo-location-button`} title={locationEnabled ? "Désactiver la localisation" : "Me localiser"} aria-label={locationEnabled ? "Désactiver la localisation" : "Me localiser"}><LocateFixed size={19} /></button>
     </div>

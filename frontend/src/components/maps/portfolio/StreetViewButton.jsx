@@ -1,7 +1,14 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
+
+const GOOGLE_MAPS_SCRIPT_ID = "mapgeo-google-maps-js";
+
+function readRuntimeConfig() {
+  return window.__MAPGEO_CONFIG__ || {};
+}
 
 function readStreetViewFlag() {
-  const runtimeValue = window.__MAPGEO_CONFIG__?.ENABLE_STREET_VIEW;
+  const runtimeValue = readRuntimeConfig().ENABLE_STREET_VIEW;
 
   if (typeof runtimeValue === "boolean") {
     return runtimeValue;
@@ -20,7 +27,23 @@ function readStreetViewFlag() {
   return true;
 }
 
-function buildStreetViewUrl(map) {
+function readGoogleMapsApiKey() {
+  const runtimeValue = readRuntimeConfig().GOOGLE_MAPS_API_KEY;
+
+  if (typeof runtimeValue === "string" && runtimeValue.trim()) {
+    return runtimeValue.trim();
+  }
+
+  const envValue = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  if (typeof envValue === "string" && envValue.trim()) {
+    return envValue.trim();
+  }
+
+  return "";
+}
+
+function getMapCenter(map) {
   const center = map?.getCenter?.();
 
   if (!center) {
@@ -34,10 +57,65 @@ function buildStreetViewUrl(map) {
     return null;
   }
 
-  const roundedLat = lat.toFixed(7);
-  const roundedLng = lng.toFixed(7);
+  return { lat, lng };
+}
 
-  return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${roundedLat},${roundedLng}`;
+function loadGoogleMaps(apiKey) {
+  if (window.google?.maps?.StreetViewPanorama) {
+    return Promise.resolve(window.google.maps);
+  }
+
+  if (!apiKey) {
+    return Promise.reject(new Error("Clé Google Maps API manquante."));
+  }
+
+  const existingScript = document.getElementById(GOOGLE_MAPS_SCRIPT_ID);
+
+  if (existingScript?.dataset.loaded === "true" && window.google?.maps) {
+    return Promise.resolve(window.google.maps);
+  }
+
+  if (window.__mapgeoGoogleMapsPromise) {
+    return window.__mapgeoGoogleMapsPromise;
+  }
+
+  window.__mapgeoGoogleMapsPromise = new Promise((resolve, reject) => {
+    const script = existingScript || document.createElement("script");
+
+    const cleanup = () => {
+      script.removeEventListener("load", handleLoad);
+      script.removeEventListener("error", handleError);
+    };
+
+    const handleLoad = () => {
+      script.dataset.loaded = "true";
+      cleanup();
+      if (window.google?.maps) {
+        resolve(window.google.maps);
+      } else {
+        reject(new Error("Google Maps API chargée, mais objet google.maps indisponible."));
+      }
+    };
+
+    const handleError = () => {
+      cleanup();
+      window.__mapgeoGoogleMapsPromise = null;
+      reject(new Error("Impossible de charger Google Maps API."));
+    };
+
+    script.id = GOOGLE_MAPS_SCRIPT_ID;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly`;
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", handleLoad);
+    script.addEventListener("error", handleError);
+
+    if (!existingScript) {
+      document.head.appendChild(script);
+    }
+  });
+
+  return window.__mapgeoGoogleMapsPromise;
 }
 
 function PegmanIcon() {
@@ -65,12 +143,14 @@ function PegmanIcon() {
 
 export default function StreetViewButton({ map, disabled = false, className = "" }) {
   const enabled = useMemo(() => readStreetViewFlag(), []);
+  const apiKey = useMemo(() => readGoogleMapsApiKey(), []);
+  const panoramaRef = useRef(null);
+  const panoramaInstanceRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [status, setStatus] = useState("idle");
+  const [message, setMessage] = useState("");
 
-  if (!enabled) {
-    return null;
-  }
-
-  const openStreetView = (event) => {
+  const openStreetView = useCallback((event) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -78,25 +158,160 @@ export default function StreetViewButton({ map, disabled = false, className = ""
       return;
     }
 
-    const url = buildStreetViewUrl(map);
+    setIsOpen(true);
+  }, [disabled]);
 
-    if (!url) {
+  const closeStreetView = useCallback(() => {
+    setIsOpen(false);
+    setStatus("idle");
+    setMessage("");
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || !enabled) {
       return;
     }
 
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+    let cancelled = false;
+
+    async function initStreetView() {
+      const position = getMapCenter(map);
+
+      if (!position) {
+        setStatus("error");
+        setMessage("Impossible de récupérer le centre de la carte.");
+        return;
+      }
+
+      if (!apiKey) {
+        setStatus("error");
+        setMessage("Clé Google Maps manquante : ajoute VITE_GOOGLE_MAPS_API_KEY dans Vercel.");
+        return;
+      }
+
+      try {
+        setStatus("loading");
+        setMessage("Chargement de Street View…");
+
+        const googleMaps = await loadGoogleMaps(apiKey);
+
+        if (cancelled || !panoramaRef.current) {
+          return;
+        }
+
+        const service = new googleMaps.StreetViewService();
+
+        service.getPanorama(
+          {
+            location: position,
+            radius: 80,
+            preference: googleMaps.StreetViewPreference.NEAREST,
+            source: googleMaps.StreetViewSource.OUTDOOR,
+          },
+          (data, streetViewStatus) => {
+            if (cancelled || !panoramaRef.current) {
+              return;
+            }
+
+            if (streetViewStatus !== googleMaps.StreetViewStatus.OK || !data?.location?.pano) {
+              setStatus("empty");
+              setMessage("Aucune vue Street View trouvée à proximité du centre de la carte.");
+              return;
+            }
+
+            panoramaInstanceRef.current = new googleMaps.StreetViewPanorama(
+              panoramaRef.current,
+              {
+                pano: data.location.pano,
+                visible: true,
+                addressControl: true,
+                linksControl: true,
+                panControl: true,
+                zoomControl: true,
+                fullscreenControl: true,
+                motionTracking: false,
+                motionTrackingControl: false,
+              }
+            );
+
+            setStatus("ready");
+            setMessage("");
+          }
+        );
+      } catch (error) {
+        if (!cancelled) {
+          setStatus("error");
+          setMessage(error?.message || "Impossible d'ouvrir Street View.");
+        }
+      }
+    }
+
+    initStreetView();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiKey, enabled, isOpen, map]);
+
+  if (!enabled) {
+    return null;
+  }
 
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={openStreetView}
-      className={`${className} mapgeo-street-view-button text-amber-300 hover:text-amber-200`}
-      title="Ouvrir Street View au centre de la carte"
-      aria-label="Ouvrir Street View au centre de la carte"
-    >
-      <PegmanIcon />
-    </button>
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={openStreetView}
+        className={`${className} mapgeo-street-view-button text-amber-300 hover:text-amber-200`}
+        title="Ouvrir Street View au centre de la carte"
+        aria-label="Ouvrir Street View au centre de la carte"
+      >
+        <PegmanIcon />
+      </button>
+
+      {isOpen ? (
+        <div
+          className="fixed inset-x-4 bottom-4 top-20 z-[1200] overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-2xl md:left-auto md:right-6 md:top-24 md:h-[520px] md:w-[460px]"
+          role="dialog"
+          aria-modal="false"
+          aria-label="Street View"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3 text-white">
+            <div>
+              <p className="text-sm font-semibold">Street View</p>
+              <p className="text-xs text-slate-400">Vue la plus proche du centre de la carte</p>
+            </div>
+            <button
+              type="button"
+              onClick={closeStreetView}
+              className="rounded-full p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              title="Fermer Street View"
+              aria-label="Fermer Street View"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="relative h-[calc(100%-57px)] w-full bg-slate-950">
+            <div ref={panoramaRef} className="h-full w-full" />
+
+            {status !== "ready" ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 px-6 text-center text-sm text-slate-200">
+                <div>
+                  <p className="font-medium">{message || "Préparation de Street View…"}</p>
+                  {status === "error" ? (
+                    <p className="mt-2 text-xs text-slate-400">
+                      Vérifie la clé Google Maps et l’activation de Maps JavaScript API.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
