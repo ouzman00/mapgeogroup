@@ -9,6 +9,7 @@ if [ -n "$DB_HOST" ]; then
 fi
 
 if [ "${SKIP_MIGRATIONS:-false}" != "true" ]; then
+  python manage.py setup_mapgeo_schema --move-public
   python manage.py migrate --noinput
 fi
 
