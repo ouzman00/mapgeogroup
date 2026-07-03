@@ -1,13 +1,13 @@
-from django.contrib.gis.db import models as gis_models
+﻿from django.contrib.gis.db import models as gis_models
 from django.db import migrations, models
 
 
 CREATE_COMMUNES_AND_QGIS_VIEW = r"""
 SET search_path TO donnees_mapgeo, public;
-CREATE SCHEMA IF NOT EXISTS donnees_mapgeo AUTHORIZATION mapgeo;
+CREATE SCHEMA IF NOT EXISTS donnees_mapgeo;
 
 -- Table SIG des communes. Cette migration est volontairement idempotente :
--- elle fonctionne aussi si une ancienne table communes existe déjà dans le schéma.
+-- elle fonctionne aussi si une ancienne table communes existe dÃ©jÃ  dans le schÃ©ma.
 CREATE TABLE IF NOT EXISTS communes (
     id bigserial PRIMARY KEY
 );
@@ -42,7 +42,7 @@ ALTER TABLE donnees_mapgeo.communes ADD COLUMN IF NOT EXISTS geom geometry(Geome
 ALTER TABLE donnees_mapgeo.communes ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT NOW();
 ALTER TABLE donnees_mapgeo.communes ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT NOW();
 
--- Harmonise la géométrie en EPSG:32628 sans supprimer les données existantes.
+-- Harmonise la gÃ©omÃ©trie en EPSG:32628 sans supprimer les donnÃ©es existantes.
 ALTER TABLE donnees_mapgeo.communes
 ALTER COLUMN geom TYPE geometry(Geometry, 32628)
 USING CASE
@@ -52,7 +52,7 @@ USING CASE
     ELSE ST_Transform(geom, 32628)
 END;
 
--- Essaie de renseigner nom/code depuis les colonnes historiques fréquentes.
+-- Essaie de renseigner nom/code depuis les colonnes historiques frÃ©quentes.
 DO $$
 DECLARE
     candidate text;
@@ -100,10 +100,6 @@ CREATE INDEX IF NOT EXISTS communes_code_idx ON donnees_mapgeo.communes (code);
 CREATE INDEX IF NOT EXISTS communes_nom_idx ON donnees_mapgeo.communes (nom);
 CREATE INDEX IF NOT EXISTS communes_department_nom_idx ON donnees_mapgeo.communes (department, nom);
 CREATE INDEX IF NOT EXISTS communes_geom_gix ON donnees_mapgeo.communes USING GIST (geom);
-
-ALTER TABLE donnees_mapgeo.communes OWNER TO mapgeo;
-GRANT ALL ON TABLE donnees_mapgeo.communes TO mapgeo;
-
 DROP VIEW IF EXISTS donnees_mapgeo.parcels_parcel_qgis;
 CREATE OR REPLACE VIEW donnees_mapgeo.parcels_parcel_qgis AS
 SELECT
@@ -132,8 +128,6 @@ SELECT
     p.geom
 FROM donnees_mapgeo.parcels_parcel p
 WHERE p.archived_at IS NULL;
-
-GRANT SELECT ON donnees_mapgeo.parcels_parcel_qgis TO mapgeo;
 """
 
 DROP_QGIS_VIEW = r"""
@@ -177,3 +171,4 @@ class Migration(migrations.Migration):
             ],
         ),
     ]
+
